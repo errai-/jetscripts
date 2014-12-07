@@ -1,0 +1,80 @@
+This is a short recap that explains the functions of different files/scripts in this folder. The main purpose of most of the scripts is analysis of CMSSW or real jet data.
+
+Files from other sources, used as templates for the scripts created here:
+------------------------------------------------------------------------
+
+fileopen.C, Dialogs.C, settings.h, mk_drawJetCorrectionUncertainty.C, JetDefs.hpp,
+JECUncertainty.hpp, JECUncertainty.cpp, ErrorTypes.hpp, ErrorTypes.cpp,
+drawJetCorrectionUncertainty.C, testSources.C, mk_testSources.C
+
+Folders:
+-------
+
+KKousour, Hannouris, QCD:
+An old and a new version for the handling of CMSSW style data sets
+
+pdf:
+Stored images
+
+txt:
+Jet energy corrections files
+
+backupdir:
+self-explanatory
+
+luminosity:
+luminosity info for an other way of prescaling
+
+pileupcorr:
+pileup corrections used for monte carlo data
+
+CondFormats, DataFormats, FWCore:
+directories taken from the CMSSW data package
+
+.root files:
+-----------
+
+mc*.root: analyzed versions of the CMSSW data
+Juska/old dataset, old/new PU correction
+
+dt*.root: analyzed versions of the real data
+Full: everything available; lumi/not: prescale method
+
+fj*.root: analysis of pythia8 generated data
+
+random:
+------
+
+setTDRStyle.C, tdrstyle_mod.C:
+versions of a graphics style for root
+
+TProfileHelper.C:
+a class for .root profile editing, not created here
+
+Actual Scripts:
+--------------
+
+AnalyzeData.h, AnalyzeData.C:
+Basic analysis of MC/DT/Pythia8 data, makes pT-eta "cakes" that can be sliced according to the needs
+
+AnalyzeHelper.h:
+Small helper scripts related to the AnalyzeData class
+
+ProfileBuilder.h:
+A class for building the "cake-like" profile, including functions for using it
+
+runAnalyzeData.C:
+The actual root script that initiates the usage of AnalyzeData
+
+HistScripts.h:
+General small scripts to be used for modifying histograms
+
+ProfileProjector.h:
+A class to be used while reading the histogram data stored by AnalyzeData. Projects the desired part of the "cakes" to a 2D plot.
+
+runDrawHistos.C:
+The actual root script that runs ProfileProjector. Includes several pre-defined things that can be plotted, but also new things for plotting can be included. By default, this will compare histograms with each other, for instance MC vs. Data.
+
+runSingleHistos.C:
+Same as the previous, but here no comparison is done. Only plots of single results.
+
