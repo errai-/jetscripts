@@ -30,7 +30,7 @@
 int runSortedJets() {
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("sortedjets_general.root", "READ");
+  TFile *inFile = new TFile("sortedjets.root", "READ");
   THStack* partFracs = new THStack("particlestacks", "");
   THStack* errorFracs = new THStack("errorstacks", "" );
   
