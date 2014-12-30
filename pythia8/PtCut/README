@@ -1,0 +1,71 @@
+Simulation code for CMS detector simulation with pythia8. Multiple versions are
+used for historical reasons. A star (*) is used to mark old/deprecated versions.
+
+ptcut: *
+The original version. Pairs up jets by location. That is, jets are sorted for
+both the "real data" and simulated detector data. These jets are paired up
+and compared to each other (direction is used for pairing). This is slightly
+inaccurate, since the jet boundaries may vary a bit.
+
+ptcut_progressive: *
+A refined version of the original. The basic mechanisms are unchanged.
+
+ptcut_stable.cc:
+The best "classic" version of the simulation. Now, only one jet is used
+and the energy scales are directly applied to particles.
+
+ptcut_stable_summation.cc: *
+Similar as ptcut_stable, but a different summation method is used for
+averaging. Turns out, this has little effect on things. ptcut_stable
+is thus preferred.
+
+ptcut_datahists:
+From ptcut_stable, uses histograms to apply different scales directly
+to the particles. The best version at this moment.
+
+USAGE:
+
+make ptcut_*
+## ptcut_*.exe is created
+./ptcut_*.exe [NoOfEvents]
+## ptcut*.root created
+
+CINT files, with *.C (vs. *.cc used by the makefile):
+(run these with 'root -l *.C+' or similar commands)
+
+PLOTTING:
+
+drawCaloPtCut.C:
+Used to draw hadron effects applied to ECAL vs. effects applied
+to both ECAL and HCAL.
+
+drawEfracsPtCut.C:
+Used for drawing energy fractions of different particle types in
+a simulation.
+
+drawHistsPtCut.C:
+Draws pt_simulated/pt_total for a root file created by datahists.
+In the root file there would exists also other partitions, which
+are not used by this software.
+
+drawProgressivePtCut.C:
+A plotting script to show many effects at the same time.
+
+drawPtCut.C: *
+First version of PtCut plotting, not compatible with new root files.
+
+drawSamePtCut.C: *
+A version of drawPtCut which can swap quickly between two input files.
+No other special functionalities.
+
+OTHERS:
+
+pfhadrons.C:
+Used to extract information from pfhadrons.root, original script.
+
+saveFits.C:
+A modified version to extract the information.
+
+tdrStyle*:
+For plotting purposes.
+

@@ -23,6 +23,8 @@ make clean
 CINT files, with *.C (vs. *.cc used by the makefile):
 (run these with 'root -l *.C+' or similar commands)
 
+PLOTTING
+
 runPFSortedJets.C:
 ## Primary plotting script. Uses the particle flow ordering scheme for the
 ## different particles.
