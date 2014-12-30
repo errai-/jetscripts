@@ -1,5 +1,18 @@
 This README describes to some degree the contents of this folder
 
+########################################################
+# Root path and libraries:
+source /Path_to_ROOT/root/bin/thisroot.sh
+ 
+# Pythia 8 path and libraries:
+export PYTHIA8=/Path_to_Pythia8/pythia81xx/
+export LD_LIBRARY_PATH=$PYTHIA8/lib:$LD_LIBRARY_PATH
+########################################################
+
+Contents below are deprecated and should be used only if some additional information is necessary. New README's are provided in the subfolders.
+
+########################################################
+
 Pythia location should be given in ../config.mk. In general, these programs should be run under pythia8/wrkdir (or some similar folder). Makefile should be modified so that fastjet location is taken into account in the CXXFLAGS. Additionally, it is instructive to have a working root installation, as well as fastjet and pythia (also the proper modifications should be done to .bashrc).
 
 - Updated 12/10/2014
