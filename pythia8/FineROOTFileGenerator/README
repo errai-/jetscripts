@@ -10,5 +10,6 @@ make event2tree
 root -l Finalize.C
 # See the file for further options. pythiajets.root is processed
 # further, output is of the desired format: .root. 
-# Auxiliary.C and LoadModules.C are used for fine tuning by the script.
+# Auxiliary.C is used for fine tuning by the script.
 # output file: fjpythia.root
+# LoadModules.C and FormatHelper.h are not currently in use.
