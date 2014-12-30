@@ -1,20 +1,11 @@
-#ifndef TDRSTYLE_H
-#define TDRSTYLE_H
-
 #include "TStyle.h"
 #include "TROOT.h"
 #include "TLatex.h"
 #include "TGraph.h"
 #include "TLegend.h"
 #include "TCanvas.h"
-#include "TH1D.h"
-
-using std::string;
-using std::vector;
 
 // tdrGrid: Turns the grid lines on (true) or off (false)
-
-// Used by jetsorter.cc
 
 // Add useful short-hands
 void tdrDraw(TH1* h, string opt,
@@ -138,8 +129,8 @@ void setTDRStyle() {
 // Margins:
   tdrStyle->SetPadTopMargin(0.05);
   tdrStyle->SetPadBottomMargin(0.13);//0.13);
-  tdrStyle->SetPadLeftMargin(0.13);//0.16);
-  tdrStyle->SetPadRightMargin(0.19);//16);//0.02);
+  tdrStyle->SetPadLeftMargin(0.11);//0.16);
+  tdrStyle->SetPadRightMargin(0.04);//16);//0.02);
 
 // For the Global title:
 
@@ -160,7 +151,7 @@ void setTDRStyle() {
 
   tdrStyle->SetTitleColor(1, "XYZ");
   tdrStyle->SetTitleFont(42, "XYZ");
-  tdrStyle->SetTitleSize(0.086, "XYZ");
+  tdrStyle->SetTitleSize(0.06, "XYZ");
   // tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the size?
   // tdrStyle->SetTitleYSize(Float_t size = 0.02);
   tdrStyle->SetTitleXOffset(1.1);//1.1 0.9);
@@ -228,7 +219,7 @@ void pythiaFinal(double intLumi=-1, bool wide = false) {
   }
   else {
     latex->SetTextAlign(11); // align left
-    latex->DrawLatex(0.13,0.96,"Pythia 8 simulation");
+    latex->DrawLatex(0.1,0.96,"Pythia 8 simulation (Summer14)");
   }
 } // cmsPrel
 
@@ -256,20 +247,6 @@ void cmsPrel(double intLumi=-1, bool wide = false) {
   }
 } // cmsPrel
 
-void stackModify(TH1D *setter){
-  setter->GetXaxis()->SetTitle("p_{T} (GeV)");
-  setter->GetYaxis()->SetTitle("Jet energy fraction");
-  setter->SetStats(0);
-  setter->GetXaxis()->SetMoreLogLabels();
-  setter->GetXaxis()->SetNoExponent();
-  setter->GetYaxis()->SetTitleOffset(1.35);
-  setter->GetXaxis()->SetTitleOffset(1.2);
-  setter->GetXaxis()->SetLabelSize(0.045);
-  setter->GetYaxis()->SetLabelSize(0.045);
-  setter->GetXaxis()->SetTitleSize(0.045);
-  setter->GetYaxis()->SetTitleSize(0.045);
-}
-
 void cmsFinal(double intLumi=-1, bool wide = false) {
 
   TLatex *latex = new TLatex();
@@ -284,16 +261,14 @@ void cmsFinal(double intLumi=-1, bool wide = false) {
 		     Form("CMS, L = %.2g fb^{-1}",intLumi*0.001));
   }
   else if (intLumi==0) { // simulation
-    latex->SetTextAlign(21); // align left
+    latex->SetTextAlign(11); // align left
     latex->DrawLatex(wide ? 0.06 : 0.15, 0.96, "CMS simulation (Pythia Z2*)");
   }
   else {
     latex->SetTextAlign(11); // align left
-    latex->DrawLatex(0.06,0.96,"CMS 2012");
+    latex->DrawLatex(0.15,0.96,"CMS 2012");
   }
 } // cmsPrel
 
 //cmsPrel(); // to print just CMS and \sqrt{s}
 //cmsPrel(400);  // to print also the integrated luminosity.
-
-#endif // TDRSTYLE_H

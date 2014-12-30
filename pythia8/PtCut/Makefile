@@ -1,7 +1,7 @@
-################################################################
-## Makefile for building Pythia-ROOT-Fastjet code (jetsorter) ## 
-## Hannu Siikonen, 30.12.2014                                 ##  
-################################################################
+#############################################################
+## Makefile for building Pythia-ROOT-Fastjet files (ptcut) ##
+## Hannu Siikonen, 30.12.2014                              ##
+#############################################################
 
 # It is assumed that pythia8 and fastjet are installed under /usr/local
 # or some other known location. If not, see Makefile_long for adding proper
@@ -17,9 +17,21 @@ SHELL = /bin/sh
 LDFLAGS := $(shell root-config --ldflags --glibs) \
   $(shell pythia8-config --libs) $(shell fastjet-config --libs) 
 
-jetsorter: 
+ptcut: 
+	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+
+ptcut_progressive: 
+	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+
+ptcut_stable: 
+	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+
+ptcut_stable_sum: 
+	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+
+ptcut_datahists: 
 	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
 
 clean:
-	rm -f *.log *.exe sortedjets.root *.d *.so \
+	rm -f $(EXE) *.log *.exe *.d *.so 
 
