@@ -17,9 +17,8 @@ SHELL = /bin/sh
 LDFLAGS := $(shell root-config --ldflags --glibs) \
   $(shell pythia8-config --libs) $(shell fastjet-config --libs) 
 
-jetsorter: 
+event2tree: 
 	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
 
 clean:
 	rm -f *.log *.exe *.d *.so 
-

@@ -1,0 +1,14 @@
+At the moment this is more of a curiosity. A "standard" root file is generated
+from pythia8 output.
+
+USAGE:
+
+make event2tree
+# event2tree.exe is created
+./event2tree.exe
+# pythiajets.root is created
+root -l Finalize.C
+# See the file for further options. pythiajets.root is processed
+# further, output is of the desired format: .root. 
+# Auxiliary.C and LoadModules.C are used for fine tuning by the script.
+# output file: fjpythia.root
