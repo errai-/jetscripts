@@ -4,31 +4,32 @@
 #include <string>
 #include <vector>
 
-using std::string
-using std::vector
-using std::cout
-using std::endl
+using std::string;
+using std::vector;
+using std::cout;
+using std::endl;
 
 void runAnalyzeData(Long64_t loopLimit=10000, Int_t firstIdx=0, Int_t lastIdx = 0,
   Int_t testing = 0, string writeFile="test.root", 
-  string dataPath="/home/hannu/workroot/jetit/")
+  string dataPath="../../root_jetdata/")
 {
-  cout << "Processing run.C.." << endl;
+  cout << "Processing runAnalyzeData.C ..." << endl;
 
   // These are not usually changed
-  char *scriptName=".L AnalyzeData.C+";
-  char *treePath="ak5/ProcessedTree";
+  char scriptName[] = ".L AnalyzeData.C+";
+  char treePath[] = "ak5/ProcessedTree";
   // This indicates the file to be opened
   Int_t isMC = 0;
   Int_t fileChoice = 1;
   gROOT->Reset();
-  gROOT->ProcessLine(".L Hannouris/QCDEvent.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDJet.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDMET.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDCaloJet.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDPFJet.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDEventHdr.cc+");
-  gROOT->ProcessLine(".L Hannouris/LorentzVector.h+");
+  //gSystem->AddIncludePath("/home/hannu/Cern/jetscripts/data_analysis/analyzer");
+  gROOT->ProcessLine(".L QCDModules/QCDEvent.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDJet.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDMET.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDCaloJet.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDPFJet.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDEventHdr.cc+");
+  gROOT->ProcessLine(".L QCDModules/LorentzVector.h+");
 
   gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/Utilities.cc+");
   gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/JetCorrectorParameters.cc+");

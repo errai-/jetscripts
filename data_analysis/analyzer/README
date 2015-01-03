@@ -1,0 +1,12 @@
+This folder contains full jet data analysis software. AnalyzeData.C contains the 
+main loop of the class fully given in AnalyzeData.h. this is run by runAnalyzeData.C.
+AnalyzeData uses the class given in ProfileBuilder.C and functions given in 
+AnalyszeHelper.h. QCDModules, pileupcorr and CondFormats contain additional reference files
+needed by the code.
+
+runAnalyzeData.C works only with certain initial root files. New file names can be specified
+manually.
+
+root -l runAnalyzeData.C
+
+

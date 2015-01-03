@@ -73,7 +73,7 @@ struct EventID
 // A function to shorten obtaining the path of desired files
 string GivePath( Int_t correction, Int_t isMC )
 {
-  string fullPath("/home/hannu/workroot/skriptit/CondFormats/JetMETObjects/data/Winter14_V1_");
+  string fullPath("CondFormats/JetMETObjects/data/Winter14_V1_");
   isMC ? fullPath += "MC_" : fullPath += "DATA_";
   switch( correction ){
   case 1:

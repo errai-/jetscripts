@@ -11,6 +11,7 @@
 #include <iostream>
 #include <string>
 #include <CondFormats/JetMETObjects/interface/JetCorrectorParameters.h>
+#include <CondFormats/JetMETObjects/src/JetCorrectorParameters.cc>
 #include <CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h>
 #include <CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h>
 #include <TGraph.h>
@@ -122,10 +123,12 @@ void AnalyzeData::Loop(string writeFile)
   // An object for constructing 2D histograms 
   ProfileBuilder *analysisHelper = new ProfileBuilder(ptBinAmount,etaBinAmount,
     minPt,maxPt,minEta,maxEta);
-
+  cout << "sus\n";
   // Setting up Jet energy corrections
   vector<JetCorrectorParameters> corParams;
+  cout << "sus\n";
   FactorizedJetCorrector *jetECor = EnergyCorrSetup( &corParams, isMC );
+  cout << "sus\n";
 
   // Looping over events
   for (Long64_t jentry=0; jentry<loopLimit; jentry++){

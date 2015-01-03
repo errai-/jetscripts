@@ -24,14 +24,14 @@
 #include <sstream>
 #include <HistScripts.h>
 
-using std::string
-using std::vector
-using std::cout
-using std::endl
+using std::string;
+using std::vector;
+using std::cout;
+using std::endl;
 
 void runSingleHistos(string readMcFile="mc_histos.root" 
   , string filePath=
-  "/home/hannu/workroot/skriptit/")
+  "./")
 {
   cout << "Processing runDrawHstos.C.." << endl;
 
@@ -45,13 +45,13 @@ void runSingleHistos(string readMcFile="mc_histos.root"
   int angle = 0;
   // This indicates the file to be opened
   gROOT->Reset();
-  gROOT->ProcessLine(".L Hannouris/QCDEvent.cc++");
-  gROOT->ProcessLine(".L Hannouris/QCDJet.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDMET.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDCaloJet.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDPFJet.cc+");
-  gROOT->ProcessLine(".L Hannouris/QCDEventHdr.cc++");
-  gROOT->ProcessLine(".L Hannouris/LorentzVector.h++");
+  gROOT->ProcessLine(".L QCDModules/QCDEvent.cc++");
+  gROOT->ProcessLine(".L QCDModules/QCDJet.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDMET.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDCaloJet.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDPFJet.cc+");
+  gROOT->ProcessLine(".L QCDModules/QCDEventHdr.cc++");
+  gROOT->ProcessLine(".L QCDModules/LorentzVector.h++");
 
   gROOT->ProcessLine(".L ProfileProjector.h+");
 

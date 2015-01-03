@@ -1,3 +1,7 @@
+The folders 'analyzer' and 'histplot' contain the most important pieces of code. The 'analyzer' has some analysis code, which processes raw detector/simulation data to jet data. The jet data is stored as 'cakes' in the pt-eta -plane. The 'histplot' folder contains plotting functionalities for this 'cakes'. See README's in the folders for further info. Below is a deprecated version of this README, might contain something useful.
+
+##############################################
+
 This is a short recap that explains the functions of different files/scripts in this folder. The main purpose of most of the scripts is analysis of CMSSW or real jet data.
 
 Files from other sources, used as templates for the scripts created here:

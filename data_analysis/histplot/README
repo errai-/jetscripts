@@ -1,0 +1,11 @@
+This folder holds multiple scripts for plotting root-files created with the
+class under ../analyzer. ProfileProjector.h holds the main class used for
+the task. FormatHelper.h and HistScripts.h are auxiliary scripts. The files
+run* are used for plotting the results.
+
+root -l runSingleHists.C 
+holds multiple plotting options for a single root file (see the contents of the file)
+
+root -l runDrawHistos.C
+holds equally multpile options for plotting. The point is, that this is used for
+comparing MC and DT plots.
