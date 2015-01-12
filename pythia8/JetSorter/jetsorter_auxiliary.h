@@ -13,7 +13,7 @@
 
 #include <math.h>
 // FastJet interface
-#include "Pythia8/FastJet3.h"
+#include "Pythia8Plugins/FastJet3.h"
 
 // ROOT, for histogramming.
 #include "TROOT.h"
