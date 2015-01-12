@@ -1,13 +1,12 @@
 #############################################################
 ## Makefile for building Pythia-ROOT-Fastjet files (ptcut) ##
-## Hannu Siikonen, 12.01.2014                              ##
+## Hannu Siikonen, 12.01.2015                              ##
 #############################################################
 
 # The Makefile might require some fine tuning depending on the
 # install location of fastjet and pythia8
 
 SHELL = /bin/bash
-LIBRARY_PATH := -Wl,-rpath /usr/local/lib # pythia8 library location
 CXXFLAGS := -O2 -ansi -pedantic -W -Wall -Wshadow -Wno-shadow -m64
 
 ROOT=$(shell root-config --cflags --glibs)

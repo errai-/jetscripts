@@ -16,7 +16,7 @@
 #include "TF1.h"
 
 // FastJet interface
-#include "Pythia8/FastJet3.h"
+#include "Pythia8Plugins/FastJet3.h"
 
 // ROOT, for histogramming.
 #include "TROOT.h"
@@ -173,7 +173,8 @@ int main(int argc, char* argv[]) {
   pythia.readString("Next:numberShowInfo = 0");
   pythia.readString("Next:numberShowProcess = 0");
   pythia.readString("Next:numberShowEvent = 0");
-  pythia.init( 2212, 2212, 14000.);
+  pythia.readString("Beams:eCM = 14000."); 
+  pythia.init();
   pythia.settings.listChanged();
 
   // Create file on which histogram(s) can be saved.

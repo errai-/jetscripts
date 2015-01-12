@@ -4,7 +4,6 @@
 ################################################################
 
 SHELL = /bin/bash
-LIBRARY_PATH := -Wl,-rpath /usr/local/lib # pythia8 library location
 CXXFLAGS := -O2 -ansi -pedantic -W -Wall -Wshadow -Wno-shadow -m64
 
 ROOT=$(shell root-config --cflags --glibs)
