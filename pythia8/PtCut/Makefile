@@ -1,36 +1,29 @@
 #############################################################
 ## Makefile for building Pythia-ROOT-Fastjet files (ptcut) ##
-## Hannu Siikonen, 30.12.2014                              ##
+## Hannu Siikonen, 12.01.2014                              ##
 #############################################################
 
-# It is assumed that pythia8 and fastjet are installed under /usr/local
-# or some other known location. If not, see Makefile_long for adding proper
-# includes.
+# The Makefile might require some fine tuning depending on the
+# install location of fastjet and pythia8
 
-# Separate cxxflags are required only for root, 
-# since root is not installed under /usr/local
+SHELL = /bin/bash
+LIBRARY_PATH := -Wl,-rpath /usr/local/lib # pythia8 library location
 CXXFLAGS := -O2 -ansi -pedantic -W -Wall -Wshadow -Wno-shadow -m64
-ROOTCXXFLAGS := $(shell root-config --cflags)
 
-# The libraries are loaded using proper config-files
-SHELL = /bin/sh
-LDFLAGS := $(shell root-config --ldflags --glibs) \
-  $(shell pythia8-config --libs) $(shell fastjet-config --libs) 
+ROOT=$(shell root-config --cflags --glibs)
+PYTHIA=$(shell pythia8-config --cflags --libs)
+FASTJET=$(shell fastjet-config --cxxflags --libs)
 
-ptcut: 
-	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+PYTHIALIB=/usr/local/lib/libpythia8.so
 
-ptcut_progressive: 
-	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+.SECONDEXPANSION:
+.PHONY: all clean
 
-ptcut_stable: 
-	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+all:
+	@echo "No make for all objects provided."
 
-ptcut_stable_sum: 
-	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
-
-ptcut_datahists: 
-	$(CXX) $@.cc $(CXXFLAGS) $(ROOTCXXFLAGS) $(LDFLAGS) -o $@.exe 
+ptcut ptcut_progressive ptcut_stable ptcut_stable_sum ptcut_datahists: $$@.cc $(PYTHIALIB) 
+	$(CXX) $^ -w $(CXXFLAGS) $(ROOT) $(PYTHIA) $(FASTJET) -ldl -o $@.exe 
 
 clean:
 	rm -f $(EXE) *.log *.exe *.d *.so 
