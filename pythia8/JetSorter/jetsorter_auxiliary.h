@@ -1,4 +1,6 @@
 // This holds all the auxiliary functions and classes of jetsorter
+#ifndef JETSORTER_AUXILIARY
+#define JETSORTER_AUXILIARY
 
 // Stdlib header file for input and output.
 #include <iostream>
@@ -187,3 +189,4 @@ int ChargeSign( int id ){
 }
 
 
+#endif

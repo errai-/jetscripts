@@ -22,6 +22,13 @@ all:
 jetsorter: $$@.cc $(PYTHIALIB)
 	$(CXX) $^ -w $(CXXFLAGS) $(ROOT) $(PYTHIA) $(FASTJET) -ldl -o $@.exe 
 
+#parts2tree: $$@.cc $(PYTHIALIB) MinimalEvent.h jetsorter_auxiliary.h
+#	$(ROOTSYS)/bin/rootcint -f $@Dct.cc -c -I. MinimalEvent.h $@LinkDef.h
+#	$(CXX) $@Dct.cc $@.cc $(PYTHIALIB) -w $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
+
+#jetsorttree: $$@.cc
+#	$(CXX) $@.cc $(CXXFLAGS) $(ROOT) $(FASTJET) -ldl -o $@.exe
+
 # The main-files are from the pythia8 source, used to test that everything works
 main71 main72: $$@.cc $(PYTHIALIB)
 	$(CXX) $^ $(CXXFLAGS) $(PYTHIA) $(FASTJET) -o $@.exe 
@@ -30,7 +37,7 @@ main91: $$@.cc $(PYTHIALIB)
 	$(CXX) $^ -w $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe 
 
 main92: $$@.cc $$@.h $$@LinkDef.h $(PYTHIALIB) 
-	`rootcint -f $@Dct.cc -c `pythia8-config --cflags` $@.h $@LinkDef.h`
+	$(ROOTSYS)/bin/rootcint -f $@Dct.cc -c `pythia8-config --cflags` $@.h $@LinkDef.h
 	$(CXX) $@Dct.cc $^ -w $(CXXFLAGS) $(ROOT) $(PYTHIA) -o $@.exe 
 
 # Clean.
