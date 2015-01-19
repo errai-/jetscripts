@@ -1,0 +1,8 @@
+Testing how writing to trees works with pythia8. It is possible to create 
+trees easily, but on the other hand it's very difficult to read trees while
+using fastjet. The progress is stalled.
+
+parts2tree.cc creates a tree using the MinimalEvent event definition.
+
+the other classes are attempts of reading running jetsorting algorithms on
+the generated data.
