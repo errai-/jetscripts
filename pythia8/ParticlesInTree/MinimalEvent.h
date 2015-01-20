@@ -40,6 +40,16 @@ public:
 
   void Nullify(){
     idx = 0;
+    px.clear();
+    py.clear();
+    pz.clear();
+    e.clear();
+    status.clear();
+    id.clear();
+    mother1.clear();
+    mother2.clear();
+    daughter1.clear();
+    daughter2.clear();
   }
 };
 
