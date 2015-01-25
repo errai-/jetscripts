@@ -14,7 +14,6 @@
 #include <ctime>
 #include <cstdint>
 
-
 class Timer{
   private:
     std::clock_t start;
@@ -26,12 +25,21 @@ class Timer{
     int seconds; 
     
   public:
-    Timer(int _nEvent, int _dEvent): nEvent(_nEvent),dEvent(_dEvent){
-      start = std::clock();
-    }
-
+    Timer(){}
+    
+    Timer(int _nEvent, int _dEvent): nEvent(_nEvent),dEvent(_dEvent) {}
+    
     ~Timer(){}
 
+    void set_params(int _nEvent, int _dEvent){
+      nEvent = _nEvent;
+      dEvent = _dEvent;
+    }
+    
+    void start_timing(){
+      start = std::clock(); 
+    }
+    
     void count_time(){
       cEvent += dEvent;
       double time_processor = (std::clock() - start)/(( (double) CLOCKS_PER_SEC ) );
@@ -48,10 +56,5 @@ class Timer{
         minutes << "m" << seconds << "s." << endl;
     }
 };
-
-
-
-
-
 
 #endif // HELP_FUNCTIONS_H

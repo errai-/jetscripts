@@ -17,7 +17,7 @@ using std::vector;
 // Used by jetsorter.cc
 
 // Add useful short-hands
-void tdrDraw(TH1* h, string opt,
+static void tdrDraw(TH1* h, string opt,
 	     int marker=kFullCircle, int mcolor = kBlack,
 	     int lstyle=kSolid, int lcolor=-1,
 	     int fstyle=1001, int fcolor=kYellow+1) {
@@ -30,7 +30,7 @@ void tdrDraw(TH1* h, string opt,
   h->Draw((opt+"SAME").c_str());
 }
 
-void tdrDraw(TGraph* g, string opt,
+static void tdrDraw(TGraph* g, string opt,
 	     int marker=kFullCircle, int mcolor = kBlack,
 	     int lstyle=kSolid, int lcolor=-1,
 	     int fstyle=1001, int fcolor=kYellow+1) {
@@ -43,7 +43,7 @@ void tdrDraw(TGraph* g, string opt,
   g->Draw((opt+"SAME").c_str());
 }
 
-TLegend *tdrLeg(double x1, double y1, double x2, double y2) {
+static TLegend *tdrLeg(double x1, double y1, double x2, double y2) {
   TLegend *leg = new TLegend(x1, y1, x2, y2, "", "brNDC");
   leg->SetFillStyle(kNone);
   leg->SetBorderSize(0);
@@ -52,18 +52,18 @@ TLegend *tdrLeg(double x1, double y1, double x2, double y2) {
   return leg;
 }
 
-void tdrGrid(bool gridOn) {
+static void tdrGrid(bool gridOn) {
   TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); assert(tdrStyle);
   tdrStyle->SetPadGridX(gridOn);
   tdrStyle->SetPadGridY(gridOn);
 }
 
 // fixOverlay: Redraws the axis
-void fixOverlay() {
+static void fixOverlay() {
   gPad->RedrawAxis();
 }
 
-void setTDRStyle() {
+static void setTDRStyle() {
   TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
 
 // For the canvas:
@@ -209,7 +209,7 @@ void setTDRStyle() {
 
 }
 
-void pythiaFinal(double intLumi=-1, bool wide = false) {
+static void pythiaFinal(double intLumi=-1, bool wide = false) {
 
   TLatex *latex = new TLatex();
   latex->SetNDC();
@@ -233,7 +233,7 @@ void pythiaFinal(double intLumi=-1, bool wide = false) {
 } // cmsPrel
 
 
-void cmsPrel(double intLumi=-1, bool wide = false) {
+static void cmsPrel(double intLumi=-1, bool wide = false) {
 
   TLatex *latex = new TLatex();
   latex->SetNDC();
@@ -256,7 +256,7 @@ void cmsPrel(double intLumi=-1, bool wide = false) {
   }
 } // cmsPrel
 
-void stackModify(TH1D *setter){
+static void stackModify(TH1D *setter){
   setter->GetXaxis()->SetTitle("p_{T} (GeV)");
   setter->GetYaxis()->SetTitle("Jet energy fraction");
   setter->SetStats(0);
@@ -270,7 +270,7 @@ void stackModify(TH1D *setter){
   setter->GetYaxis()->SetTitleSize(0.045);
 }
 
-void cmsFinal(double intLumi=-1, bool wide = false) {
+static void cmsFinal(double intLumi=-1, bool wide = false) {
 
   TLatex *latex = new TLatex();
   latex->SetNDC();

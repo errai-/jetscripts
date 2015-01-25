@@ -124,9 +124,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i != event.size(); ++i) {
       double status = abs( event[i].status() );
       if (event[i].isFinal() && event[i].isVisible()) {  
-        mEvent->SetVals(event[i].px(),event[i].py(),event[i].pz(),event[i].e(), 
-          event[i].status(), event[i].id(), event[i].mother1(), 
-          event[i].mother2(), event[i].daughter1(), event[i].daughter2() );
+        mEvent->SetVals(event[i].px(),event[i].py(),event[i].pz(),event[i].e(), event[i].id());
       }
     }
     eventStorage->Fill();

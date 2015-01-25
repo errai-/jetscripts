@@ -19,22 +19,22 @@
 
 // ROOT, for histogramming.
 #include "TROOT.h"
-#include "TH1.h"
+// #include "TH1.h"
 #include "TProfile.h"
-#include "THStack.h"
-#include "TStyle.h"
-
-// ROOT, for interactive graphics.
-#include "TVirtualPad.h"
-#include "TApplication.h"
-
-// ROOT, for saving file.
-#include "TFile.h"
-#include "TCanvas.h"
-#include "TLegend.h"
-
-// tdrStyle
-#include "tdrstyle_mod1.C"
+// #include "THStack.h"
+// #include "TStyle.h"
+// 
+// // ROOT, for interactive graphics.
+// #include "TVirtualPad.h"
+// #include "TApplication.h"
+// 
+// // ROOT, for saving file.
+// #include "TFile.h"
+// #include "TCanvas.h"
+// #include "TLegend.h"
+// 
+// // tdrStyle
+// #include "tdrstyle_mod1.C"
 
 using namespace Pythia8;
 
@@ -67,7 +67,7 @@ class PtHatReweightUserHook : public UserHooks
 // A function that checks whether a photon is originated from a pi0 and that
 // the energy of the photon-pair corresponds to the pion. returns 0 if
 // the origin is not a pion with good energy and 1 if it is
-int gammaChecker( Event &event, int idx ){
+static int gammaChecker( Event &event, int idx ){
   int mother = event[idx].mother1();
   if ( event[mother].id() != 111 ) return 0;
   double eDifference = abs( event[mother].e() -
@@ -76,13 +76,13 @@ int gammaChecker( Event &event, int idx ){
   return 0;
 }
 
-double deltaR( double phi1, double phi2, double eta1, double eta2 ){
+static double deltaR( double phi1, double phi2, double eta1, double eta2 ){
   double dPhi = phi1 - phi2;
   double dEta = eta1 - eta2;
   return pow( pow( dPhi, 2 ) + pow( dEta, 2 ) , 0.5 );
 }
 
-void histFiller( vector<TProfile*> &hists, double pt, double eTot, double piPlus,
+static void histFiller( vector<TProfile*> &hists, double pt, double eTot, double piPlus,
   double piMinus, double pi0Gamma, double kaPlus, double kaMinus, double kSZero,
   double kLZero, double proton, double aproton, double neutron, double aneutron,
   double gamma, double lambda0, double sigma, double elecmuon, double others ){
@@ -96,7 +96,7 @@ void histFiller( vector<TProfile*> &hists, double pt, double eTot, double piPlus
   hists[14]->Fill( pt, elecmuon/eTot ); hists[15]->Fill( pt, others/eTot );
 }
 
-int isBottom( int id ) {
+static int isBottom( int id ) {
   int code1;
   int code2;
   bool tmpHasBottom = false;
@@ -106,7 +106,7 @@ int isBottom( int id ) {
   return tmpHasBottom;
 }
 
-int isCharm( int id ) {
+static int isCharm( int id ) {
   int code1;
   int code2;
   bool tmpHasCharm = false;
@@ -116,7 +116,7 @@ int isCharm( int id ) {
   return tmpHasCharm;
 }
 
-int isStrange( int id ) {
+static int isStrange( int id ) {
   int code1;
   int code2;
   bool tmpHasStrange = false;
@@ -126,7 +126,7 @@ int isStrange( int id ) {
   return tmpHasStrange;
 }
 
-int isDown( int id ) {
+static int isDown( int id ) {
   int code1;
   int code2;
   bool tmpHasDown = false;
@@ -136,7 +136,7 @@ int isDown( int id ) {
   return tmpHasDown;
 }
 
-int isUp( int id ) {
+static int isUp( int id ) {
   int code1;
   int code2;
   bool tmpHasUp = false;
@@ -146,7 +146,7 @@ int isUp( int id ) {
   return tmpHasUp;
 }
 
-int statusCheck( int id1, int id2 ){
+static int statusCheck( int id1, int id2 ){
   if ( id1 == 5 && isBottom( id2 ) ) return 1;
   if ( id1 == 4 && isCharm( id2 ) ) return 1;
   if ( id1 == 3 && isStrange( id2 ) ) return 1;
@@ -155,7 +155,7 @@ int statusCheck( int id1, int id2 ){
   return 0;
 }
 
-int isExcitedState( Event &event, int idx, int id ) {
+static int isExcitedState( Event &event, int idx, int id ) {
   int d1 = event[idx].daughter1(), d2 = event[idx].daughter2();
   if (d2!=0){
     if (d1 < d2){
@@ -172,7 +172,7 @@ int isExcitedState( Event &event, int idx, int id ) {
   return 0;
 }
 
-int ChargeSign( int id ){
+static int ChargeSign( int id ){
   if ( id == 1 ) return 1;
   if ( id == -2 ) return 1;
   if ( id == -3 ) return 1;
