@@ -14,6 +14,9 @@
 #include <ctime>
 #include <cstdint>
 
+using std::cout;
+using std::endl;
+
 class Timer{
   private:
     std::clock_t start;

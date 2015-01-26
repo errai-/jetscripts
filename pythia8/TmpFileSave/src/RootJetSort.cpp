@@ -1,6 +1,41 @@
-#include "../include/JetSorter.h"
+#include "../include/RootJetSort.h"
 
-void JetSorter::InitCI(){
+Int_t RootJetSort::GetEntry(Long64_t entry)
+{
+// Read contents of entry.
+   if (!fChain) return 0;
+   return fChain->GetEntry(entry);
+}
+
+Long64_t RootJetSort::LoadTree(Long64_t entry)
+{
+// Set the environment to read one entry
+   if (!fChain) return -5;
+   Long64_t centry = fChain->LoadTree(entry);
+   if (centry < 0) return centry;
+   if (fChain->GetTreeNumber() != fCurrent) {
+      fCurrent = fChain->GetTreeNumber();
+   }
+   return centry;
+}
+
+void RootJetSort::Init(TTree *tree)
+{
+  // Set branch addresses and branch pointers
+  if (!tree) return;
+  fChain = tree;
+  fCurrent = -1;
+  fChain->SetMakeClass(1);
+
+  fChain->SetBranchAddress("px", &px, &b_event_px);
+  fChain->SetBranchAddress("py", &py, &b_event_py);
+  fChain->SetBranchAddress("pz", &pz, &b_event_pz);
+  fChain->SetBranchAddress("e", &e, &b_event_e);
+  fChain->SetBranchAddress("id", &id, &b_event_id);
+  fChain->SetBranchAddress("particles", &particles, &b_event_particles);
+}
+
+void RootJetSort::InitCI(){
   // Create file on which histogram(s) can be saved.
   chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
   chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
@@ -14,7 +49,7 @@ void JetSorter::InitCI(){
   chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
 }
 
-void JetSorter::InitFP(){
+void RootJetSort::InitFP(){
   for (int idx = 0; idx != 16; ++idx){
     std::stringstream tmpString("");
     tmpString << "g" << idx;
@@ -33,25 +68,62 @@ void JetSorter::InitFP(){
     fractionProfilesAll.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
   }
 }
-  
-void JetSorter::EventLoop(){
-  // Begin event loop. Generate event; skip if generation aborted.
-  while (input.good()) {
-    // Reset Fastjet input
-    fjInputs.clear();
-    // Read an event
-    eventHandler.Read(&input);
-    
+
+void RootJetSort::Insert(double px, double py, double pz, double e, int _status, int _id){
+  fastjet::PseudoJet tmpJet(px,py,pz,e);
+  Momentum.push_back(tmpJet);
+  status.push_back(_status);
+  id_store.push_back(_id);
+}
+
+void RootJetSort::Clear(){
+  Momentum.clear();
+  status.clear();
+  id_store.clear();
+}
+
+void RootJetSort::Show(Long64_t entry)
+{
+// Print contents of entry.
+// If entry is not specified, print current entry
+   if (!fChain) return;
+   fChain->Show(entry);
+}
+
+void RootJetSort::EventLoop() {
+  if (fChain == 0) return;
+
+  Long64_t nentries = fChain->GetEntries();
+//    JetStore storaging;
+  cout << nentries << endl;
+  timer.set_params(nentries,100);
+
+  timer.start_timing();  
+  Long64_t nbytes = 0, nb = 0;
+  for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
+         
+    if (jentry!=0&&jentry%100==0){
+      timer.print_time();
+    }
+    Long64_t ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    nb = fChain->GetEntry(jentry);   nbytes += nb;
     if ( !ParticlesToJetsorterInput() ) continue;
 
     // Run Fastjet algorithm
     vector <fastjet::PseudoJet> inclusiveJets;
     fastjet::ClusterSequence clustSeq(fjInputs, *jetDef);
-    inclusiveJets = clustSeq.inclusive_jets( pTMin );
+    inclusiveJets = clustSeq.inclusive_jets( pTMin );    
+
     // Extract inclusive jets sorted by pT (note minimum pT of 20.0 GeV)
     sortedJets    = sorted_by_pt(inclusiveJets);
 
-    // TODO: Not possible without more involved structure of MinimalEvent
+    // Inspect the amount of jets
+    jetMultipl->Fill( sortedJets.size() );
+
+    JetLoop();
+    
+// TODO: Not possible without more involved structure of MinimalEvent
 //     // Initiate jets with ghost partons
 //     for (unsigned int i = 0; i != inspectIndices.size(); ++i){
 //       fastjet::PseudoJet particleTemp = event[ inspectIndices[i] ];
@@ -63,30 +135,27 @@ void JetSorter::EventLoop(){
 //     fastjet::ClusterSequence clustSeqGhosts(fjInputs, jetDef);
 //     unsortedGhosts = clustSeqGhosts.inclusive_jets( pTMin );
 //     sortedGhosts = sorted_by_pt(unsortedGhosts);
-
-    // Inspect the amount of jets
-    jetMultipl->Fill( sortedJets.size() );
-
-    JetLoop();
   }
 }
+    
 
-bool JetSorter::ParticlesToJetsorterInput(){
-  for (size_t i = 0; i != eventHandler.particles; ++i) {
-    fastjet::PseudoJet particleTemp(eventHandler.px[i],eventHandler.py[i],
-    eventHandler.pz[i],eventHandler.e[i]);
+bool RootJetSort::ParticlesToJetsorterInput(){
+  fjInputs.clear();
+  
+  for (size_t i = 0; i != particles; ++i) {
+    fastjet::PseudoJet particleTemp(px[i],py[i],pz[i],e[i]);
     particleTemp.set_user_index( i ); // To access the info of this particle within this event
     fjInputs.push_back( particleTemp );
   }
   
   if (fjInputs.size() == 0) {
-    std::cout << "Error: event with no final state particles" << std::endl;
+    cout << "Error: event with no final state particles" << endl;
     return false;
   }
   return true;
 }
 
-void JetSorter::JetLoop(){
+void RootJetSort::JetLoop(){
   int counter = 0;
   for (unsigned int i = 0; i < sortedJets.size(); i++) {
     // only count jets that have |eta| < etamax
@@ -101,7 +170,6 @@ void JetSorter::JetLoop(){
     ptProfile->Fill( sortedJets[i].pt() );
     // Particle identification
     // Determine whether a jet is dominated by quarks or by gluons
-    cout << std::setprecision(25);
     
     // TODO: cannot be used without a more intricate MinimalEvent file
 //       vector<int> partonHadronFlavour(2,0);
@@ -144,7 +212,7 @@ void JetSorter::JetLoop(){
 //         }
 //       }
 
-    ParticleLoop();
+//     ParticleLoop();
     
     // TODO: cannot be used without more evolved MinimalEvent
 //       int isHadron = (partonHadronFlavour[1]) ? 1 : 0; 
@@ -172,7 +240,8 @@ void JetSorter::JetLoop(){
   }
 }
 
-void JetSorter::ParticleLoop(){
+
+void RootJetSort::ParticleLoop(){
   
     piPlus = 0; piMinus = 0;  pi0Gamma = 0; gamma = 0; 
     kaPlus = 0; kaMinus = 0; kSZero = 0; kLZero = 0; 
@@ -227,7 +296,7 @@ void JetSorter::ParticleLoop(){
   }    
 }
 
-void JetSorter::HistFill(int i){
+void RootJetSort::HistFill(int i){
   histFiller( fractionProfilesAll, sortedJets[i].pt(), etSum, piPlus, 
     piMinus, pi0Gamma, kaPlus, kaMinus, kSZero, kLZero, proton,
     aproton, neutron, aneutron, gamma, lambda0, sigma, elecmuon, others );
@@ -255,7 +324,8 @@ void JetSorter::HistFill(int i){
 //         }    
 }
 
-void JetSorter::WriteResults(){
+
+void RootJetSort::WriteResults(){
 
   ptProfile->Write();
   jetMultipl->Write();
@@ -282,4 +352,3 @@ void JetSorter::WriteResults(){
   gPad->WaitPrimitive();
   gq->Write();   
 }
- 

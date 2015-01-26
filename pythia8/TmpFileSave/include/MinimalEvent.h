@@ -5,20 +5,20 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <cstdint>
+// #include <cstdint>
 #include <string>
 
 using std::vector;
 
-typedef union DoubleInBinary{
-  double dValue;
-  char binary[8];
-} DoubleInBinary;
-
-typedef union IntInBinary{
-  int iValue;
-  char binary[4];
-} IntInBinary;
+// typedef union DoubleInBinary{
+//   double dValue;
+//   char binary[8];
+// } DoubleInBinary;
+// 
+// typedef union IntInBinary{
+//   int iValue;
+//   char binary[4];
+// } IntInBinary;
 
 // This file format is designed for the use of ptcut, so that
 // a minimal amount of storage space is consumed. For applications
@@ -30,8 +30,8 @@ typedef union IntInBinary{
 class MinimalEvent {
 private:
   // Editor params
-  DoubleInBinary transformer;
-  IntInBinary iTransformer;
+//   DoubleInBinary transformer;
+//   IntInBinary iTransformer;
 public:
   // The four momentum of a particle
   vector<double>px;
@@ -50,9 +50,9 @@ public:
 
   void Nullify();
 
-  void Write(std::ofstream *);
-
-  void Read(std::ifstream *);
+//   void Write(std::ofstream *);
+// 
+//   void Read(std::ifstream *);
 
 };
 

@@ -35,15 +35,12 @@
 // tdrStyle
 //#include "tdrstyle_mod1.C"
 // scripts
-#include "../JetSorter/jetsorter_auxiliary.h"
-#include "MinimalEvent.h"
-#include <boost/lexical_cast.hpp>
+#include "../../JetSorter/jetsorter_auxiliary.h"
+#include "../include/RootJetSort.h"
 
-using namespace Pythia8;
 using std::cout;
 using std::endl;
 using std::string;
-using std::stringstream;
 
 string IntToString (int a)
 {
@@ -54,38 +51,35 @@ string IntToString (int a)
 
 int main(int argc, char* argv[]) {
 
+  // Create a chain that includes all the necessary trees
   string treePath = "Pythia8Tree";
   string name ="particle_storage.root";
   TChain *forest = new TChain(treePath.c_str());
-  //stringstream converter;
     
   // Check that all the subtrees are included in the chain
   TFile *probe = new TFile("particle_storage.root");
   TIter *iter = new TIter(probe->GetListOfKeys());
   TKey *tmpKey = 0;
   string alterName;
+  vector<string> names;
   while ( tmpKey = (TKey *) iter->Next() ){
     if ( strcmp( tmpKey->GetName(), treePath.c_str() ) !=  0) continue;
     alterName = treePath;
     alterName += ";";
     alterName += IntToString(tmpKey->GetCycle());
-    forest->AddFile(name.c_str(),forest->kBigNumber,alterName.c_str());
+    names.push_back(alterName);
   }
+  // Only add the tree with the greatest index. Root creates occasionally ghost trees
+  // that refer to a part of the actual tree.
+  forest->AddFile(name.c_str(),forest->kBigNumber,names[0].c_str());
   delete iter;
   delete probe;
   
-  MinimalEvent *event;
-  //vector<double> *px;
-  forest->SetBranchAddress("event",&event);
-  //forest->SetBranchAddress("px",px);
-  Long64_t nentries = forest->GetEntries();
-
-  for (Long64_t jentry=0; jentry!=nentries;++jentry) {
-    forest->Show(jentry); 
-    forest->LoadTree(jentry);
-    Int_t ientry = forest->GetEntry(jentry);
-    if (ientry < 0 || !forest) break;
-    cout << event->idx << " " << event->px << endl;
-  }
+  RootJetSort treeHandle(forest);
+  
+  treeHandle.EventLoop();
+  
+  treeHandle.WriteResults();
+  
   delete forest;
 }

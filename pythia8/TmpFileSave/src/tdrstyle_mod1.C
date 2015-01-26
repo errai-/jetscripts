@@ -8,6 +8,7 @@
 #include "TLegend.h"
 #include "TCanvas.h"
 #include "TH1D.h"
+#include <cassert>
 
 using std::string;
 using std::vector;
