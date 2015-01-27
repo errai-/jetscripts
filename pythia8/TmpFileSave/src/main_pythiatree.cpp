@@ -101,7 +101,8 @@ int main(int argc, char* argv[]) {
   }
 
   eventStorage->Print();
-  eventStorage->Write();
+  //eventStorage->Write();
+  eventStorage->Auto
   
   outFile.Close();
   
