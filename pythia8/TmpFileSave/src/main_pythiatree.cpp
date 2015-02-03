@@ -93,16 +93,19 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i != event.size(); ++i) {
       double status = abs( event[i].status() );
       if (event[i].isFinal() && event[i].isVisible()) {  
-        mEvent->SetVals(event[i].px(),event[i].py(),event[i].pz(),event[i].e(), event[i].id());
+	int tmpId = event[i].id();
+	tmpId -= ( ((tmpId == 22) && gammaChecker( event, i )) ? 2 : 0 ); // Indicate pi0 photons
+        mEvent->SetVals(event[i].px(),event[i].py(),event[i].pz(),event[i].e(), tmpId);
+	cout << event[i].charge() << " ";
       }
+      cout << endl;
     }
     eventStorage->Fill();
     mEvent->Nullify();
   }
 
   eventStorage->Print();
-  //eventStorage->Write();
-  eventStorage->Auto
+  eventStorage->AutoSave("Overwrite"); // Using Write makes the data display in two trees.
   
   outFile.Close();
   

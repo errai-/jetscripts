@@ -61,17 +61,13 @@ int main(int argc, char* argv[]) {
   TIter *iter = new TIter(probe->GetListOfKeys());
   TKey *tmpKey = 0;
   string alterName;
-  vector<string> names;
   while ( tmpKey = (TKey *) iter->Next() ){
     if ( strcmp( tmpKey->GetName(), treePath.c_str() ) !=  0) continue;
     alterName = treePath;
     alterName += ";";
     alterName += IntToString(tmpKey->GetCycle());
-    names.push_back(alterName);
+    forest->AddFile(name.c_str(),forest->kBigNumber,alterName.c_str());
   }
-  // Only add the tree with the greatest index. Root creates occasionally ghost trees
-  // that refer to a part of the actual tree.
-  forest->AddFile(name.c_str(),forest->kBigNumber,names[0].c_str());
   delete iter;
   delete probe;
   
