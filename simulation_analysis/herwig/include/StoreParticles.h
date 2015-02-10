@@ -19,6 +19,7 @@ using std::endl;
 #include "TCanvas.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "MinimalEvent.h"
 
 namespace jetanalysis {
 
@@ -48,14 +49,15 @@ private:
   * ROOT tree internal arrays and variables
   * @debugging: in case of segfault, arraySize might be too small
   */
- 
-  static const size_t arraySize = 10000;
-  double px[arraySize];
-  double py[arraySize];
-  double pz[arraySize];
-  double  e[arraySize];
-  int    id[arraySize];
-  int particles;
+
+  MinimalEvent *mEvent;
+//   static const size_t arraySize = 10000;
+//   double px[arraySize];
+//   double py[arraySize];
+//   double pz[arraySize];
+//   double  e[arraySize];
+//   int    id[arraySize];
+//   int particles;
 //   double Pm[16];
 //   int Nqurk;
 //   int Nhdrn;

@@ -33,9 +33,9 @@
 // tdrStyle
 #include "tdrstyle_mod1.C"
 // scripts
-#include "../../JetSorter/jetsorter_auxiliary.h"
-#include "../include/MinimalEvent.h"
-#include "../include/help_functions.h"
+#include "jetsorter_auxiliary.h"
+#include "MinimalEvent.h"
+#include "help_functions.h"
 
 using namespace Pythia8;
 using std::cout;
@@ -49,6 +49,8 @@ int main(int argc, char* argv[]) {
   int  nEvent = 100;
   if (argc > 1){ nEvent = atoi(argv[1]); }
   int weightedPt = 1;
+  bool everything = false;
+  if (argc > 2 && atoi(argv[2]) != 0){ everything = true; }
 
   // Create Pythia instance and set it up to generate hard QCD processes
   // above pTHat = 20 GeV for pp collisions at 14 TeV.
@@ -66,7 +68,7 @@ int main(int argc, char* argv[]) {
   pythia.readString("Next:numberShowProcess = 0");
   pythia.readString("Next:numberShowEvent = 0");
   pythia.readString("PartonLevel:ISR=on");
-  pythia.readString("Beams:eCM = 14000.");
+  pythia.readString("Beams:eCM = 7000.");
   pythia.init();
   pythia.settings.listChanged();
   //pythia.particleData.listAll();
@@ -92,13 +94,13 @@ int main(int argc, char* argv[]) {
     // Particle loop
     for (int i = 0; i != event.size(); ++i) {
       double status = abs( event[i].status() );
-      if (event[i].isFinal() && event[i].isVisible()) {  
+      if (everything || (event[i].isFinal() && event[i].isVisible()) ) {  
 	int tmpId = event[i].id();
 	tmpId -= ( ((tmpId == 22) && gammaChecker( event, i )) ? 2 : 0 ); // Indicate pi0 photons
         mEvent->SetVals(event[i].px(),event[i].py(),event[i].pz(),event[i].e(), tmpId);
-	cout << event[i].charge() << " ";
+	//cout << event[i].charge() << " ";
       }
-      cout << endl;
+      //cout << endl;
     }
     eventStorage->Fill();
     mEvent->Nullify();

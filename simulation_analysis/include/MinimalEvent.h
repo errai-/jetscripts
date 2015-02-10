@@ -7,18 +7,13 @@
 #include <fstream>
 // #include <cstdint>
 #include <string>
+#include <cmath>
+
+#include "TROOT.h"
+#include "TObject.h"
+#include "TArrayD.h"
 
 using std::vector;
-
-// typedef union DoubleInBinary{
-//   double dValue;
-//   char binary[8];
-// } DoubleInBinary;
-// 
-// typedef union IntInBinary{
-//   int iValue;
-//   char binary[4];
-// } IntInBinary;
 
 // This file format is designed for the use of ptcut, so that
 // a minimal amount of storage space is consumed. For applications
@@ -28,10 +23,6 @@ using std::vector;
 
 // Data is saved in binary form without any spaces or other formatting
 class MinimalEvent {
-private:
-  // Editor params
-//   DoubleInBinary transformer;
-//   IntInBinary iTransformer;
 public:
   // The four momentum of a particle
   vector<double>px;
@@ -44,16 +35,17 @@ public:
   size_t particles;
   
   MinimalEvent() : particles(0) {}
-  ~MinimalEvent(){ }
+  virtual ~MinimalEvent(){ }
 
   void SetVals( double, double, double, double, int );
 
   void Nullify();
 
-//   void Write(std::ofstream *);
-// 
-//   void Read(std::ifstream *);
+  TArrayD Pt() const;
 
+  TArrayD Eta() const;
+
+  ClassDef(MinimalEvent, 1);
 };
 
 #endif // MINIMALEVENT_H

@@ -13,6 +13,9 @@
 #include <cmath>
 #include <ctime>
 #include <cstdint>
+// ROOT, histogramming
+#include "TROOT.h"
+#include "TProfile.h"
 
 using std::cout;
 using std::endl;
@@ -59,5 +62,20 @@ class Timer{
         minutes << "m" << seconds << "s." << endl;
     }
 };
+
+static void histFiller( vector<TProfile*> &hists, double pt, double eTot, double piPlus,
+  double piMinus, double pi0Gamma, double kaPlus, double kaMinus, double kSZero,
+  double kLZero, double proton, double aproton, double neutron, double aneutron,
+  double gamma, double lambda0, double sigma, double elecmuon, double others ){
+  hists[0]->Fill( pt, piPlus/eTot ); hists[1]->Fill( pt, piMinus/eTot );
+  hists[2]->Fill( pt, pi0Gamma/eTot ); hists[3]->Fill( pt, kaPlus/eTot );
+  hists[4]->Fill( pt, kaMinus/eTot ); hists[5]->Fill( pt, kSZero/eTot );
+  hists[6]->Fill( pt, kLZero/eTot ); hists[7]->Fill( pt, proton/eTot );
+  hists[8]->Fill( pt, aproton/eTot ); hists[9]->Fill( pt, neutron/eTot );
+  hists[10]->Fill( pt, aneutron/eTot ); hists[11]->Fill( pt, gamma/eTot );
+  hists[12]->Fill( pt, lambda0/eTot ); hists[13]->Fill( pt, sigma/eTot );
+  hists[14]->Fill( pt, elecmuon/eTot ); hists[15]->Fill( pt, others/eTot );
+}
+
 
 #endif // HELP_FUNCTIONS_H

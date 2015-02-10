@@ -1,3 +1,10 @@
+10-02-2015 The contents of this directory are from an older branch and
+simulation scripts are now being moved to simulation_analysis. Since
+there might be some trouble with moving to the new versions, the old
+code is still mostly provided here.
+
+########################################################
+
 This README describes to some degree the contents of this folder
 
 ########################################################

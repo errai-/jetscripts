@@ -49,12 +49,18 @@ set  /Herwig/UnderlyingEvent/UECuts:MHatMin 6.72
 ##################################################
 # Matrix Elements for hadron-hadron collisions 
 ##################################################
+
+mkdir /Herwig/Weights
+cd /Herwig/Weights
+create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so
+
 cd /Herwig/MatrixElements/
-insert SimpleQCD:MatrixElements[0] MEMinBias
+insert SimpleQCD:MatrixElements[0] MEQCD2to2
+insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT
 
 # Need this cut only for min bias
 cd /Herwig/Cuts
-set JetKtCut:MinKT 0.0*GeV
+set JetKtCut:MinKT 30.0*GeV
 set QCDCuts:MHatMin 0.0*GeV
 set QCDCuts:X1Min 0.055
 set QCDCuts:X2Min 0.055
@@ -65,6 +71,9 @@ set /Herwig/UnderlyingEvent/MPIHandler:softInt Yes
 set /Herwig/UnderlyingEvent/MPIHandler:twoComp Yes
 set /Herwig/UnderlyingEvent/MPIHandler:DLmode 3
 
+# CMSSW, weights for jets
+set /Herwig/Weights/reweightMinPT:Power 4.5
+set /Herwig/Weights/reweightMinPT:Scale 15*GeV
 
 cd /Herwig/Analysis
 create jetanalysis::StoreParticles jetAnalysis StoreParticles.so

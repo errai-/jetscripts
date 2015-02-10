@@ -1,0 +1,20 @@
+The code structures for simulating Herwig++ data.
+
+Usage:
+
+Herwig++ read *.in
+// The specifics of the simulation are defined in the .in file.
+Herwig++ run *.run -N no_of_steps
+// This is used for running the simulation that 
+// was initialized in the previous step
+
+Preliminary requirements:
+To store particle data into .root files, Herwig requires a structure for
+the storaging scheme. Here, a basic storage based on the class MinimalEvent is
+used. The corresponding shared object has to be in this directory or in
+a correct location in Herwig path (more complicated). To build the share object:
+
+make StoreParticles.so
+
+This routine relies heavily on the base makefile in the parent folder, so making
+random changes there might cause problems.

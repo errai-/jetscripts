@@ -1,4 +1,4 @@
-#include "../include/RootJetSort.h"
+#include "RootJetSort.h"
 
 Int_t RootJetSort::GetEntry(Long64_t entry)
 {

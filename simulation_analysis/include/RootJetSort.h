@@ -32,13 +32,13 @@
 #include "fastjet/Selector.hh"
 
 // Header file for the classes stored in the TTree if any.
-#include "../include/MinimalEvent.h"
+#include "MinimalEvent.h"
 // Fixed size dimensions of array or collections stored in the TTree if any.
-#include "../include/help_functions.h"
+#include "help_functions.h"
 // tdrStyle
-#include "../src/tdrstyle_mod1.C"
+#include "tdrstyle_mod1.C"
 // scripts
-#include "../../JetSorter/jetsorter_auxiliary.h"
+//#include "../../JetSorter/jetsorter_auxiliary.h"
 
 using std::cout;
 using std::endl;

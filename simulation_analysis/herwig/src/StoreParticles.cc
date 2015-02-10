@@ -36,21 +36,24 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int state) {
   /** get the final-state particles */
   tPVector parts=event->getFinalState();
   
-  particles = parts.size();
+//   particles = parts.size();
   
   int counter = 0; // index of the current particle
   /** loop over all particles */
   for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit){
     //if( ChargedSelector::Check(**pit) )
-    px[counter] = (*pit)->momentum().x();
-    py[counter] = (*pit)->momentum().y();
-    pz[counter] = (*pit)->momentum().z();
-    e[counter] = (*pit)->momentum().t();
-    id[counter] = (*pit)->id();
+    //if ( (*pit)->eta() < 1.3 ){
+    mEvent->SetVals((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),(*pit)->momentum().t(), (*pit)->id());
+//     px[counter] = (*pit)->momentum().x();
+//     py[counter] = (*pit)->momentum().y();
+//     pz[counter] = (*pit)->momentum().z();
+//     e[counter] = (*pit)->momentum().t();
+//     id[counter] = (*pit)->id();
     counter++;
   }
   // Fill TTree record
   herwigTree->Fill();
+  mEvent->Nullify();
 }
 
 LorentzRotation StoreParticles::transform(tcEventPtr event) const {
@@ -113,7 +116,7 @@ void StoreParticles::doinitrun() {
   AnalysisHandler::doinitrun();
 
   // create ROOT Tree
-  herwigTree = new TTree ("h76","myAnalysis root tree", 1);
+  herwigTree = new TTree ("HerwigTree","root tree", 1);
   if (!herwigTree) {
     cout << "StoreParticles: root tree has not been created..." << endl;
     return;
@@ -126,21 +129,15 @@ void StoreParticles::doinitrun() {
   }
   herwigTree->SetDirectory (herwigFile);
 
+  mEvent = new MinimalEvent;
   // define ROOT Tree branches/leaves  
-  herwigTree->Branch ("particles",  &particles, "particles/I");
-  herwigTree->Branch ("px",      px,      "px[particles]/D");
-  herwigTree->Branch ("py",      py,      "py[particles]/D");
-  herwigTree->Branch ("pz",      pz,      "pz[particles]/D");
-  herwigTree->Branch ("e",       e,        "e[particles]/D");
-  herwigTree->Branch ("id",      id,      "id[particles]/I");
-//   herwigTree->Branch ("Nqurk",   &Nqurk,  "Nqurk/I");
-//   herwigTree->Branch ("Nhdrn",   &Nhdrn,  "Nhdrn/I");
-//   herwigTree->Branch ("Kp",      Kp,      "Kp[Nentry]/I");
-//   herwigTree->Branch ("Kn",      Kn,      "Kn[Nentry]/I");
-//   herwigTree->Branch ("Stat",    Stat,    "Stat[Nentry]/I");
-//   herwigTree->Branch ("Wgt",     &Wgt,    "Wgt/D");
-//   herwigTree->Branch ("Qscl",    Qscl,    "Qscl[5]/D");
-//   herwigTree->Branch ("Pm",      Pm,      "Pm[Nentry]/D");
+  herwigTree->Branch("event","MinimalEvent",&mEvent); 
+//   herwigTree->Branch ("particles",  &particles, "particles/I");
+//   herwigTree->Branch ("px",      px,      "px[particles]/D");
+//   herwigTree->Branch ("py",      py,      "py[particles]/D");
+//   herwigTree->Branch ("pz",      pz,      "pz[particles]/D");
+//   herwigTree->Branch ("e",       e,        "e[particles]/D");
+//   herwigTree->Branch ("id",      id,      "id[particles]/I");
 }
 
 void StoreParticles::rebind(const TranslationMap & trans) {

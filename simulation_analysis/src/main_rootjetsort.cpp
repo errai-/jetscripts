@@ -35,7 +35,6 @@
 // tdrStyle
 //#include "tdrstyle_mod1.C"
 // scripts
-#include "../../JetSorter/jetsorter_auxiliary.h"
 #include "../include/RootJetSort.h"
 
 using std::cout;
