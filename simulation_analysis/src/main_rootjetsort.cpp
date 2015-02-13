@@ -35,11 +35,12 @@
 // tdrStyle
 //#include "tdrstyle_mod1.C"
 // scripts
-#include "../include/RootJetSort.h"
+#include "RootJetSort.h"
 
 using std::cout;
 using std::endl;
 using std::string;
+using std::vector;
 
 string IntToString (int a)
 {
@@ -55,11 +56,11 @@ int main(int argc, char* argv[]) {
   string name ="particle_storage.root";
   TChain *forest = new TChain(treePath.c_str());
     
-  // Check that all the subtrees are included in the chain
+  // Check that the subtree with the maximal index is included in the chain
   TFile *probe = new TFile("particle_storage.root");
   TIter *iter = new TIter(probe->GetListOfKeys());
   TKey *tmpKey = 0;
-  string alterName;
+  vector<int> idStore;
   while ( tmpKey = (TKey *) iter->Next() ){
     if ( strcmp( tmpKey->GetName(), treePath.c_str() ) !=  0) continue;
     alterName = treePath;
@@ -69,6 +70,7 @@ int main(int argc, char* argv[]) {
   }
   delete iter;
   delete probe;
+  string alterName;
   
   RootJetSort treeHandle(forest);
   

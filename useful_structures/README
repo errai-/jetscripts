@@ -1,0 +1,6 @@
+13.02.2015
+
+A storage of useful script formats that are painful to  look for in the old
+source code. This is also a convenient place to store "old ways of doing
+things". Usually when some functionality is replaced, it is hard to say
+whether there will be use for it in the future.

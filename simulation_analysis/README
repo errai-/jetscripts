@@ -4,15 +4,15 @@ the subfolders. The scripts that are in general use are located in this folder.
 If necessary, the Makefiles in the subfolders refer to the makefile located in
 this folder.
 
-MinimalEvent: (src/MinimalEvent.cpp, include/MinimalEvent.h)
+SimEvent: (src/SimEvent.cpp, include/SimEvent.h)
 A definition for the information that is storaged while making a simulation.
 Built to a shared object, since this is frequently used.
 
-PTLinkDef.h: (include/PTLinkDef.h)
+SimLinkDef.h: (include/SimLinkDef.h)
 Used to create a ROOT dictionary from the class MinimalEvent. Necessary, while
 editing trees. Build creates PTDct.cc and PTDct.h in the obj directory.
 
-libP2TLib.so: (obj/PTDct.cc src/MinimalEvent.cpp)
+libSimEvent.so: (obj/SimDct.o obj/SimEvent.o)
 A shared object that corresponds to the created ROOT library. Necessary in
 certain applications.
 

@@ -1,0 +1,21 @@
+
+string IntToString (int a)
+{
+    std::ostringstream temp;
+    temp<<a;
+    return temp.str();
+}
+
+  TFile *probe = new TFile("particle_storage.root");
+  TIter *iter = new TIter(probe->GetListOfKeys());
+  TKey *tmpKey = 0;
+  vector<int> idStore;
+  while ( tmpKey = (TKey *) iter->Next() ){
+    if ( strcmp( tmpKey->GetName(), treePath.c_str() ) !=  0) continue;
+    alterName = treePath;
+    alterName += ";";
+    alterName += IntToString(tmpKey->GetCycle());
+    forest->AddFile(name.c_str(),forest->kBigNumber,alterName.c_str());
+  }
+  delete iter;
+  delete probe;

@@ -208,7 +208,6 @@ int main(int argc, char* argv[]) {
   TProfile* pfe0h = (TProfile*) inFile.Get("pfe0h");
   TProfile* pfe1h = (TProfile*) inFile.Get("pfe1h");
 
-  
   // To write:
   TProfile* histProfile = new TProfile("hist bins","",ptBins, ptRange);
   TProfile* histPNh = new TProfile("nh bins","",ptBins,ptRange);
@@ -300,7 +299,7 @@ int main(int argc, char* argv[]) {
     for (unsigned int i = 0; i != sortedFullJets.size(); ++i) {
       // General Cut jets
       // Limitations: more than 1 particle in a jet, eta < 1.3
-      if (abs(sortedFullJets[i].eta()) < 1.3) continue;
+      if (abs(sortedFullJets[i].eta()) > 1.3) continue;
       vector<fastjet::PseudoJet> parts = sorted_by_pt(sortedFullJets[i].constituents());
       if (parts.size()<2) {continue;}
       
