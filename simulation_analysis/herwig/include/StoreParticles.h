@@ -19,7 +19,7 @@ using std::endl;
 #include "TCanvas.h"
 #include "TTree.h"
 #include "TFile.h"
-#include "MinimalEvent.h"
+#include "SimEvent.h"
 
 namespace jetanalysis {
 
@@ -50,7 +50,7 @@ private:
   * @debugging: in case of segfault, arraySize might be too small
   */
 
-  MinimalEvent *mEvent;
+  SimEvent *sEvent;
 //   static const size_t arraySize = 10000;
 //   double px[arraySize];
 //   double py[arraySize];

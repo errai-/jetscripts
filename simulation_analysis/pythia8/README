@@ -1,10 +1,10 @@
 
-10.02.2015
+13.02.2015
 
 Refined versions for Jet analysis scripts. Pythia8 particle data is saved to a
 ROOT file. This can be quickly processed with fastjet.
 
-## src/main_pythiatree.cpp:
+## src/main_pythia8.cpp:
 
 Usage:
 make pythiatree
@@ -15,7 +15,7 @@ Creates a tree with pythia8 event data, using the event structure defined in
 MinimalEvent.
 
 Dependencies:
-MinimalEvent.
-PTLinkDef.
+SimEvent.
+SimLinkDef.
 help_functions
 

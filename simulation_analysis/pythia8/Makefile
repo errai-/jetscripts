@@ -15,17 +15,26 @@ all:
 
 # Main targets
 
-pythiatree: src/main_$$@.cpp $(PYTHIALIB) ../obj/minimalevent.so include/jetsorter_auxiliary.h ../obj/PTDct.cc
-	$(CXX) $^ $(PYTHIALIB) -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
+pythia8: src/main_$$@.cpp $(PYTHIALIB) ../obj/libSimEvent.so
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
 
-## OBJECTS
+../obj/SimDct.cc: ../include/SimEvent.h ../include/SimLinkDef.h
+	cd .. && $(MAKE) obj/SimDct.cc
 
-../obj/PTDct.cc: ../include/MinimalEvent.h ../include/PTLinkDef.h
-	cd .. && $(MAKE) obj/PTDct.cc
+# Objects
 
-../obj/minimalevent.so: ../src/MinimalEvent.cpp
-	cd .. && $(MAKE) obj/minimalevent.so
+../obj/SimEvent.o: ../src/SimEvent.cpp
+	cd .. && $(MAKE) obj/SimEvent.o
+
+../obj/SimEventDict.o: ../obj/SimDct.cc
+	cd .. && $(MAKE) obj/SimEventDict.o
+
+# Shared objects
+
+../obj/libSimEvent.so: ../obj/SimEventDict.o ../obj/SimEvent.o
+	cd .. && $(MAKE) obj/libSimEvent.so
 
 # Clean.
 clean:
 	rm -f *.log *.exe *.d *.so
+

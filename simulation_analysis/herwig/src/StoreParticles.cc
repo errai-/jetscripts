@@ -42,8 +42,9 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int state) {
   /** loop over all particles */
   for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit){
     //if( ChargedSelector::Check(**pit) )
-    //if ( (*pit)->eta() < 1.3 ){
-    mEvent->SetVals((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),(*pit)->momentum().t(), (*pit)->id());
+    if ( (*pit)->eta() < 1.3 ){
+      sEvent->Build((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),(*pit)->momentum().t(), (*pit)->id());
+    }
 //     px[counter] = (*pit)->momentum().x();
 //     py[counter] = (*pit)->momentum().y();
 //     pz[counter] = (*pit)->momentum().z();
@@ -53,7 +54,7 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int state) {
   }
   // Fill TTree record
   herwigTree->Fill();
-  mEvent->Nullify();
+  sEvent->Clear();
 }
 
 LorentzRotation StoreParticles::transform(tcEventPtr event) const {
@@ -115,29 +116,43 @@ void StoreParticles::dofinish() {
 void StoreParticles::doinitrun() {
   AnalysisHandler::doinitrun();
 
-  // create ROOT Tree
-  herwigTree = new TTree ("HerwigTree","root tree", 1);
-  if (!herwigTree) {
-    cout << "StoreParticles: root tree has not been created..." << endl;
-    return;
-  }
   // create ROOT File
   herwigFile = new TFile ("herwigData.root","RECREATE");
+  Int_t comp   = 1;       // by default file is compressed
+  herwigFile->SetCompressionLevel(comp);
+
   if (!herwigFile) {
     cout << "StoreParticles: root file has not been created..." << endl;
     return;
   }
-  herwigTree->SetDirectory (herwigFile);
+  
+  // create ROOT Tree
+  herwigTree = new TTree ("HerwigTree","Tree filled with herwig data.");
+  if (!herwigTree) {
+    cout << "StoreParticles: root tree has not been created..." << endl;
+    return;
+  }
+  herwigTree->SetAutoSave(1000000000); // autosave when 1 Gbyte written
+  herwigTree->SetCacheSize(10000000);  // set a 10 MBytes cache (useless when writing local files)
 
-  mEvent = new MinimalEvent;
-  // define ROOT Tree branches/leaves  
-  herwigTree->Branch("event","MinimalEvent",&mEvent); 
+  Int_t branchStyle = 1; //new style by default 
+  Int_t bufsize = 64000/4;
+  TTree::SetBranchStyle(branchStyle);
+  sEvent = new SimEvent;
+  TBranch *branch = herwigTree->Branch("event", &sEvent, bufsize,2);
+  branch->SetAutoDelete(kFALSE);
+  if(branchStyle) herwigTree->BranchRef();
+   
+  //herwigTree->SetDirectory(herwigFile);
+
+// define ROOT Tree branches/leaves  
 //   herwigTree->Branch ("particles",  &particles, "particles/I");
 //   herwigTree->Branch ("px",      px,      "px[particles]/D");
 //   herwigTree->Branch ("py",      py,      "py[particles]/D");
 //   herwigTree->Branch ("pz",      pz,      "pz[particles]/D");
 //   herwigTree->Branch ("e",       e,        "e[particles]/D");
 //   herwigTree->Branch ("id",      id,      "id[particles]/I");
+   
 }
 
 void StoreParticles::rebind(const TranslationMap & trans) {
