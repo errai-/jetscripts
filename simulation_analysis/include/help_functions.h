@@ -140,5 +140,20 @@ static int statusCheck( int id1, int id2 ){
   return 0;
 }
 
+static int ChargeSign( int id ){
+  if ( id == 1 ) return 1;
+  if ( id == -2 ) return 1;
+  if ( id == -3 ) return 1;
+  if ( id == 4 ) return 1;
+  if ( id == -5 ) return 1;
+  if ( id == 6 ) return 1;
+  if ( id == -1 ) return -1;
+  if ( id == 2 ) return -1;
+  if ( id == 3 ) return -1;
+  if ( id == -4 ) return -1;
+  if ( id == 5 ) return -1;
+  if ( id == -6 ) return -1;
+  return 1;
+}
 
 #endif // HELP_FUNCTIONS_H

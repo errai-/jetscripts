@@ -19,7 +19,7 @@ SimEvent::~SimEvent()
   Reset();
 }
 
-void SimEvent::Build( double Px, double Py, double Pz, double E, int Id, int pi0Gamma, int jetFlavor, int isExcitedState){
+void SimEvent::Build( double Px, double Py, double Pz, double E, int Id, double Charge, int pi0Gamma, int jetFlavor, int isExcitedState){
   Int_t ObjectNumber = TProcessID::GetObjectCount();
   
   SimParticle *part;
@@ -31,6 +31,7 @@ void SimEvent::Build( double Px, double Py, double Pz, double E, int Id, int pi0
   part->fE = E;
 
   part->fPDGCode = Id;
+  part->fChargeTimes3 = TMath::Nint(3*Charge);
   part->IsPi0Photon = pi0Gamma ? true : false;
   part->IsJetFlavor = jetFlavor ? true : false;
   part->IsExcitedState = isExcitedState ? true : false;

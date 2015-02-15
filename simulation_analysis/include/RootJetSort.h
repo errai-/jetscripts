@@ -32,7 +32,7 @@
 #include "fastjet/Selector.hh"
 
 // Header file for the classes stored in the TTree if any.
-#include "MinimalEvent.h"
+#include "SimEvent.h"
 // Fixed size dimensions of array or collections stored in the TTree if any.
 #include "help_functions.h"
 // tdrStyle
@@ -45,6 +45,8 @@ using std::endl;
 
 class RootJetSort {
 private: // Mostly Fastjet and histogramming
+  
+  Timer timer;
   
   // ROOT initialization:  
   static const int ptBins = 48.;
@@ -85,7 +87,7 @@ private: // Mostly Fastjet and histogramming
   // Fastjet initialization ^
   
   // Event loop initialization:
-  MinimalEvent eventHandler;
+  //SimEvent eventHandler;
   std::ifstream input;
   size_t iEvent = 0;
 
@@ -96,37 +98,53 @@ private: // Mostly Fastjet and histogramming
     lambda0, sigma, elecmuon,
     others, etSum;
 
-  vector<fastjet::PseudoJet> sortedJets; 
-  vector<fastjet::PseudoJet> jetParts;
-
-  vector<fastjet::PseudoJet> fjInputs;  
+  // PseudoJet storages
+  vector<fastjet::PseudoJet> sortedJets, sortedGhosts, jetParts, fjInputs; 
+  
+  // For Jet flavor studies 
+  vector<size_t> FlavorIndices; 
+  
+  double partSum, chargSum, chargWSum, chargW2Sum, w2;
+  
+  int partonHadronFlavour[2];
+  int quarkJetCharge, isHadron;
   
 public : // Interface to the tree and functions
   
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
   Int_t           fCurrent; //!current Tree number in a TChain
 
+  // Fixed size dimensions of array or collections stored in the TTree if any.
+  // If this is too small, Segfaults may follow.
+  static const Int_t kMaxfParts = 5000;
   // Declaration of leaf types
-  //MinimalEvent    *event;
-  vector<double>  px;
-  vector<double>  py;
-  vector<double>  pz;
-  vector<double>  e;
-  vector<int>     id;
-  ULong_t         particles;
-  Timer timer;
+  //SimEvent        *event;
+  Int_t           fParts_;
+  Double_t        fParts_fPx[kMaxfParts];   //[fParts_]
+  Double_t        fParts_fPy[kMaxfParts];   //[fParts_]
+  Double_t        fParts_fPz[kMaxfParts];   //[fParts_]
+  Double_t        fParts_fE[kMaxfParts];   //[fParts_]
+  Int_t           fParts_fPDGCode[kMaxfParts];   //[fParts_]
+  Int_t           fParts_fChargeTimes3[kMaxfParts];   //[fParts_]
+  Bool_t          fParts_IsPi0Photon[kMaxfParts];   //[fParts_]
+  Bool_t          fParts_IsJetFlavor[kMaxfParts];   //[fParts_]
+  Bool_t          fParts_IsExcitedState[kMaxfParts];   //[fParts_]
 
   // List of branches
-  TBranch        *b_event_px;   //!
-  TBranch        *b_event_py;   //!
-  TBranch        *b_event_pz;   //!
-  TBranch        *b_event_e;   //!
-  TBranch        *b_event_id;   //!
-  TBranch        *b_event_particles;   //!
-
+  TBranch        *b_event_fParts_;   //!
+  TBranch        *b_fParts_fPx;   //!
+  TBranch        *b_fParts_fPy;   //!
+  TBranch        *b_fParts_fPz;   //!
+  TBranch        *b_fParts_fE;   //!
+  TBranch        *b_fParts_fPDGCode;   //!
+  TBranch        *b_fParts_fChargeTimes3;   //!
+  TBranch        *b_fParts_IsPi0Photon;   //!
+  TBranch        *b_fParts_IsJetFlavor;   //!
+  TBranch        *b_fParts_IsExcitedState;   //!
+  
   RootJetSort(TTree *tree = 0) : fChain(0) {
     if (tree == 0) {
-       TChain * chain = new TChain("Pythia8Tree","");
+      TChain * chain = new TChain("Pythia8Tree","");
       chain->Add("particle_storage.root/Pythia8Tree;1");
       tree = chain;
     }
@@ -148,18 +166,8 @@ public : // Interface to the tree and functions
     delete fChain->GetCurrentFile();
     
     delete outFile;
-//     delete ptProfile;
-//     delete jetMultipl;
-//     delete gluonQuark;
     delete jetDef;
-    
-//     for (auto it = chargeIndicator.begin(); it != chargeIndicator.end(); ++it){ delete (*it);}
-//     for (auto it = fractionProfilesAll.begin(); it != fractionProfilesAll.end(); ++it){ delete (*it);}
-//     for (auto it = fractionProfilesHQuark.begin(); it != fractionProfilesHQuark.end(); ++it){ delete (*it);}
-//     for (auto it = fractionProfilesLQuark.begin(); it != fractionProfilesLQuark.end(); ++it){ delete (*it);}
-//     for (auto it = fractionProfilesGluon.begin(); it != fractionProfilesGluon.end(); ++it){ delete (*it);}
-//     for (auto it = fractionProfilesQuark.begin(); it != fractionProfilesQuark.end(); ++it){ delete (*it);}
- }
+  }
    
   virtual Int_t    GetEntry(Long64_t);
   virtual Long64_t LoadTree(Long64_t);
@@ -167,18 +175,19 @@ public : // Interface to the tree and functions
   virtual void     InitCI(); // Charge indicator
   virtual void     InitFP(); // Fraction profiles
   virtual void     Show(Long64_t = -1);
-  virtual void     Insert(double,double=0,double=0,double=0,int=0,int=0);
-  virtual void     Clear();
+//   virtual void     Insert(double,double=0,double=0,double=0,int=0,int=0);
+//   virtual void     Clear();
   virtual void     EventLoop();
   virtual bool     ParticlesToJetsorterInput();
   virtual void     JetLoop();
-  virtual void     ParticleLoop();
+  virtual void     FlavorLoop(size_t);
+  virtual void     ParticleLoop(size_t);
   virtual void     HistFill(int);
+  virtual void     FillerHandle(vector<TProfile*> &, double, double, double,
+    double, double, double, double, double, double, double, double, double, 
+    double, double, double, double, double, double);
   virtual void     WriteResults();
   
-  vector<fastjet::PseudoJet> Momentum;
-  vector<int> status;
-  vector<int> id_store;   
 };
 
 #endif // ROOTJETSORT_H

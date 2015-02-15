@@ -42,35 +42,25 @@ using std::endl;
 using std::string;
 using std::vector;
 
-string IntToString (int a)
-{
-    std::ostringstream temp;
-    temp<<a;
-    return temp.str();
-}
+
 
 int main(int argc, char* argv[]) {
 
-  // Create a chain that includes all the necessary trees
+  // Create a chain that includes the necessary tree
+  // There are a couple of different data options available.
   string treePath = "Pythia8Tree";
-  string name ="particle_storage.root";
-  TChain *forest = new TChain(treePath.c_str());
-    
-  // Check that the subtree with the maximal index is included in the chain
-  TFile *probe = new TFile("particle_storage.root");
-  TIter *iter = new TIter(probe->GetListOfKeys());
-  TKey *tmpKey = 0;
-  vector<int> idStore;
-  while ( tmpKey = (TKey *) iter->Next() ){
-    if ( strcmp( tmpKey->GetName(), treePath.c_str() ) !=  0) continue;
-    alterName = treePath;
-    alterName += ";";
-    alterName += IntToString(tmpKey->GetCycle());
-    forest->AddFile(name.c_str(),forest->kBigNumber,alterName.c_str());
+  string name ="pythia8_particles.root";
+  if (argc > 1) {
+    if ( argv[2] == "1" ){
+      treePath = "HerwigTree";
+      name = "herwig_particles.root";
+    }
   }
-  delete iter;
-  delete probe;
-  string alterName;
+  
+  TChain *forest = new TChain(treePath.c_str());
+  
+  // This opens the tree with the highest key value with the given treePath
+  forest->AddFile(name.c_str());
   
   RootJetSort treeHandle(forest);
   
@@ -80,3 +70,4 @@ int main(int argc, char* argv[]) {
   
   delete forest;
 }
+

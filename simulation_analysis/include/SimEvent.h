@@ -38,6 +38,7 @@ public:
   Double_t fE;
   
   Int_t fPDGCode;
+  Int_t fChargeTimes3;
   
   Bool_t IsPi0Photon;
   Bool_t IsJetFlavor;
@@ -78,7 +79,7 @@ public:
   SimEvent(size_t = 10000);
   virtual ~SimEvent();
 
-  void Build(double,double,double,double,int,int=0,int=0,int=0);
+  void Build(double,double,double,double,int,double,int=0,int=0,int=0);
   void Clear(Option_t *option ="");
   void Reset(Option_t *option ="");
 
