@@ -67,7 +67,7 @@ public:
 class SimEvent : public TObject {
 private:
   
-  Int_t fNpart;
+  Int_t fNpart; //! Not saved to a tree
   
   TClonesArray *fParts;
   
@@ -83,7 +83,7 @@ public:
   void Reset(Option_t *option ="");
 
   void SetNpart(Int_t n) { fNpart = n; }
-  Int_t GetNpart() const { return fNpart; }
+  Int_t GetNpart() { return fNpart; }
   
   SimParticle *AddParticle();
 
