@@ -1,35 +1,14 @@
 #include "SimEvent.h"
 
-ClassImp(SimParticle);
-ClassImp(SimEvent);
+ClassImp(SimParticle)
+ClassImp(SimEvent)
 
 TClonesArray *SimEvent::fgParts = 0;
 
-Double_t SimParticle::Pt() const
-{
-  return sqrt(pow(fPx,2)+pow(fPy,2));
-}
-
-Double_t SimParticle::Eta() const
-{
-  Double_t P = sqrt(pow(fPx,2) + pow(fPy,2) + pow(fPz,2));
-  return 0.5*log( (P+fPz)/(P-fPz));
-}
-
-Double_t SimParticle::Phi() const
-{
-  Double_t rawAngle = TMath::ATan2( fPy, fPx );
-  if ( fPx >= 0 ) {
-    return rawAngle;
-  } else if ( fPy >= 0 ) {
-    return TMath::Pi() - rawAngle;
-  } else {
-    return -TMath::Pi() - rawAngle;
-  }
-}
 
 SimEvent::SimEvent(size_t tmpStore)
 {
+  Class()->IgnoreTObjectStreamer();
   SetNpart(0);
   if (!fgParts) fgParts = new TClonesArray("SimParticle",tmpStore);
   fParts = fgParts;
@@ -40,7 +19,7 @@ SimEvent::~SimEvent()
   Reset();
 }
 
-void SimEvent::Build( double Px, double Py, double Pz, double E, int Id){
+void SimEvent::Build( double Px, double Py, double Pz, double E, int Id, int pi0Gamma, int jetFlavor, int isExcitedState){
   Int_t ObjectNumber = TProcessID::GetObjectCount();
   
   SimParticle *part;
@@ -49,8 +28,12 @@ void SimEvent::Build( double Px, double Py, double Pz, double E, int Id){
   part->fPx = Px;
   part->fPy = Py;
   part->fPz = Pz;
-  part->fE  = E;
+  part->fE = E;
+
   part->fPDGCode = Id;
+  part->IsPi0Photon = pi0Gamma ? true : false;
+  part->IsJetFlavor = jetFlavor ? true : false;
+  part->IsExcitedState = isExcitedState ? true : false;
   TProcessID::SetObjectCount(ObjectNumber);
 }
 

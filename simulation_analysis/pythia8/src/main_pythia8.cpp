@@ -34,9 +34,9 @@
 // tdrStyle
 #include "tdrstyle_mod1.C"
 // scripts
-#include "jetsorter_auxiliary.h"
-#include "SimEvent.h"
 #include "help_functions.h"
+#include "pythia8_functions.h"
+#include "SimEvent.h"
 
 using namespace Pythia8;
 using std::cout;
@@ -104,11 +104,18 @@ int main(int argc, char **argv)
     }
     
     for (size_t prt = 0; prt!=event.size(); ++prt){
+      double status = abs( event[prt].status() );
+      
+      int tmpId = event[prt].id();
       if (saveEverything || (event[prt].isFinal() && event[prt].isVisible()) ) {  
-	int tmpId = event[prt].id();
-	tmpId -= ( ((tmpId == 22) && gammaChecker( event, prt )) ? 2 : 0 ); // Indicate pi0 photons
-	sEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),event[prt].e(), tmpId);
-      }
+	int pi0Gamma = 0;
+	if ((tmpId == 22) && gammaChecker( event, prt )) pi0Gamma = 1; // Indicate pi0 photons
+	sEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),event[prt].e(), tmpId, pi0Gamma);
+      } else if ( status == 71 || status == 72 || status == 61 || status == 62 || status == 63 ){
+	int isExcState = ((isExcitedState(event,prt,tmpId)) ? 1 : 0);
+        sEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),event[prt].e(), tmpId, 0, 1, isExcState); 
+      } 
+
     } 
     
     tree->Fill();  //fill the tree

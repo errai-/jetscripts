@@ -3,7 +3,7 @@
 
 // Stdlib header file for input and output.
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -15,10 +15,13 @@
 #include <cstdint>
 // ROOT, histogramming
 #include "TROOT.h"
+#include "TMath.h"
 #include "TProfile.h"
 
 using std::cout;
 using std::endl;
+
+// Timer class for showing the progress of a simulation
 
 class Timer{
   private:
@@ -63,18 +66,78 @@ class Timer{
     }
 };
 
-static void histFiller( vector<TProfile*> &hists, double pt, double eTot, double piPlus,
-  double piMinus, double pi0Gamma, double kaPlus, double kaMinus, double kSZero,
-  double kLZero, double proton, double aproton, double neutron, double aneutron,
-  double gamma, double lambda0, double sigma, double elecmuon, double others ){
-  hists[0]->Fill( pt, piPlus/eTot ); hists[1]->Fill( pt, piMinus/eTot );
-  hists[2]->Fill( pt, pi0Gamma/eTot ); hists[3]->Fill( pt, kaPlus/eTot );
-  hists[4]->Fill( pt, kaMinus/eTot ); hists[5]->Fill( pt, kSZero/eTot );
-  hists[6]->Fill( pt, kLZero/eTot ); hists[7]->Fill( pt, proton/eTot );
-  hists[8]->Fill( pt, aproton/eTot ); hists[9]->Fill( pt, neutron/eTot );
-  hists[10]->Fill( pt, aneutron/eTot ); hists[11]->Fill( pt, gamma/eTot );
-  hists[12]->Fill( pt, lambda0/eTot ); hists[13]->Fill( pt, sigma/eTot );
-  hists[14]->Fill( pt, elecmuon/eTot ); hists[15]->Fill( pt, others/eTot );
+
+// Difference in R of two jets
+
+static double deltaR( double phi1, double phi2, double eta1, double eta2 ){
+  
+  double dPhi = abs(phi1-phi2);
+  while ( dPhi >  TMath::Pi() ) dPhi -= TMath::Pi();
+  
+  double dEta = eta1 - eta2;
+  
+  return pow( pow( dPhi, 2 ) + pow( dEta, 2 ) , 0.5 );
+}
+
+// Some functions for pdg particle code recognition:
+
+static int isBottom( int id ) {
+  int code1;
+  int code2;
+  bool tmpHasBottom = false;
+  code1 = (int)( ( abs( id ) / 100)%10 );
+  code2 = (int)( ( abs( id ) /1000)%10 );
+  if ( code1 == 5 || code2 == 5) tmpHasBottom = true;
+  return tmpHasBottom;
+}
+
+static int isCharm( int id ) {
+  int code1;
+  int code2;
+  bool tmpHasCharm = false;
+  code1 = (int)( ( abs( id ) / 100)%10 );
+  code2 = (int)( ( abs( id ) /1000)%10 );
+  if ( code1 == 4 || code2 == 4) tmpHasCharm = true;
+  return tmpHasCharm;
+}
+
+static int isStrange( int id ) {
+  int code1;
+  int code2;
+  bool tmpHasStrange = false;
+  code1 = (int)( ( abs( id ) / 100)%10 );
+  code2 = (int)( ( abs( id ) /1000)%10 );
+  if ( code1 == 3 || code2 == 3) tmpHasStrange = true;
+  return tmpHasStrange;
+}
+
+static int isDown( int id ) {
+  int code1;
+  int code2;
+  bool tmpHasDown = false;
+  code1 = (int)( ( abs( id ) / 100)%10 );
+  code2 = (int)( ( abs( id ) /1000)%10 );
+  if ( code1 == 2 || code2 == 2) tmpHasDown = true;
+  return tmpHasDown;
+}
+
+static int isUp( int id ) {
+  int code1;
+  int code2;
+  bool tmpHasUp = false;
+  code1 = (int)( ( abs( id ) / 100)%10 );
+  code2 = (int)( ( abs( id ) /1000)%10 );
+  if ( code1 == 1 || code2 == 1) tmpHasUp = true;
+  return tmpHasUp;
+}
+
+static int statusCheck( int id1, int id2 ){
+  if ( id1 == 5 && isBottom( id2 ) ) return 1;
+  if ( id1 == 4 && isCharm( id2 ) ) return 1;
+  if ( id1 == 3 && isStrange( id2 ) ) return 1;
+  if ( id1 == 2 && isDown( id2 ) ) return 1;
+  if ( id1 == 1 && isUp( id2 ) ) return 1;
+  return 0;
 }
 
 

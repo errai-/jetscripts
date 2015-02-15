@@ -42,9 +42,9 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int state) {
   /** loop over all particles */
   for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit){
     //if( ChargedSelector::Check(**pit) )
-    if ( (*pit)->eta() < 1.3 ){
-      sEvent->Build((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),(*pit)->momentum().t(), (*pit)->id());
-    }
+    //if ( (abs(*pit)->eta()) < 1.3 ){
+    sEvent->Build((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),(*pit)->momentum().t(), (*pit)->id());
+    //}
 //     px[counter] = (*pit)->momentum().x();
 //     py[counter] = (*pit)->momentum().y();
 //     pz[counter] = (*pit)->momentum().z();
