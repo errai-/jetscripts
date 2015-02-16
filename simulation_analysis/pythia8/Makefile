@@ -18,6 +18,9 @@ all:
 pythia8: src/main_$$@.cpp $(PYTHIALIB) ../obj/libSimEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
 
+test: src/main_$$@.cpp $(PYTHIALIB)
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
+
 ../obj/SimDct.cc: ../include/SimEvent.h ../include/SimLinkDef.h
 	cd .. && $(MAKE) obj/SimDct.cc
 

@@ -17,25 +17,16 @@ all:
 
 # Main targets
 
-rootjetsort: src/main_$$@.cpp obj/rootjetsort.o obj/minimalevent.so obj/PTDct.cc
+rootjetsort: src/main_$$@.cpp obj/rootjetsort.o obj/libSimEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
 
-ptcut: src/main_$$@.cpp obj/ptcut.o obj/minimalevent.so obj/PTDct.cc
+ptcut: src/main_$$@.cpp obj/ptcut.o obj/libSimEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
 
 obj/SimDct.cc: include/SimEvent.h include/SimLinkDef.h
 	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) $^
 
 # Shared objects
-
-obj/minimalevent.so: src/MinimalEvent.cpp
-	$(CXX) -shared -fPIC $^ $(INCLUDE) $(CXXFLAGS) $(ROOT) -w -ldl -o $@
-
-obj/libP2TLib.so: obj/PTDct.cc src/MinimalEvent.cpp
-	g++ -shared -o $@ $(INCLUDE) $(ROOT) $(CXXFLAGS) -I. $^ -fPIC
-
-obj/PTDct.cc: include/MinimalEvent.h include/PTLinkDef.h
-	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) $^
 
 obj/libSimEvent.so: obj/SimEvent.o obj/SimEventDict.o
 	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
