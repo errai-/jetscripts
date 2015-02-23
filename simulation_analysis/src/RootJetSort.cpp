@@ -85,7 +85,6 @@ void RootJetSort::EventLoop() {
   if (fChain == 0) return;
 
   Long64_t nentries = fChain->GetEntries();
-  // JetStore storaging;
   cout << nentries << endl;
   timer.set_params(nentries,100);
 
@@ -94,9 +93,8 @@ void RootJetSort::EventLoop() {
   for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
     
     FlavorIndices.clear();
-    if (jentry!=0&&jentry%100==0){
-      timer.print_time();
-    }
+    if (jentry!=0&&jentry%100==0) timer.print_time();
+    
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
@@ -127,6 +125,7 @@ void RootJetSort::EventLoop() {
     unsortedGhosts = clustSeqGhosts.inclusive_jets( pTMin );
     sortedGhosts = sorted_by_pt(unsortedGhosts);
 
+    // Loop through the generated jets
     JetLoop();
   }
 }
@@ -156,7 +155,7 @@ void RootJetSort::JetLoop(){
     if (fabs(sortedJets[i].pseudorapidity()) > etaMax) continue;
     // Inspect only the two leading jets
     if ( counter++ == 2 ) continue;
-    // Check that this is a realistic jet
+    // Check that this is a sensible jet
     jetParts = sortedJets[i].constituents();
     if ( jetParts.size() == 1 ) continue;
 
@@ -166,7 +165,7 @@ void RootJetSort::JetLoop(){
     // Find out whether this is a quark or a gluon jet
     FlavorLoop(i);
     
-    // The actual particle loop
+    // Loop over particles within a jet
     ParticleLoop(i);
     
     // Histograms of the quark-gluon status

@@ -35,13 +35,11 @@
 // tdrStyle
 //#include "tdrstyle_mod1.C"
 // scripts
-#include "RootJetSort.h"
+#include "PTCut.h"
 
 using std::cout;
 using std::endl;
 using std::string;
-using std::vector;
-
 
 
 int main(int argc, char* argv[]) {
@@ -58,11 +56,10 @@ int main(int argc, char* argv[]) {
   }
   
   TChain *forest = new TChain(treePath.c_str());
-  
   // This opens the tree with the highest key value with the given treePath
   forest->AddFile(name.c_str());
   
-  RootJetSort treeHandle(forest);
+  PTCut treeHandle(forest);
   
   treeHandle.EventLoop();
   
@@ -70,4 +67,3 @@ int main(int argc, char* argv[]) {
   
   delete forest;
 }
-

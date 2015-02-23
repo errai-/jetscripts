@@ -6,30 +6,21 @@
 #include "QCDModules/QCDPFJet.h"
 #include "QCDModules/QCDEventHdr.h"
 #include <vector>
-#include "QCDModules/LorentzVector.h"
 
-LorentzVector operator*( double multiplier, const LorentzVector& vector ){
-  LorentzVector result = vector;
-  result.scaleX( multiplier );
-  result.scaleY( multiplier );
-  result.scaleZ( multiplier );
-  result.scaleT( multiplier );
-  return result;
-}
+#include "TROOT.h"
+#include "TMath.h"
+#include "Math/Vector3D.h"
+#include "Math/Vector4D.h"
+#include "Math/LorentzVector.h"
+#include "Math/PxPyPzE4D.h"
 
-LorentzVector operator+(const LorentzVector& left, const LorentzVector& right){
-  LorentzVector result = left;
-  result.addX( right.getX() );
-  result.addY( right.getY() );
-  result.addZ( right.getZ() );
-  result.addT( right.getT() );
-  return result;
-}
+using namespace ROOT::Math;
 
 
 class QCDEvent 
 {
     public:
+      //typedef ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > LorentzVector ;
       //------------ Constructor ------------------------------
       QCDEvent();
       //------------ Destructor -------------------------------
@@ -41,9 +32,9 @@ class QCDEvent
       void setCaloJets(const std::vector<QCDCaloJet>& fCaloJets);
       void setPFJets(const std::vector<QCDPFJet>& fPFJets);
       void setFatJets(const std::vector<QCDJet>& fFatJets);
-      void setGenJets(const std::vector< LorentzVector >& fGenJets);
-      void setL1Obj(const std::vector<std::vector<LorentzVector> >& fL1Obj);
-      void setHLTObj(const std::vector<std::vector<LorentzVector> >& fHLTObj);
+      void setGenJets(const std::vector< ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> >  >& fGenJets);
+      //void setL1Obj(const std::vector<std::vector<ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > > >& fL1Obj);
+      //void setHLTObj(const std::vector<std::vector<ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > > >& fHLTObj);
       void setPrescales(const std::vector<int>& fPreL1, const std::vector<int>& fPreHLT) {L1Prescale_ = fPreL1; HLTPrescale_ = fPreHLT;}
       void setTrigDecision(const std::vector<int>& fTrigDecision) {TriggerDecision_ = fTrigDecision;}                           
       //------------ Get methods ------------------------------- 
@@ -69,9 +60,9 @@ class QCDEvent
       float calomjjgen();
       const QCDMET&        calomet()                   const {return CaloMet_;}
       const QCDMET&        pfmet()                     const {return PFMet_;} 
-      const LorentzVector& hltobj(int itrig, int iobj) const {return (HLTObj_[itrig])[iobj];}  
-      const LorentzVector& l1obj(int itrig, int iobj)  const {return (L1Obj_[itrig])[iobj];}   
-      const LorentzVector& genjet(int i)               const {return GenJets_[i];}
+      const ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > & hltobj(int itrig, int iobj) const {return (HLTObj_[itrig])[iobj];}  
+      const ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > & l1obj(int itrig, int iobj)  const {return (L1Obj_[itrig])[iobj];}   
+      const ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > & genjet(int i)               const {return GenJets_[i];}
       const QCDPFJet&      pfjet(int i)                const {return PFJets_[i];}
       const QCDJet&        fatjet(int i)               const {return FatJets_[i];}
       const QCDCaloJet&    calojet(int i)              const {return CaloJets_[i];}
@@ -91,11 +82,11 @@ class QCDEvent
       //---- HLT prescale vector -------------------------------------
       std::vector<int>                         HLTPrescale_;
       //---- HLT objects ---------------------------------------------  
-      std::vector<std::vector<LorentzVector> > HLTObj_;
+      std::vector<std::vector<ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > > > HLTObj_;
       //---- L1 objects ----------------------------------------------
-      std::vector<std::vector<LorentzVector> > L1Obj_;
+      std::vector<std::vector<ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > > > L1Obj_;
       //---- Genjets -------------------------------------------------
-      std::vector<LorentzVector>               GenJets_;
+      std::vector<ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > >               GenJets_;
       //---- CaloJets ------------------------------------------------ 
       std::vector<QCDCaloJet>                  CaloJets_;
       //---- PFJets --------------------------------------------------

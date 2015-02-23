@@ -2,11 +2,19 @@
 #define QCDJet_h
 
 #include <vector>
-#include "QCDModules/LorentzVector.h"
+//#include "QCDModules/LorentzVector.h"
 //-------- Generic Jet class for QCD analyses ---------------
+#include "TROOT.h"
+#include "TMath.h"
+#include "Math/Vector3D.h"
+#include "Math/Vector4D.h"
+
+using namespace ROOT::Math;
+
 class QCDJet 
 {
    public:
+     typedef ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > LorentzVector;
      //------------ Constructor ------------------------------
      QCDJet() {}
      //------------ Destructor -------------------------------
