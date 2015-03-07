@@ -1,4 +1,8 @@
-// This holds all the auxiliary functions and classes of jetsorter
+////////////////////////////////////////////////////////////////////////
+// This holds all the auxiliary functions and classes of pythia8 sims //
+// Hannu Siikonen 7.3.2015                                            //
+////////////////////////////////////////////////////////////////////////
+
 #ifndef PYTHIA8_FUNCTIONS
 #define PYTHIA8_FUNCTIONS 
 

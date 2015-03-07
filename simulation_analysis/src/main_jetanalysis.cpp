@@ -1,8 +1,3 @@
-//////////////////////////////////////////////////////
-// The main part of the generic jet sorting program //
-// Hannu Siikonen 7.3.2015                          //
-//////////////////////////////////////////////////////
-
 #include <iostream>
 #include <vector>
 #include <string>
@@ -37,8 +32,10 @@
 #include "TIterator.h"
 #include "TString.h"
 
+// tdrStyle
+//#include "tdrstyle_mod1.C"
 // scripts
-#include "RootJetSort.h"
+#include "JetAnalysis.h"
 
 using std::cout;
 using std::endl;
@@ -65,12 +62,9 @@ int main(int argc, char* argv[]) {
   // This opens the tree with the highest key value with the given treePath
   forest->AddFile(name.c_str());
   
-  RootJetSort treeHandle(forest);
+  JetAnalysis treeHandle(forest);
   
   treeHandle.EventLoop();
   
-  treeHandle.WriteResults();
-  
   delete forest;
 }
-

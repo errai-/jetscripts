@@ -1,37 +1,25 @@
-#include "RootJetSort.h"
+#include "JetAnalysis.h"
 
-/////////
-// Setup:
-/////////
-
-RootJetSort::RootJetSort(TTree *tree) : fChain(0) {
-  if (tree == 0) {
-    TChain * chain = new TChain("Pythia8Tree","");
-    chain->Add("particle_storage.root/Pythia8Tree;1");
-    tree = chain;
-  }
-  Init(tree);
-  
-  outFile = new TFile("sortedjets.root", "RECREATE");
-  ptProfile = new TH1D("pT bins","Pt bins", ptBins, ptRange);
-  jetMultipl = new TH1D("Jet multiplicity","Jet multiplicity",50,0.,50.);
-  gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
-  
-  InitCI();
-  InitFP();
-  
-  jetDef = new fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
+Int_t JetAnalysis::GetEntry(Long64_t entry)
+{
+// Read contents of entry.
+   if (!fChain) return 0;
+   return fChain->GetEntry(entry);
 }
 
-RootJetSort::~RootJetSort() {
-  if (!fChain) return;
-  delete fChain->GetCurrentFile();
-  
-  delete outFile;
-  delete jetDef;
+Long64_t JetAnalysis::LoadTree(Long64_t entry)
+{
+// Set the environment to read one entry
+   if (!fChain) return -5;
+   Long64_t centry = fChain->LoadTree(entry);
+   if (centry < 0) return centry;
+   if (fChain->GetTreeNumber() != fCurrent) {
+      fCurrent = fChain->GetTreeNumber();
+   }
+   return centry;
 }
 
-void RootJetSort::Init(TTree *tree)
+void JetAnalysis::Init(TTree *tree)
 {
   // Set branch addresses and branch pointers
   if (!tree) return;
@@ -51,7 +39,7 @@ void RootJetSort::Init(TTree *tree)
   fChain->SetBranchAddress("fParts.IsExcitedState", fParts_IsExcitedState, &b_fParts_IsExcitedState);
 }
 
-void RootJetSort::InitCI(){
+void JetAnalysis::InitCI(){
   // Create file on which histogram(s) can be saved.
   chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
   chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
@@ -65,7 +53,7 @@ void RootJetSort::InitCI(){
   chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
 }
 
-void RootJetSort::InitFP(){
+void JetAnalysis::InitFP(){
   for (int idx = 0; idx != 16; ++idx){
     std::stringstream tmpString("");
     tmpString << "g" << idx;
@@ -85,30 +73,7 @@ void RootJetSort::InitFP(){
   }
 }
 
-///////////////////////////////////////////////////
-// Generic functions, these should not be modified:
-///////////////////////////////////////////////////
-
-Int_t RootJetSort::GetEntry(Long64_t entry)
-{
-// Read contents of entry.
-   if (!fChain) return 0;
-   return fChain->GetEntry(entry);
-}
-
-Long64_t RootJetSort::LoadTree(Long64_t entry)
-{
-// Set the environment to read one entry
-   if (!fChain) return -5;
-   Long64_t centry = fChain->LoadTree(entry);
-   if (centry < 0) return centry;
-   if (fChain->GetTreeNumber() != fCurrent) {
-      fCurrent = fChain->GetTreeNumber();
-   }
-   return centry;
-}
-
-void RootJetSort::Show(Long64_t entry)
+void JetAnalysis::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
@@ -116,15 +81,21 @@ void RootJetSort::Show(Long64_t entry)
    fChain->Show(entry);
 }
 
-//////////////////////////////////
-// Loop over events and particles:
-//////////////////////////////////
-
-void RootJetSort::EventLoop() {
+void JetAnalysis::EventLoop() {
   if (fChain == 0) return;
 
   Long64_t nentries = fChain->GetEntries();
   cout << nentries << endl;
+  
+  // Create file on which a particle data tree is saved (before sampling to jets)
+  jEvent = new JetEvent();
+  Int_t bufsize = 64000/4;
+   
+  jetBranch = outTree->Branch("event", &jEvent, bufsize,2);
+  jetBranch->SetAutoDelete(kFALSE);
+  outTree->BranchRef();
+  outFile->SetCompressionLevel(1);
+  
   timer.set_params(nentries,100);
 
   timer.start_timing();  
@@ -166,11 +137,20 @@ void RootJetSort::EventLoop() {
 
     // Loop through the generated jets
     JetLoop();
-  }
-}
     
+    outTree->Fill();  //fill the tree
+    jEvent->Clear();
+  }
+  
+  outFile = outTree->GetCurrentFile(); //just in case we switched to a new file
+  outTree->AutoSave("Overwrite");
+  // We own the event (since we set the branch address explicitly), we need to delete it.
+  delete jEvent;  jEvent = 0;
+   
+  outFile->Close();
+}    
 
-bool RootJetSort::ParticlesToJetsorterInput(){
+bool JetAnalysis::ParticlesToJetsorterInput(){
   fjInputs.clear();
       
   for (size_t i = 0; i != fParts_; ++i) {
@@ -187,7 +167,7 @@ bool RootJetSort::ParticlesToJetsorterInput(){
   return true;
 }
 
-void RootJetSort::JetLoop(){
+void JetAnalysis::JetLoop(){
   int counter = 0;
   for (size_t i = 0; i < sortedJets.size(); i++) {
     // only count jets that have |eta| < etamax
@@ -228,13 +208,15 @@ void RootJetSort::JetLoop(){
     }
 
     // Fill the histograms:
-    // Fill only gluons or only heavy/light quarks
-    if (etSum){ HistFill(i); }
+    
+    jEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),event[prt].e(), 
+      1,1,1,1,1,1);
+
   }
 }
 
 
-void RootJetSort::FlavorLoop(size_t i){
+void JetAnalysis::FlavorLoop(size_t i){
   // Particle identification
   // Determine whether a jet is dominated by quarks or by gluons
   // Looping stops when a corresponding jet is found
@@ -279,7 +261,7 @@ void RootJetSort::FlavorLoop(size_t i){
   }
 }
 
-void RootJetSort::ParticleLoop(size_t i){
+void JetAnalysis::ParticleLoop(size_t i){
   
   piPlus = 0; piMinus = 0;  pi0Gamma = 0; gamma = 0; 
   kaPlus = 0; kaMinus = 0; kSZero = 0; kLZero = 0; 
@@ -334,11 +316,7 @@ void RootJetSort::ParticleLoop(size_t i){
   }    
 }
 
-///////////////////////
-// Storing the results:
-///////////////////////
-
-void RootJetSort::HistFill(int i){
+void JetAnalysis::HistFill(int i){
   FillerHandle( fractionProfilesAll, sortedJets[i].pt(), etSum, piPlus, 
     piMinus, pi0Gamma, kaPlus, kaMinus, kSZero, kLZero, proton,
     aproton, neutron, aneutron, gamma, lambda0, sigma, elecmuon, others );
@@ -368,7 +346,7 @@ void RootJetSort::HistFill(int i){
 
 // A shortcut for plotting certain histograms
 
-void RootJetSort::FillerHandle( vector<TProfile*> &hists, double pt, double eTot, double piPlus,
+void JetAnalysis::FillerHandle( vector<TProfile*> &hists, double pt, double eTot, double piPlus,
   double piMinus, double pi0Gamma, double kaPlus, double kaMinus, double kSZero,
   double kLZero, double proton, double aproton, double neutron, double aneutron,
   double gamma, double lambda0, double sigma, double elecmuon, double others ){
@@ -382,17 +360,17 @@ void RootJetSort::FillerHandle( vector<TProfile*> &hists, double pt, double eTot
   hists[14]->Fill( pt, elecmuon/eTot ); hists[15]->Fill( pt, others/eTot );
 }
 
-void RootJetSort::WriteResults(){
+void JetAnalysis::WriteResults(){
 
-  ptProfile->Write();
-  jetMultipl->Write();
-  for (unsigned int i = 0; i != fractionProfilesGluon.size(); ++i){
-    fractionProfilesGluon[i]->Write();
-    fractionProfilesQuark[i]->Write();
-    fractionProfilesLQuark[i]->Write();
-    fractionProfilesHQuark[i]->Write();
-    fractionProfilesAll[i]->Write();
-  }
+//   ptProfile->Write();
+//   jetMultipl->Write();
+//   for (unsigned int i = 0; i != fractionProfilesGluon.size(); ++i){
+//     fractionProfilesGluon[i]->Write();
+//     fractionProfilesQuark[i]->Write();
+//     fractionProfilesLQuark[i]->Write();
+//     fractionProfilesHQuark[i]->Write();
+//     fractionProfilesAll[i]->Write();
+//   }
 
   for (int i = 0; i != 10; ++i){
     chargeIndicator[i]->Write();

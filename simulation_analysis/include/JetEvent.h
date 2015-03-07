@@ -2,8 +2,8 @@
 #define SIMEVENT_H
 
 ///////////////////////////////////////////////////////////////////////
-// A generic event class for storing particle data from simulations. //
-// Hannu Siikonen 13.2.2015                                          //
+// A generic event class for storing jet data from simulations.      //
+// Hannu Siikonen 23.2.2015                                          //
 // (special thanks to Rene Brun's ROOT examples)                     //
 ///////////////////////////////////////////////////////////////////////
 
@@ -28,24 +28,23 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-
-
-class SimParticle : public TObject {
+class JetData : public TObject {
 public:
   Double_t fPx;
   Double_t fPy;
   Double_t fPz;
   Double_t fE;
+ 
+  Double_t fChf;
+  Double_t fNhf;
+  Double_t fPhf;
+  Double_t fElf;
+  Double_t fMuf;
   
-  Int_t fPDGCode;
-  Int_t fChargeTimes3;
+  Char_t fFlavour;
   
-  Bool_t IsPi0Photon;
-  Bool_t IsJetFlavor;
-  Bool_t IsExcitedState;
-  
-  SimParticle() { Class()->IgnoreTObjectStreamer(); }
-  virtual ~SimParticle() { }
+  JetData() { Class()->IgnoreTObjectStreamer(); }
+  virtual ~JetData() { }
   
   Double_t P() const { return pow( pow(fPx,2) + pow(fPy,2) + pow(fPz,2), 0.5); }
   Double_t Pt() const { return pow( pow(fPx,2) + pow(fPy,2), 0.5 ); }
@@ -61,37 +60,37 @@ public:
     return tmpVect;
   }
   
-  ClassDef(SimParticle,1)
+  ClassDef(JetData,1)
 };
 
 
-class SimEvent : public TObject {
+class JetEvent : public TObject {
 private:
   
-  Int_t fNpart; //! Not saved to a tree
+  Int_t fNjet; //! Not saved to a tree
   
-  TClonesArray *fParts;
+  TClonesArray *fJets;
   
-  static TClonesArray *fgParts;
+  static TClonesArray *fgJets;
 
 public:
   
-  SimEvent(size_t = 10000);
-  virtual ~SimEvent();
+  JetEvent(size_t = 10000);
+  virtual ~JetEvent();
 
-  void Build(double,double,double,double,int,double,int=0,int=0,int=0);
+  void Build(double,double,double,double,double,double,double,double,double,char);
   void Clear(Option_t *option ="");
   void Reset(Option_t *option ="");
 
-  void SetNpart(Int_t n) { fNpart = n; }
-  Int_t GetNpart() { return fNpart; }
+  void SetNjet(Int_t n) { fNjet = n; }
+  Int_t GetNjet() { return fNjet; }
   
-  SimParticle *AddParticle();
+  JetData *AddJet();
 
-  TClonesArray *GetParts() const {return fParts;}
+  TClonesArray *GetParts() const {return fJets;}
   
-  ClassDef(SimEvent, 1)
+  ClassDef(JetEvent, 1)
 };
 
 
-#endif // SIMEVENT_H
+#endif // JETEVENT_H

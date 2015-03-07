@@ -1,6 +1,6 @@
 ################################################################
 ## Makefile for building Pythia-ROOT-Fastjet code (jetsorter) ## 
-## Hannu Siikonen, 10.02.2015                                 ##  
+## Hannu Siikonen, 07.03.2015                                 ##  
 ################################################################
 
 -include ../config.mk
@@ -15,27 +15,27 @@ all:
 
 # Main targets
 
-pythia8: src/main_$$@.cpp $(PYTHIALIB) ../obj/libSimEvent.so
+pythia8: src/main_$$@.cpp $(PYTHIALIB) ../obj/libParticleEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
 
 test: src/main_$$@.cpp $(PYTHIALIB)
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
 
-../obj/SimDct.cc: ../include/SimEvent.h ../include/SimLinkDef.h
-	cd .. && $(MAKE) obj/SimDct.cc
+../obj/ParticleDct.cc: ../include/ParticleEvent.h ../include/ParticleLinkDef.h
+	cd .. && $(MAKE) obj/ParticleDct.cc
 
 # Objects
 
-../obj/SimEvent.o: ../src/SimEvent.cpp
-	cd .. && $(MAKE) obj/SimEvent.o
+../obj/ParticleEvent.o: ../src/ParticleEvent.cpp
+	cd .. && $(MAKE) obj/ParticleEvent.o
 
-../obj/SimEventDict.o: ../obj/SimDct.cc
-	cd .. && $(MAKE) obj/SimEventDict.o
+../obj/ParticleEventDict.o: ../obj/ParticleDct.cc
+	cd .. && $(MAKE) obj/ParticleEventDict.o
 
 # Shared objects
 
-../obj/libSimEvent.so: ../obj/SimEventDict.o ../obj/SimEvent.o
-	cd .. && $(MAKE) obj/libSimEvent.so
+../obj/libParticleEvent.so: ../obj/ParticleEventDict.o ../obj/ParticleEvent.o
+	cd .. && $(MAKE) obj/libParticleEvent.so
 
 # Clean.
 clean:

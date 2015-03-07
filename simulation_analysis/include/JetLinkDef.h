@@ -9,13 +9,11 @@
 
 #ifdef __CINT__
 #include <vector>
-#include <SimEvent.h>
+#include <JetEvent.h>
 
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
-#pragma link C++ class SimEvent+;
-#pragma link C++ class SimParticle+;
-//#pragma link C++ class std::vector<Double_t>+;
-#pragma link C++ class std::vector<Int_t>+;
+#pragma link C++ class JetEvent+;
+#pragma link C++ class JetData+;
 #endif

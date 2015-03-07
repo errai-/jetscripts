@@ -1,10 +1,6 @@
-///////////////////////////////////////////////////////
-// The general class for sorting particles into jets //
-// Hannu Siikonen 7.3.2015                           //
-///////////////////////////////////////////////////////
 
-#ifndef ROOTJETSORT_H
-#define ROOTJETSORT_H
+#ifndef JETANALYSIS_H
+#define JETANALYSIS_H
 
 // General
 #include <iostream>
@@ -36,7 +32,9 @@
 #include "fastjet/Selector.hh"
 
 // Header file for the classes stored in the TTree if any.
-#include "ParticleEvent.h"
+#include "SimEvent.h"
+#include "JetEvent.h"
+
 // Fixed size dimensions of array or collections stored in the TTree if any.
 #include "help_functions.h"
 // tdrStyle
@@ -45,12 +43,13 @@
 using std::cout;
 using std::endl;
 
-class RootJetSort {
+class JetAnalysis {
 private: 
- 
-///////////////////////  
+// Mostly Fastjet and histogramming
+  
+///////////////////////
 // ROOT initialization:
-///////////////////////  
+///////////////////////
   static const int ptBins = 48.;
   const double ptRange[ptBins+1]=
   //{1, 5, 6, 8, 10, 12, 15
@@ -61,8 +60,6 @@ private:
   //2116, 2238, 2366, 2500, 2640, 2787, 2941, 3103, 3273, 3450,
   //3637, 3832, 4037};//  
   
-  // Create the ROOT application environment.
-  //TApplication* theApp;
   TFile* outFile;
   TH1D* ptProfile;
   TH1D* jetMultipl;
@@ -75,8 +72,11 @@ private:
   vector<TProfile*> fractionProfilesLQuark;
   vector<TProfile*> fractionProfilesHQuark;
   vector<TProfile*> fractionProfilesAll;
-
-//////////////////////////  
+////////////////////////
+// ROOT initialization ^
+////////////////////////
+  
+//////////////////////////
 // Fastjet initialization:
 //////////////////////////
   int power     = -1;     // -1 = ant-kT; 0 = C/A; 1 = kT
@@ -84,18 +84,18 @@ private:
   double pTMin  = 20.0;   // Min jet pT
   double etaMax = 1.3;    // Pseudorapidity range
 
-  // Fastjet analysis - select algorithm and parameters
+  // Analysis: select algorithm and parameters
   fastjet::JetDefinition* jetDef;
 
   // PseudoJet storages
   vector<fastjet::PseudoJet> sortedJets, sortedGhosts, jetParts, fjInputs; 
-
-//////////
-// Others:
-//////////  
+///////////////////////////
+// Fastjet initialization ^
+///////////////////////////
+    
   Timer timer;
-
-  // Event loop initialization:
+  
+  // Event loop:
   std::ifstream input;
   size_t iEvent = 0;
 
@@ -115,13 +115,14 @@ private:
   int quarkJetCharge, isHadron;
   
 public : 
+// Interface to the tree and functions
 
-//////////
-// Output:
-////////// 
+/////////
+// Input:
+/////////  
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
   Int_t           fCurrent; //!current Tree number in a TChain
-
+  
   // Fixed size dimensions of array or collections stored in the TTree if any.
   // If this is too small, Segfaults may follow.
   static const Int_t kMaxfParts = 5000;
@@ -149,35 +150,68 @@ public :
   TBranch        *b_fParts_IsPi0Photon;   //!
   TBranch        *b_fParts_IsJetFlavor;   //!
   TBranch        *b_fParts_IsExcitedState;   //!
+//////////
+// Input ^
+//////////
 
-/////////////
-// Functions:
-/////////////
-  RootJetSort(TTree * = 0);
-
-  ~RootJetSort();
+  // Output:
+  TTree          *outTree;
+  JetEvent jEvent;
+  TBranch jetBranch;
+  
+  JetAnalysis(TTree *tree = 0) : fChain(0) {
+    if (tree == 0) {
+      TChain * chain = new TChain("Pythia8Tree","");
+      chain->Add("particle_storage.root/Pythia8Tree;1");
+      tree = chain;
+    }
+    Init(tree);
+    
+    outFile = new TFile("sortedjets.root", "RECREATE");
+    ptProfile = new TH1D("pT bins","Pt bins", ptBins, ptRange);
+    jetMultipl = new TH1D("Jet multiplicity","Jet multiplicity",50,0.,50.);
+    gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
+    
+    InitCI();
+    InitFP();
+    
+    jetDef = new fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
+  
+    outTree = new TTree("JetTree","Tree filled with simulated jet data.");
    
+    // Create a ROOT Tree and one superbranch
+    outTree->SetAutoSave(1000000000); // autosave when 1 Gbyte written
+    outTree->SetCacheSize(10000000);  // set a 10 MBytes cache (useless when writing local files)
+    TTree::SetBranchStyle(1);
+  }
+
+  ~JetAnalysis() {
+    if (!fChain) return;
+    delete fChain->GetCurrentFile();
+    
+    delete outFile;
+    delete jetDef;
+  }
+   
+  virtual Int_t    GetEntry(Long64_t);
+  virtual Long64_t LoadTree(Long64_t);
   virtual void     Init(TTree *tree); // Chain
   virtual void     InitCI(); // Charge indicator
   virtual void     InitFP(); // Fraction profiles
-  
-  virtual Int_t    GetEntry(Long64_t);
-  virtual Long64_t LoadTree(Long64_t);
   virtual void     Show(Long64_t = -1);
-  
+//   virtual void     Insert(double,double=0,double=0,double=0,int=0,int=0);
+//   virtual void     Clear();
   virtual void     EventLoop();
   virtual bool     ParticlesToJetsorterInput();
   virtual void     JetLoop();
   virtual void     FlavorLoop(size_t);
   virtual void     ParticleLoop(size_t);
-  
   virtual void     HistFill(int);
   virtual void     FillerHandle(vector<TProfile*> &, double, double, double,
     double, double, double, double, double, double, double, double, double, 
     double, double, double, double, double, double);
   virtual void     WriteResults();
+  
 };
 
-#endif // ROOTJETSORT_H
-
-
+#endif // JETANALYSIS_H

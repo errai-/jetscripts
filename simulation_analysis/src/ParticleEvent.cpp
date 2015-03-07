@@ -1,28 +1,28 @@
-#include "SimEvent.h"
+#include "ParticleEvent.h"
 
-ClassImp(SimParticle)
-ClassImp(SimEvent)
+ClassImp(PrtclData)
+ClassImp(ParticleEvent)
 
-TClonesArray *SimEvent::fgParts = 0;
+TClonesArray *ParticleEvent::fgParts = 0;
 
 
-SimEvent::SimEvent(size_t tmpStore)
+ParticleEvent::ParticleEvent(size_t tmpStore)
 {
   Class()->IgnoreTObjectStreamer();
   SetNpart(0);
-  if (!fgParts) fgParts = new TClonesArray("SimParticle",tmpStore);
+  if (!fgParts) fgParts = new TClonesArray("PrtclData",tmpStore);
   fParts = fgParts;
 }
 
-SimEvent::~SimEvent()
+ParticleEvent::~ParticleEvent()
 {
   Reset();
 }
 
-void SimEvent::Build( double Px, double Py, double Pz, double E, int Id, double Charge, int pi0Gamma, int jetFlavor, int isExcitedState){
+void ParticleEvent::Build( double Px, double Py, double Pz, double E, int Id, double Charge, int pi0Gamma, int jetFlavor, int isExcitedState){
   Int_t ObjectNumber = TProcessID::GetObjectCount();
   
-  SimParticle *part;
+  PrtclData *part;
   
   part = AddParticle();
   part->fPx = Px;
@@ -38,23 +38,23 @@ void SimEvent::Build( double Px, double Py, double Pz, double E, int Id, double 
   TProcessID::SetObjectCount(ObjectNumber);
 }
 
-SimParticle* SimEvent::AddParticle()
+PrtclData* ParticleEvent::AddParticle()
 {
   if (fNpart>=10000) {
     fNpart = 0; // As a last resort, set the indexing to loop from beginning.
-    cout << "The container size for SimParticle is too small, set a larger one in the constructor" << endl;
+    cout << "The container size for PrtclData is too small, set a larger one in the constructor" << endl;
   }
-  SimParticle *part = (SimParticle*) fParts->ConstructedAt(fNpart++);
+  PrtclData *part = (PrtclData*) fParts->ConstructedAt(fNpart++);
   return part;
 }
 
-void SimEvent::Clear(Option_t* /* option */)
+void ParticleEvent::Clear(Option_t* /* option */)
 {
   fParts->Clear("C");
   SetNpart(0);
 }
 
-void SimEvent::Reset(Option_t* option)
+void ParticleEvent::Reset(Option_t* option)
 {
   delete fgParts; fgParts = 0;
   SetNpart(0);
