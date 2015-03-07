@@ -1,8 +1,0 @@
-
-13.02.2015
-
-A storage for various plotting functions. It seems to be the clearest
-alternative to move the finished simulation files away from the simulation
-directory. Thus, there is no point in keeping the plotting functions there.
-This way the 'entropy' in the simulation directories is also slightly
-reduced.

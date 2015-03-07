@@ -28,22 +28,29 @@ StoreParticles::~StoreParticles() {}
 #include "ThePEG/Analysis/LWH/AnalysisFactory.h"
 #endif
 
-void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int state) {
-  AnalysisHandler::analyze(event, ieve, loop, state);
+void StoreParticles::analyze(tEventPtr _event, long _ieve, int _loop, int _state) {
+  AnalysisHandler::analyze(_event, _ieve, _loop, _state);
   // Rotate to CMS, extract final state particles and call analyze(particles).
-  if ( loop > 0 || state != 0 || !event ) return;
+  if ( _loop > 0 || _state != 0 || !_event ) return;
 
   /** get the final-state particles */
-  tPVector parts=event->getFinalState();
+  tPVector parts=_event->getFinalState();
   
 //   particles = parts.size();
   
   int counter = 0; // index of the current particle
-  /** loop over all particles */
+  /**
+   * Loop over all particles.
+   * This should be cleaned up. Herwig is still a bit of a work in progress,
+   * so some of these commented lines could be useful.
+   * pEvent is used only partially, since the "more advanced" parts are at
+   * the moment working only with pythia
+   */
   for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit){
     //if( ChargedSelector::Check(**pit) )
     //if ( (abs(*pit)->eta()) < 1.3 ){
-    sEvent->Build((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),(*pit)->momentum().t(), (*pit)->id());
+    pEvent->Build((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),
+      (*pit)->momentum().t(), (*pit)->id(), (*pit)->data().charge());
     //}
 //     px[counter] = (*pit)->momentum().x();
 //     py[counter] = (*pit)->momentum().y();
@@ -54,7 +61,7 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int state) {
   }
   // Fill TTree record
   herwigTree->Fill();
-  sEvent->Clear();
+  pEvent->Clear();
 }
 
 LorentzRotation StoreParticles::transform(tcEventPtr event) const {
@@ -138,8 +145,8 @@ void StoreParticles::doinitrun() {
   Int_t branchStyle = 1; //new style by default 
   Int_t bufsize = 64000/4;
   TTree::SetBranchStyle(branchStyle);
-  sEvent = new SimEvent;
-  TBranch *branch = herwigTree->Branch("event", &sEvent, bufsize,2);
+  pEvent = new PrtclEvent;
+  TBranch *branch = herwigTree->Branch("event", &pEvent, bufsize,2);
   branch->SetAutoDelete(kFALSE);
   if(branchStyle) herwigTree->BranchRef();
    

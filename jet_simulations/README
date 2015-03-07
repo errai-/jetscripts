@@ -1,0 +1,27 @@
+This base directory holds the code for processing jets from Herwig, Pythia8
+and Pythia6 particle data. The actual particle data is generated within
+the subfolders. The scripts that are in general use are located in this folder.
+If necessary, the Makefiles in the subfolders refer to the makefile located in
+this folder.
+
+SimEvent: (src/SimEvent.cpp, include/SimEvent.h)
+A definition for the information that is storaged while making a simulation.
+Built to a shared object, since this is frequently used.
+
+SimLinkDef.h: (include/SimLinkDef.h)
+Used to create a ROOT dictionary from the class MinimalEvent. Necessary, while
+editing trees. Build creates PTDct.cc and PTDct.h in the obj directory.
+
+libSimEvent.so: (obj/SimDct.o obj/SimEvent.o)
+A shared object that corresponds to the created ROOT library. Necessary in
+certain applications.
+
+RootJetSort: (src/RootJetSort.cpp include/RootJetSort.h)
+A script that is used within this folder. The purpose is to do jet sorting for
+the simulated particle data for any simulation type.
+
+Auxiliary scripts: (include/help_functions.h include/tdrstyle_mod1.C)
+Some additional functionalities that are used in the programs.
+
+Note:
+A complete ROOTJetSort requires a more complex event class

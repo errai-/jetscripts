@@ -19,24 +19,24 @@ INCLUDE := $(INCLUDE) -I../include -I..
 
 # Main targets
 
-StoreParticles.so : src/StoreParticles.cc ../obj/libSimEvent.so
+StoreParticles.so : src/StoreParticles.cc ../obj/libPrtclEvent.so
 	$(CXX) -shared -fPIC $^ $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o $@  
 
-../obj/SimDct.cc: ../include/SimEvent.h ../include/SimLinkDef.h
-	cd .. && $(MAKE) obj/SimDct.cc
+../obj/PrtclDct.cc: ../include/PrtclEvent.h ../include/PrtclLinkDef.h
+	cd .. && $(MAKE) obj/PrtclDct.cc
 
 # Objects
 
-../obj/SimEvent.o: ../src/SimEvent.cpp
-	cd .. && $(MAKE) obj/SimEvent.o
+../obj/PrtclEvent.o: ../src/PrtclEvent.cpp
+	cd .. && $(MAKE) obj/PrtclEvent.o
 
-../obj/SimEventDict.o: ../obj/SimDct.cc
-	cd .. && $(MAKE) obj/SimEventDict.o
+../obj/PrtclEventDict.o: ../obj/PrtclDct.cc
+	cd .. && $(MAKE) obj/PrtclEventDict.o
 
 # Shared objects
 
-../obj/libSimEvent.so: ../obj/SimEventDict.o ../obj/SimEvent.o
-	cd .. && $(MAKE) obj/libSimEvent.so
+../obj/libPrtclEvent.so: ../obj/PrtclEventDict.o ../obj/PrtclEvent.o
+	cd .. && $(MAKE) obj/libPrtclEvent.so
 
 clean:
 	rm -f $(ALLCCFILES:.cc=.so)

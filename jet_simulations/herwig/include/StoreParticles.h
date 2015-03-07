@@ -1,3 +1,8 @@
+///////////////////////////////////////////////////////////////////
+// A class for Herwig to store simulation data into a .root file //
+// Based on a template: contains some peculiarities              //
+// Hannu Siikonen 7.3.2015                                       //
+///////////////////////////////////////////////////////////////////
 // -*- C++ -*-
 #ifndef jetanalysis_StoreParticles_H
 #define jetanalysis_StoreParticles_H
@@ -19,7 +24,7 @@ using std::endl;
 #include "TCanvas.h"
 #include "TTree.h"
 #include "TFile.h"
-#include "SimEvent.h"
+#include "PrtclEvent.h"
 
 namespace jetanalysis {
 
@@ -50,7 +55,7 @@ private:
   * @debugging: in case of segfault, arraySize might be too small
   */
 
-  SimEvent *sEvent;
+  PrtclEvent *pEvent;
 //   static const size_t arraySize = 10000;
 //   double px[arraySize];
 //   double py[arraySize];

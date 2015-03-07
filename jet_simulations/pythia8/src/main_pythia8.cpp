@@ -40,7 +40,7 @@
 // scripts
 #include "help_functions.h"
 #include "pythia8_functions.h"
-#include "ParticleEvent.h"
+#include "PrtclEvent.h"
 
 using namespace Pythia8;
 using std::cout;
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
   // Create file on which a particle data tree is saved (before sampling to jets)
   TFile *outFile = new TFile("pythia8_particles.root", "RECREATE");
   TTree *tree = new TTree("Pythia8Tree","Tree filled with pythia8 data.");
-  ParticleEvent *pEvent = new ParticleEvent();
+  PrtclEvent *pEvent = new PrtclEvent();
    
   Int_t bufsize = 64000/4;
   outFile->SetCompressionLevel(comp);
