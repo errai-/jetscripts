@@ -87,17 +87,16 @@ int main(int argc, char **argv)
   TTree *tree = new TTree("Pythia8Tree","Tree filled with pythia8 data.");
   PrtclEvent *pEvent = new PrtclEvent();
    
-  Int_t bufsize = 64000/4;
+  Int_t bufsize = 64000/2;
   outFile->SetCompressionLevel(comp);
    
   // Create a ROOT Tree and one superbranch
   tree->SetAutoSave(1000000000); // autosave when 1 Gbyte written
   tree->SetCacheSize(10000000);  // set a 10 MBytes cache (useless when writing local files)
   TTree::SetBranchStyle(branchStyle);
-  TBranch *branch = tree->Branch("event", &pEvent, bufsize,2);
+  TBranch *branch = tree->Branch("event", &pEvent, bufsize,4);
   branch->SetAutoDelete(kFALSE);
   if(branchStyle) tree->BranchRef();
-  Float_t ptmin = 1;
 
 // Simulation loop:
   Timer timer;

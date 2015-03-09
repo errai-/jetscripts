@@ -1,5 +1,5 @@
-#ifndef PARTICLEEVENT_H
-#define PARTICLEEVENT_H
+#ifndef PRTCLEVENT_H
+#define PRTCLEVENT_H
 
 ///////////////////////////////////////////////////////////////////////
 // A generic event class for storing particle data from simulations. //
@@ -21,21 +21,21 @@
 #include "TClonesArray.h"
 #include "TProcessID.h"
 #include "TMath.h"
-#include "TLorentzVector.h"
 #include "TClass.h"
+#include "Math/Vector3D.h"
+#include "Math/Vector4D.h"
 
 using std::vector;
 using std::cout;
 using std::endl;
 
-
-
 class PrtclData : public TObject {
 public:
-  Double_t fPx;
-  Double_t fPy;
-  Double_t fPz;
-  Double_t fE;
+  // Use a pure ROOT LorentzVector so that for instance Pt can be found out even 
+  // without the sources of this event class. This is a slightly better format than
+  // TLorentzVector and is in use for instance in the KKousouris scripts (indirectly,
+  // through CMSSW).
+  ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
   
   Int_t fPDGCode;
   Int_t fChargeTimes3;
@@ -47,37 +47,26 @@ public:
   PrtclData() { Class()->IgnoreTObjectStreamer(); }
   virtual ~PrtclData() { }
   
-  Double_t P() const { return pow( pow(fPx,2) + pow(fPy,2) + pow(fPz,2), 0.5); }
-  Double_t Pt() const { return pow( pow(fPx,2) + pow(fPy,2), 0.5 ); }
-  Double_t Eta() const {
-    if ( P() - fPz == 0 ) return 1000000000000;
-    else return 0.5*TMath::Log( ( P() + fPz )/( P() - fPz ) ); 
-  }
-  Double_t Phi() const { return TMath::ATan2( fPy, fPx ); }
-  Double_t Mass() const { return pow( pow(fE,2) - pow( P(), 2 ), 0.5 ); }
-  
-  TLorentzVector GetLorentz() const {
-    TLorentzVector tmpVect(fPx,fPy,fPz,fE);
-    return tmpVect;
-  }
+  Double_t P() const { return fP4.P(); }
+  Double_t Pt() const { return fP4.Pt(); }
+  Double_t Eta() const { return fP4.Eta(); }
+  Double_t Phi() const { return fP4.Phi(); }
+  Double_t Mass() const { return fP4.M(); }
   
   ClassDef(PrtclData,1)
 };
 
-
-class ParticleEvent : public TObject {
+class PrtclEvent : public TObject {
 private:
-  
-  Int_t fNpart; //! Not saved to a tree
+  Int_t fNpart; //! Not saved to a tree; present amount of particles in the tree
+  Size_t fSizeLim; //! The maximal amount of particles within an event
   
   TClonesArray *fParts;
   
   static TClonesArray *fgParts;
-
 public:
-  
-  ParticleEvent(size_t = 10000);
-  virtual ~ParticleEvent();
+  PrtclEvent(size_t = 10000);
+  virtual ~PrtclEvent() { Reset(); };
 
   void Build(double,double,double,double,int,double,int=0,int=0,int=0);
   void Clear(Option_t *option ="");
@@ -90,8 +79,8 @@ public:
 
   TClonesArray *GetParts() const {return fParts;}
   
-  ClassDef(ParticleEvent, 1)
+  ClassDef(PrtclEvent, 1)
 };
 
 
-#endif // SIMEVENT_H
+#endif // PRTCLEVENT_H
