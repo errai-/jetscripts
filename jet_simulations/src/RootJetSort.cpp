@@ -174,10 +174,15 @@ bool RootJetSort::ParticlesToJetsorterInput(){
   fjInputs.clear();
       
   for (size_t i = 0; i != fParts_; ++i) {
-    fastjet::PseudoJet particleTemp(fParts_fPx[i],fParts_fPy[i],fParts_fPz[i],fParts_fE[i]);
-    if (fParts_IsJetFlavor) FlavorIndices.push_back(i);
-    particleTemp.set_user_index( i ); // To access the info of this particle within this event
-    fjInputs.push_back( particleTemp );
+    if (fParts_IsJetFlavor[i]) {
+      FlavorIndices.push_back(i);
+    } else {
+      fastjet::PseudoJet particleTemp(fParts_fPx[i],fParts_fPy[i], 
+        fParts_fPz[i],fParts_fE[i]);
+      // To access the info of this particle within this event 
+      particleTemp.set_user_index( i );  
+      fjInputs.push_back( particleTemp );
+    }
   }
   
   if (fjInputs.size() == 0) {
@@ -212,18 +217,19 @@ void RootJetSort::JetLoop(){
     if ( abs(sortedJets[i].eta()) < 1.3 && ( sortedJets[i].perp() > 80 && 
       sortedJets[i].perp() < 120 ) ){
       if ( partonHadronFlavour[0]==21 ){
-	chargeIndicator[0]->Fill(partSum);
-	chargeIndicator[2]->Fill(chargSum);
-	chargeIndicator[4]->Fill(chargWSum);
-	chargeIndicator[6]->Fill(chargW2Sum);
-	chargeIndicator[8]->Fill(w2);
+        chargeIndicator[0]->Fill(partSum);
+        chargeIndicator[2]->Fill(chargSum);
+        chargeIndicator[4]->Fill(chargWSum);
+        chargeIndicator[6]->Fill(chargW2Sum);
+        chargeIndicator[8]->Fill(w2);
       } else if ( partonHadronFlavour[isHadron] < 9 ){
-	
-	chargeIndicator[1]->Fill(partSum);
-	chargeIndicator[3]->Fill(isHadron ? chargSum : quarkJetCharge*chargSum);
-	chargeIndicator[5]->Fill(isHadron ? chargWSum : quarkJetCharge*chargWSum);
-	chargeIndicator[7]->Fill(isHadron ? chargW2Sum : quarkJetCharge*chargW2Sum);
-	chargeIndicator[9]->Fill(w2);
+        chargeIndicator[1]->Fill(partSum);
+        chargeIndicator[3]->Fill(isHadron ? chargSum : quarkJetCharge*chargSum);
+        chargeIndicator[5]->Fill(isHadron ? chargWSum : 
+          quarkJetCharge*chargWSum);
+        chargeIndicator[7]->Fill(isHadron ? chargW2Sum : 
+          quarkJetCharge*chargW2Sum);
+        chargeIndicator[9]->Fill(w2);
       }
     }
 

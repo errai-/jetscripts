@@ -36,7 +36,7 @@
 #include "fastjet/Selector.hh"
 
 // Header file for the classes stored in the TTree if any.
-#include "ParticleEvent.h"
+#include "PrtclEvent.h"
 // Fixed size dimensions of array or collections stored in the TTree if any.
 #include "help_functions.h"
 // tdrStyle
@@ -126,7 +126,7 @@ public :
   // If this is too small, Segfaults may follow.
   static const Int_t kMaxfParts = 5000;
   // Declaration of leaf types
-  //SimEvent        *event;
+  // PrtclEvent        *event;
   Int_t           fParts_;
   Double_t        fParts_fPx[kMaxfParts];   //[fParts_]
   Double_t        fParts_fPy[kMaxfParts];   //[fParts_]

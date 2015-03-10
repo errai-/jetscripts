@@ -21,7 +21,7 @@ JetEvent::~JetEvent()
 
 void JetEvent::Build( double Px, double Py, double Pz, double E, double Chf, 
   double Nhf, double Phf, double Elf, double Muf, double Chm, double Nhm, 
-  double Phm, double Elm, double Mum, int flav){
+  double Phm, double Elm, double Mum, char flav){
   Int_t ObjectNumber = TProcessID::GetObjectCount();
   
   JetData *jet;
@@ -50,8 +50,7 @@ JetData* JetEvent::AddJet()
 {
   if (fNjet>=10000) {
     fNjet = 0; // As a last resort, set the indexing to loop from beginning.
-    cout << "The container size for SimParticle is too small, set a larger one" 
-    "in the constructor" << endl;
+    cout << "The container size for SimParticle is too small, set a larger one in the constructor" << endl;
   }
   JetData *jet = (JetData*) fJets->ConstructedAt(fNjet++);
   return jet;

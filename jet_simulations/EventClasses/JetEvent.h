@@ -50,7 +50,7 @@ public:
   Double_t fElm;
   Double_t fMum;
   
-  Int_t fFlavour;
+  Char_t fFlavour;
   
   JetData() { Class()->IgnoreTObjectStreamer(); }
   virtual ~JetData() { }
@@ -67,6 +67,7 @@ public:
 
 class JetEvent : public TObject {
 private:
+  
   Int_t fNjet; //! Not saved to a tree
   
   TClonesArray *fJets;
@@ -74,11 +75,13 @@ private:
   static TClonesArray *fgJets;
 
 public:
+  
   JetEvent(size_t = 10000);
   virtual ~JetEvent();
 
-  void Build(double,double,double,double,double,double,double,double,double,
-  double, double, double, double, double,int);
+  
+void Build(double,double,double,double,double,double,double,double,double,
+  double, double, double, double, double,char);
   void Clear(Option_t *option ="");
   void Reset(Option_t *option ="");
 

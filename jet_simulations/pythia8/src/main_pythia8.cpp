@@ -56,7 +56,8 @@ int main(int argc, char **argv)
   Int_t arg5   = 600;     //default number of tracks per event
   if (argc > 1)  nevent = atoi(argv[1]);
   Int_t branchStyle = 1; //new style by default 
-  bool saveEverything = false;
+  // A flag that allows saving all particles, usage not recommmended
+  bool saveEverything = false;  
   if (argc > 2 && atoi(argv[2]) != 0){ saveEverything = true; }
 
 // Pythia Setup:
@@ -108,26 +109,32 @@ int main(int argc, char **argv)
     if (ev!=0&&ev%100==0){
       timer.print_time();
     }
-    
     for (size_t prt = 0; prt!=event.size(); ++prt){
       double status = abs( event[prt].status() );
       int tmpId = event[prt].id();
       if (saveEverything || (event[prt].isFinal() && event[prt].isVisible()) ) {  
-	int pi0Gamma = 0;
-	if ((tmpId == 22) && gammaChecker( event, prt )) pi0Gamma = 1; // Indicate pi0 photons
-	pEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),event[prt].e(), tmpId, event[prt].charge(), pi0Gamma);
-      } else if ( status == 71 || status == 72 || status == 61 || status == 62 || status == 63 ){
-	int isExcState = ((isExcitedState(event,prt,tmpId)) ? 1 : 0);
-        pEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),event[prt].e(), tmpId, event[prt].charge(), 0, 1, isExcState); 
+        // Indicate pi0 photons
+        int pi0Gamma = 0;
+        if ((tmpId == 22) && gammaChecker( event, prt )) pi0Gamma = 1;
+        // Add final particles into the tree
+        pEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),
+          event[prt].e(),tmpId, event[prt].charge(), pi0Gamma);
+      } else if ( status == 71 || status == 72 ){
+        // Status 71 and 72 recommended by CMSSW, is there a reason for the 
+        // others; 61,62,63?
+        
+        // Indicate excited state
+        int isExcState = ((isExcitedState(event,prt,tmpId)) ? 1 : 0);
+        // Add non-permanent particles and partons for flavour indication
+        pEvent->Build(event[prt].px(),event[prt].py(),event[prt].pz(),
+          event[prt].e(), tmpId, event[prt].charge(), 0, 1,isExcState); 
       } 
-
     } 
-    
     tree->Fill();  //fill the tree
     pEvent->Clear();
   }
 
-// Close the processes
+// Close the processes:
   outFile = tree->GetCurrentFile(); //just in case we switched to a new file
   tree->AutoSave("Overwrite");
   // We own the event (since we set the branch address explicitly), we need to delete it.

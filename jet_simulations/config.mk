@@ -14,7 +14,7 @@ CFLAGS :=
 CFLAGS := $(CFLAGS) -O2 -ansi -pedantic -W -Wall -Wshadow -m64 
 CXXFLAGS := $(CFLAGS) -std=c++11
 
-ROOT=$(shell root-config --cflags --glibs)
+ROOT=$(shell root-config --cflags --glibs) -lGenVector
 PYTHIA=$(shell pythia8-config --cflags --libs)
 FASTJET=$(shell fastjet-config --cxxflags --libs)
 

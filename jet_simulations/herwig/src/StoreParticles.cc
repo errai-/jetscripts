@@ -146,7 +146,7 @@ void StoreParticles::doinitrun() {
   Int_t bufsize = 64000/4;
   TTree::SetBranchStyle(branchStyle);
   pEvent = new PrtclEvent;
-  TBranch *branch = herwigTree->Branch("event", &pEvent, bufsize,2);
+  TBranch *branch = herwigTree->Branch("event", &pEvent, bufsize,4);
   branch->SetAutoDelete(kFALSE);
   if(branchStyle) herwigTree->BranchRef();
    
