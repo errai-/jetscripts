@@ -1,7 +1,0 @@
-A portable directory for loading the functions that are needed for reading the 
-event classes properly. Intended to be used with TBrowser. Usage: before 
-opening the .root file in TBrowser, run:
-
-.L EventClasses/PrtclEvent.cpp+
-or
-.L EventClasses/JetEvent.cpp+

@@ -4,10 +4,7 @@
 // Stdlib header file for input and output.
 #include <iostream>
 #include <cstdlib>
-#include <vector>
 #include <string>
-#include <sstream>
-#include <fstream>
 #include <iomanip>
 // Nice libraries from C
 #include <cmath>
@@ -24,136 +21,134 @@ using std::endl;
 // Timer class for showing the progress of a simulation
 
 class Timer{
-  private:
-    std::clock_t start;
-    int nEvent;
-    int dEvent; // spacing of time/event lattice
-    int cEvent = 0; // current event
-    int hours; 
-    int minutes; 
-    int seconds; 
+public:
+   Timer(){}
     
-  public:
-    Timer(){}
+   Timer(int eventNo, int dEvent): mCurr(0), mTotal(eventNo), mDelta(dEvent) {}
     
-    Timer(int _nEvent, int _dEvent): nEvent(_nEvent),dEvent(_dEvent) {}
-    
-    ~Timer(){}
+   ~Timer(){}
 
-    void set_params(int _nEvent, int _dEvent){
-      nEvent = _nEvent;
-      dEvent = _dEvent;
-    }
+   void setParams(int eventNo, int dEvent) 
+   {
+      mTotal = eventNo;
+      mDelta = dEvent;
+   }
     
-    void start_timing(){
-      start = std::clock(); 
-    }
+   void startTiming() 
+   {
+      mStart = std::clock(); 
+   }
     
-    void count_time(){
-      cEvent += dEvent;
-      double time_processor = (std::clock() - start)/(( (double) CLOCKS_PER_SEC ) );
-      time_processor = time_processor*( ((double) nEvent)/cEvent-1); 
-      minutes =  time_processor/60; 
-      hours = minutes/60;
-      seconds = time_processor-60*minutes;
-      minutes = minutes - hours*60;
-    }
+   void countTime() 
+   {
+      mCurr += mDelta;
+      double timeProcessor = (std::clock() - mStart)/( (double) CLOCKS_PER_SEC);
+      timeProcessor = timeProcessor*( ((double) mTotal)/mCurr-1); 
+      mMinutes =  timeProcessor/60; 
+      mHours = mMinutes/60;
+      mSeconds = timeProcessor-60*mMinutes;
+      mMinutes = mMinutes - mHours*60;
+   }
 
-    void print_time(){
-      count_time();
-      cout << cEvent << " events created, ETA : " << hours << "h" <<
-        minutes << "m" << seconds << "s." << endl;
-    }
+   void printTime() {
+      countTime();
+      cout << mCurr << " events created, ETA : " << mHours << "h" <<
+        mMinutes << "m" << mSeconds << "s." << endl;
+   }
+
+private:
+   std::clock_t mStart;
+   int mTotal;
+   int mDelta; // spacing of time/event lattice
+   int mCurr;  // current event
+   int mHours; 
+   int mMinutes; 
+   int mSeconds;    
 };
 
 
-// Difference in R of two jets
-
-static double deltaR( double phi1, double phi2, double eta1, double eta2 ){
-  
-  double dPhi = abs(phi1-phi2);
-  while ( dPhi >  TMath::Pi() ) dPhi -= TMath::Pi();
-  
-  double dEta = eta1 - eta2;
-  
-  return pow( pow( dPhi, 2 ) + pow( dEta, 2 ) , 0.5 );
+// Some functions for PDG particle code recognition:
+static int isBottom(int id) 
+{
+   int code1;
+   int code2;
+   bool tmpHasBottom = false;
+   code1 = (int)( ( abs( id ) / 100)%10 );
+   code2 = (int)( ( abs( id ) /1000)%10 );
+   if ( code1 == 5 || code2 == 5) tmpHasBottom = true;
+   return tmpHasBottom;
 }
 
-// Some functions for pdg particle code recognition:
-
-static int isBottom( int id ) {
-  int code1;
-  int code2;
-  bool tmpHasBottom = false;
-  code1 = (int)( ( abs( id ) / 100)%10 );
-  code2 = (int)( ( abs( id ) /1000)%10 );
-  if ( code1 == 5 || code2 == 5) tmpHasBottom = true;
-  return tmpHasBottom;
+static int isCharm(int id) 
+{
+   int code1;
+   int code2;
+   bool tmpHasCharm = false;
+   code1 = (int)( ( abs( id ) / 100)%10 );
+   code2 = (int)( ( abs( id ) /1000)%10 );
+   if ( code1 == 4 || code2 == 4) tmpHasCharm = true;
+   return tmpHasCharm;
 }
 
-static int isCharm( int id ) {
-  int code1;
-  int code2;
-  bool tmpHasCharm = false;
-  code1 = (int)( ( abs( id ) / 100)%10 );
-  code2 = (int)( ( abs( id ) /1000)%10 );
-  if ( code1 == 4 || code2 == 4) tmpHasCharm = true;
-  return tmpHasCharm;
+static int isStrange( int id ) 
+{
+   int code1;
+   int code2;
+   bool tmpHasStrange = false;
+   code1 = (int)( ( abs( id ) / 100)%10 );
+   code2 = (int)( ( abs( id ) /1000)%10 );
+   if ( code1 == 3 || code2 == 3) tmpHasStrange = true;
+   return tmpHasStrange;
 }
 
-static int isStrange( int id ) {
-  int code1;
-  int code2;
-  bool tmpHasStrange = false;
-  code1 = (int)( ( abs( id ) / 100)%10 );
-  code2 = (int)( ( abs( id ) /1000)%10 );
-  if ( code1 == 3 || code2 == 3) tmpHasStrange = true;
-  return tmpHasStrange;
+static int isDown( int id ) 
+{
+   int code1;
+   int code2;
+   bool tmpHasDown = false;
+   code1 = (int)( ( abs( id ) / 100)%10 );
+   code2 = (int)( ( abs( id ) /1000)%10 );
+   if ( code1 == 2 || code2 == 2) tmpHasDown = true;
+   return tmpHasDown;
 }
 
-static int isDown( int id ) {
-  int code1;
-  int code2;
-  bool tmpHasDown = false;
-  code1 = (int)( ( abs( id ) / 100)%10 );
-  code2 = (int)( ( abs( id ) /1000)%10 );
-  if ( code1 == 2 || code2 == 2) tmpHasDown = true;
-  return tmpHasDown;
+static int isUp( int id ) 
+{
+   int code1;
+   int code2;
+   bool tmpHasUp = false;
+   code1 = (int)( ( abs( id ) / 100)%10 );
+   code2 = (int)( ( abs( id ) /1000)%10 );
+   if ( code1 == 1 || code2 == 1) tmpHasUp = true;
+   return tmpHasUp;
 }
 
-static int isUp( int id ) {
-  int code1;
-  int code2;
-  bool tmpHasUp = false;
-  code1 = (int)( ( abs( id ) / 100)%10 );
-  code2 = (int)( ( abs( id ) /1000)%10 );
-  if ( code1 == 1 || code2 == 1) tmpHasUp = true;
-  return tmpHasUp;
+static int statusCheck( int id1, int id2 )
+{
+   if ( id1 == 5 && isBottom( id2 ) ) return 1;
+   if ( id1 == 4 && isCharm( id2 ) ) return 1;
+   if ( id1 == 3 && isStrange( id2 ) ) return 1;
+   if ( id1 == 2 && isDown( id2 ) ) return 1;
+   if ( id1 == 1 && isUp( id2 ) ) return 1;
+   return 0;
 }
 
-static int statusCheck( int id1, int id2 ){
-  if ( id1 == 5 && isBottom( id2 ) ) return 1;
-  if ( id1 == 4 && isCharm( id2 ) ) return 1;
-  if ( id1 == 3 && isStrange( id2 ) ) return 1;
-  if ( id1 == 2 && isDown( id2 ) ) return 1;
-  if ( id1 == 1 && isUp( id2 ) ) return 1;
-  return 0;
-}
 
-static int ChargeSign( int id ){
-  if ( id == 1 ) return 1;
-  if ( id == -2 ) return 1;
-  if ( id == -3 ) return 1;
-  if ( id == 4 ) return 1;
-  if ( id == -5 ) return 1;
-  if ( id == 6 ) return 1;
-  if ( id == -1 ) return -1;
-  if ( id == 2 ) return -1;
-  if ( id == 3 ) return -1;
-  if ( id == -4 ) return -1;
-  if ( id == 5 ) return -1;
-  if ( id == -6 ) return -1;
-  return 1;
+static int ChargeSign( int id )
+{
+   if ( id == 1 ) return 1;
+   if ( id == -2 ) return 1;
+   if ( id == -3 ) return 1;
+   if ( id == 4 ) return 1;
+   if ( id == -5 ) return 1;
+   if ( id == 6 ) return 1;
+   if ( id == -1 ) return -1;
+   if ( id == 2 ) return -1;
+   if ( id == 3 ) return -1;
+   if ( id == -4 ) return -1;
+   if ( id == 5 ) return -1;
+   if ( id == -6 ) return -1;
+   return 1;
 }
 
 #endif // HELP_FUNCTIONS_H

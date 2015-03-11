@@ -1,6 +1,6 @@
 ###################################################################
 ## Makefile for building ROOT-fastjet analysis of simulated data ## 
-## Hannu Siikonen, 04.02.2015                                    ##  
+## Hannu Siikonen, 11.03.2015                                    ##  
 ###################################################################
 
 -include config.mk
@@ -17,8 +17,9 @@ all:
 
 # Main targets
 
-jetanalysis: src/main_$$@.cpp obj/jetanalysis.o obj/libPrtclEvent.so obj/libJetEvent.so
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
+main_jetanalysis: jetanalysis/$$@.cpp obj/jetanalysis.o lib/libPrtclEvent.so lib/libJetEvent.so
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o \
+jetanalysis.exe
 
 rootjetsort: src/main_$$@.cpp obj/rootjetsort.o obj/libPrtclEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
@@ -26,29 +27,36 @@ rootjetsort: src/main_$$@.cpp obj/rootjetsort.o obj/libPrtclEvent.so
 ptcut: src/main_$$@.cpp obj/ptcut.o obj/libPrtclEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
 
-obj/PrtclDct.cc: include/PrtclEvent.h include/PrtclLinkDef.h
+obj/PrtclDct.cc: events/PrtclEvent.h events/PrtclLinkDef.h
 	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) $^
 
-obj/JetDct.cc: include/JetEvent.h include/JetLinkDef.h
+obj/JetDct.cc: events/JetEvent.h events/JetLinkDef.h
 	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) $^
+
+main_pythia8: pythia8/$$@.cpp $(PYTHIALIB) lib/libPrtclEvent.so
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o \
+pythia8.exe
+
+main_test: pythia8/$$@.cpp $(PYTHIALIB)
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o test.exe
 
 # Shared objects
 
-obj/libPrtclEvent.so: obj/PrtclEvent.o obj/PrtclEventDict.o
+lib/libPrtclEvent.so: obj/PrtclEvent.o obj/PrtclEventDict.o
 	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
 
-obj/libJetEvent.so: obj/JetEvent.o obj/JetEventDict.o
+lib/libJetEvent.so: obj/JetEvent.o obj/JetEventDict.o
 	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
 
 # Objects
 
-obj/PrtclEvent.o: src/PrtclEvent.cpp
+obj/PrtclEvent.o: events/PrtclEvent.cpp
 	$(CXX) -fPIC -pthread $^ $(INCLUDE) $(CXXFLAGS) $(ROOT) -c -w -ldl -o $@
 
 obj/PrtclEventDict.o: obj/PrtclDct.cc
 	$(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread -c $^ -o $@
 
-obj/JetEvent.o: src/JetEvent.cpp
+obj/JetEvent.o: events/JetEvent.cpp
 	$(CXX) -fPIC -pthread $^ $(INCLUDE) $(CXXFLAGS) $(ROOT) -c -w -ldl -o $@
 
 obj/JetEventDict.o: obj/JetDct.cc
@@ -57,7 +65,7 @@ obj/JetEventDict.o: obj/JetDct.cc
 obj/rootjetsort.o: src/RootJetSort.cpp
 	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
-obj/jetanalysis.o: src/JetAnalysis.cpp obj/libJetEvent.so obj/libPrtclEvent.so
+obj/jetanalysis.o: jetanalysis/JetAnalysis.cpp lib/libJetEvent.so lib/libPrtclEvent.so
 	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
 obj/ptcut.o: src/PTCut.cpp
