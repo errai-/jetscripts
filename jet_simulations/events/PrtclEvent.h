@@ -28,7 +28,7 @@ public:
    virtual ~PrtclData() { }
 
    void SetPxPyPzE(double,double,double,double);
-   void SetParams(int,double,int,int,int);
+   void SetParams(int,double,int);
    
    Double_t P() const { return fP4.P(); }
    Double_t Pt() const { return fP4.Pt(); }
@@ -45,10 +45,13 @@ private:
   
    int fPDGCode;
    int fChargeTimes3;
-  
-   int fIsPi0Photon;
-   int fIsJetFlavor;
-   int fIsExcitedState;
+   
+   /* Indicates why the particle was saved and/or other properties it holds.
+    * 1: Stable particle with no other distinctive features
+    * 10: pi0 photon (stable)
+    * 11: parton/gluon for jet flavour studies
+    * 12: hadron for jet flavour studies */
+   int fAnalysisStatus;
    
 public:
    ClassDef(PrtclData,1)
@@ -62,7 +65,7 @@ public:
    PrtclEvent(size_t = 10000);
    virtual ~PrtclEvent() { Reset(); };
 
-   void AddPrtcl(double,double,double,double,int,double,int=0,int=0,int=0);
+   void AddPrtcl(double,double,double,double,int,double,int);
    PrtclData *InitPrtcl();
 
    void Clear(Option_t *option ="");

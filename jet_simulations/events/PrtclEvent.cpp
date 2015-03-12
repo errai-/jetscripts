@@ -16,14 +16,11 @@ void PrtclData::SetPxPyPzE(double px, double py, double pz, double e)
 }
 
 
-void PrtclData::SetParams(int id, double charge, int pi0Gamma, int jetFlavor, 
-int    isExcitedState )
+void PrtclData::SetParams(int id, double charge, int status)
 {
    fPDGCode = id;
    fChargeTimes3 = TMath::Nint(3*charge);
-   fIsPi0Photon = (pi0Gamma ? true : false);
-   fIsJetFlavor = (jetFlavor ? true : false);
-   fIsExcitedState = (isExcitedState ? true : false);
+   fAnalysisStatus = status;
 }
 
 
@@ -37,16 +34,16 @@ PrtclEvent::PrtclEvent(size_t tmpStore)
 }
 
 
-void PrtclEvent::AddPrtcl( double px, double py, double pz, double e, int id, 
-   double charge, int pi0Gamma, int jetFlavor, int isExcitedState)
+void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id, 
+   double charge, int status)
 {
    int ObjectNumber = TProcessID::GetObjectCount();
   
    PrtclData *part;
    part = InitPrtcl();
    part->SetPxPyPzE(px,py,pz,e);
-   part->SetParams(id,charge,pi0Gamma,jetFlavor,isExcitedState);
-
+   part->SetParams(id,charge,status);
+   
    TProcessID::SetObjectCount(ObjectNumber);
 }
 

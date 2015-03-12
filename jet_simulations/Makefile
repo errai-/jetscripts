@@ -17,7 +17,7 @@ all:
 
 # Main targets
 
-main_jetanalysis: jetanalysis/$$@.cpp obj/jetanalysis.o lib/libPrtclEvent.so lib/libJetEvent.so
+main_jetanalysis: jetsorting/$$@.cpp obj/jetanalysis.o lib/libPrtclEvent.so lib/libJetEvent.so
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o \
 jetanalysis.exe
 
@@ -65,7 +65,7 @@ obj/JetEventDict.o: obj/JetDct.cc
 obj/rootjetsort.o: src/RootJetSort.cpp
 	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
-obj/jetanalysis.o: jetanalysis/JetAnalysis.cpp lib/libJetEvent.so lib/libPrtclEvent.so
+obj/jetanalysis.o: jetsorting/JetAnalysis.cpp lib/libJetEvent.so lib/libPrtclEvent.so
 	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
 obj/ptcut.o: src/PTCut.cpp
