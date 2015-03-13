@@ -2,38 +2,17 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <algorithm>
 // Nice libraries from C
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
 
-// ROOT, for histogramming.
-#include "TROOT.h"
-#include "TH1.h"
-#include "TF1.h"
-#include "TProfile.h"
-#include "THStack.h"
-#include "TStyle.h"
-// ROOT, for interactive graphics.
-#include "TVirtualPad.h"
-#include "TApplication.h"
-// ROOT, for saving a file.
-#include "TFile.h"
-#include "TCanvas.h"
-#include "TLegend.h"
 // ROOT, Trees
 #include "TTree.h"
 #include "TChain.h"
-#include "TBranch.h"
-#include "TLeaf.h"
-#include "TKey.h"
-#include "TList.h"
-#include "TIterator.h"
-#include "TString.h"
 
-// tdrStyle
-//#include "tdrstyle_mod1.C"
 // scripts
 #include "JetAnalysis.h"
 
@@ -43,28 +22,54 @@ using std::string;
 using std::vector;
 
 
-
 int main(int argc, char* argv[]) {
 
-  // Create a chain that includes the necessary tree
-  // There are a couple of different data options available.
-  string treePath = "Pythia8Tree";
-  string name ="pythia8_particles.root";
-  if (argc > 1) {
-    if ( argv[1] == "1" ){
+   /* Create a chain that includes the necessary tree
+    * There are a couple of different data options available. */
+   if (argc < 2) {
+      cout << "Mode of operation: ./a (mode of operation) (save file) (read file)" << endl;
+      cout << "Mode of operation has to be entered, either 'p8' for pythia8 or" 
+         "'hpp' for herwig++" << endl;
+      return 1;
+   }
+   string treePath;
+   string fileName; ="pythia8_particles.root";
+   
+   vector<string> modes;
+   modes.push_back("p8"); modes.push_back("hpp");
+   if (std::find(modes.begin(),modes.end(),"p8") != modes.last()) {
+      treePath = "Pythia8Tree";
+      fileName = "pythia8_particles.root";
+   } else if (std::find(modes.begin(),modes.end(),"hpp") != modes.last()) {
       treePath = "HerwigTree";
-      name = "herwig_particles.root";
-    }
-  }
+      fileName = "herwig_particles.root";
+   } else {
+      cout << "Enter a proper mode of operation (run ./a for further info)" << endl;
+      return 1;
+   }
+   
+   if (argc > 2) {
+      fileName = rootFileName( argv[2] );
+   }
+   
+   string outFile = "jet_storage.root";
+   if (argc > 3) {
+      outFile = rootFileName( argv[3] );
+   }
+   
+   TChain *forest = new TChain(treePath.c_str(), outFile.c_str());
+   /* This opens the tree with the highest key value with the given treePath */
+   forest->AddFile(fileName.c_str());
+ 
+   if (forest->GetEntries()==0) {
+      cout << "Incorrect file name " << fileName << " or tree with zero events" << endl;
+      return 1;
+   }
+   
+   JetAnalysis treeHandle(forest);
+   treeHandle.EventLoop();
   
-  TChain *forest = new TChain(treePath.c_str());
-  
-  // This opens the tree with the highest key value with the given treePath
-  forest->AddFile(name.c_str());
-  
-  JetAnalysis treeHandle(forest);
-  
-  treeHandle.EventLoop();
-  
-  delete forest;
+   delete forest;
+   
+   return 0;
 }

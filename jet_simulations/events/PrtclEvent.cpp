@@ -50,12 +50,7 @@ void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id,
 
 PrtclData* PrtclEvent::InitPrtcl()
 {
-   if (fN_Prtcl>fSizeLim) {
-      // As a last resort, set the indexing to loop from beginning.
-      fN_Prtcl = 0; 
-      cout << "The container size for PrtclData is too small, set a larger one" 
-         "in the constructor" << endl;
-   }
+   assert(fSizeLim>fN_Prtcl);
    PrtclData *part = (PrtclData*) fPrtcls->ConstructedAt(fN_Prtcl++);
    return part;
 }

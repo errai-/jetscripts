@@ -3,12 +3,13 @@
 
 ///////////////////////////////////////////////////////////////////////
 // A generic event class for storing particle data from simulations. //
-// Hannu Siikonen 11.3.2015                                           //
+// Hannu Siikonen 11.3.2015                                          //
 // (special thanks to Rene Brun's ROOT examples)                     //
 ///////////////////////////////////////////////////////////////////////
 
 #include <iostream>
 #include <cmath>
+#include <cassert>
 
 #include "TROOT.h"
 #include "TObject.h"
@@ -47,10 +48,12 @@ private:
    int fChargeTimes3;
    
    /* Indicates why the particle was saved and/or other properties it holds.
-    * 1: Stable particle with no other distinctive features
+    * 1: generic particle (stable)
     * 10: pi0 photon (stable)
     * 11: parton/gluon for jet flavour studies
-    * 12: hadron for jet flavour studies */
+    * 12: b hadron for jet flavour studies
+    * 13: c hadron for jet flavour studies
+    * 14: leptons for jet flavour studies*/
    int fAnalysisStatus;
    
 public:

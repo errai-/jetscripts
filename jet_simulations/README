@@ -1,27 +1,53 @@
-This base directory holds the code for processing jets from Herwig, Pythia8
-and Pythia6 particle data. The actual particle data is generated within
-the subfolders. The scripts that are in general use are located in this folder.
-If necessary, the Makefiles in the subfolders refer to the makefile located in
-this folder.
+Last update 13.3.2015
 
-SimEvent: (src/SimEvent.cpp, include/SimEvent.h)
-A definition for the information that is storaged while making a simulation.
-Built to a shared object, since this is frequently used.
+This software collection is designed for simulating proton collisions, saving the
+particle data and processing the particle data to suitable jet data. The simulations
+can be done with pythia8, Herwig++ and pythia6 (TODO). Folder contents:
 
-SimLinkDef.h: (include/SimLinkDef.h)
-Used to create a ROOT dictionary from the class MinimalEvent. Necessary, while
-editing trees. Build creates PTDct.cc and PTDct.h in the obj directory.
+// pythia8: The files used for pythia8 simulations.
 
-libSimEvent.so: (obj/SimDct.o obj/SimEvent.o)
-A shared object that corresponds to the created ROOT library. Necessary in
-certain applications.
+Usage:
+ make main_pythia8
+ ./pythia8.exe (number of events) (save file name) (setting file name)
 
-RootJetSort: (src/RootJetSort.cpp include/RootJetSort.h)
-A script that is used within this folder. The purpose is to do jet sorting for
-the simulated particle data for any simulation type.
+// herwig: The files used for herwig simulations.
 
-Auxiliary scripts: (include/help_functions.h include/tdrstyle_mod1.C)
-Some additional functionalities that are used in the programs.
+Usage:
+ --
+ --
 
-Note:
-A complete ROOTJetSort requires a more complex event class
+// pythia6: The files used for pythia6 simulations.
+TODO
+Usage:
+ --
+ --
+
+// jetsorting: The programs used for jet sorting and storaging.
+
+Notes:
+ rootjetsor and ptcut are in principle functional, but these are to be 
+ combined and updated into a similar file as jetanalysis.
+
+Usage:
+ make main_jetanalysis
+ ./jetanalysis (mode of operation) (read file name) (save file name)
+
+// events: Event classes used for storaging data.
+
+Notes:
+ These are used automatically by the different programs.
+
+ PrtclEvent should be edited only in extreme cases, since the particle data
+ itself consumes massive amounts of space. Other events can be modified more
+ lightly. If modifications are to be made, the appropriate branches and data
+ variables should be created. Also care should be taken with the programs that
+ use the results.
+
+Usage:
+ The events-folder is portable and can be easily shared. Thus, running
+ '.L events/***Event.cpp+' allows to easily load the libraries needed for
+ showing different functions present in the event.
+
+// obj, lib: Objects, libraries etc. needed while building the programs.
+
+// generic: Some generic files and programs that don't fit elsewhere.

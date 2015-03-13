@@ -1,0 +1,7 @@
+Last update 13.03.2015
+
+This repository consists of event classes that may be used for creating trees
+and afterwards, reading them (most notably, using the provided functions
+while reading). These are designed to work with complex scripts, but for
+simple reading purposes the functionalities of ROOT may be utilized. Simply
+by loading the .C -files (adding a +) the packages should work.

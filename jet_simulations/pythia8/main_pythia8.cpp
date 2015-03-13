@@ -7,7 +7,8 @@
 #include <iostream>
 #include <cmath>
 #include <ctime>
-// #define NDEBUG
+#include <string>
+// #define NDEBUG /* Uncomment to skip asserts */
 #include <cassert>
 
 /* Header file to access Pythia 8 program elements. */
@@ -27,6 +28,7 @@
 #include "events/PrtclEvent.h"
 
 using namespace Pythia8;
+using std::string;
 
 int main(int argc, char **argv)
 {
@@ -36,15 +38,24 @@ int main(int argc, char **argv)
    
    /* Create Pythia instance and set it up to generate hard QCD processes
     * above pTHat = 20 GeV for pp collisions at 14 TeV. */
+   string settings = "pythia8/pythiaSettings.cmnd";
+   if (argc > 3) {
+      settings = "pythia8/";
+      settings += argv[3];
+   }
    Pythia pythia;
    Event& event = pythia.event;
-   pythia.readFile("pythia8/pythiaSettings.cmnd");
+   pythia.readFile(settings.c_str());
    pythia.init();
    pythia.settings.listChanged();
   
    /* Create file on which a particle data tree is saved 
     * (before sampling to jets) */
-   TFile *outFile = new TFile("pythia8_particles.root", "RECREATE");
+   string fileName = "pythia8_particles.root";
+   if (argc > 2) {
+      fileName = rootFileName( argv[2] );
+   }
+   TFile *outFile = new TFile(fileName.c_str(), "RECREATE");
    outFile->SetCompressionLevel(1); /* File is compressed */
    
    TTree *tree = new TTree("Pythia8Tree","Tree filled with pythia8 data.");
@@ -82,10 +93,17 @@ int main(int argc, char **argv)
          
          /* Ghost partons/particles. There might be a small overlap with stable hadrons. */
          int ghostStatus = 0;
-         if ( status == 71 || status == 72 ) { 
+         if (status==71 || status==72) { 
             ghostStatus = 11; /* Partons */
-         } else if ( (abs(tmpId) >= 100) && !isExcitedHadronState(event,prt,tmpId)) { 
-            ghostStatus = 12; /* Hadrons */
+         } else if (abs(tmpId) >= 100) { /* Status codes below this are not hadrons */
+            if (hasBottom(tmpId) && !isExcitedHadronState(event,prt,5)) {
+               ghostStatus = 12; /* b Hadrons */
+            } /* A hadron may be in both categories -> no 'else' */
+            if (hasCharm(tmpId) && !isExcitedHadronState(event,prt,4)) {  
+               ghostStatus = 13; /* c Hadrons */
+            }
+         } else if (status==1 || status==2) {
+            ghostStatus = 13; /* Leptons */
          }
          
          if (ghostStatus) {

@@ -10,6 +10,7 @@
 //#include "TROOT.h"
 #include <iostream>
 #include <cmath>
+#include <cassert>
 
 #include "TROOT.h"
 #include "TObject.h"
@@ -79,7 +80,8 @@ public:
 
 private:
    size_t fN_Jet; //! 
-  
+   size_t fSizeLim; //! Maximal amount of particles within an event
+
    TClonesArray *fJets;
    static TClonesArray *fgJets;
  

@@ -44,7 +44,7 @@ public :
 
    ~JetAnalysis();
    
-   virtual void     Init(TTree *tree); // Chain
+   virtual void     Init(TTree*, char* = "jet_storage.root"); // Chain
   
    virtual Int_t    GetEntry(Long64_t);
    virtual Long64_t LoadTree(Long64_t);

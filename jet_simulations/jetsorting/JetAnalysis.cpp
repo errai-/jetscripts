@@ -4,14 +4,14 @@
 // Setup:
 /////////
 
-JetAnalysis::JetAnalysis(TTree *tree ) : fChain(0) 
+JetAnalysis::JetAnalysis(TTree *tree, char *outFile ) : fChain(0) 
 {
    assert(tree);
    Init(tree);
   
    jetDef = new fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
   
-   fOutFile = new TFile("jet_storage.root", "RECREATE");
+   fOutFile = new TFile(outFile, "RECREATE");
    fOutFile->SetCompressionLevel(1);
    fOutTree = new TTree("JetTree","Tree with jet data");
   
@@ -235,11 +235,9 @@ void JetAnalysis::FlavorLoop(size_t i){
             
             // Hadrons, set the id's to correspond to the hadron flavour
             if (stat == 12) {
-               if (isBottom(id)) {
-                  hadronFlav = 5;
-               } else if (hadronFlav != 5 && isCharm(id)) {
-                  hadronFlav = 4;
-               }
+               hadronFlav = 5;
+            } else if (stat == 13) {
+               hadronFlav = 4;
             } else if (stat = 11) {
                if (!hardestLightParton && (id==1 || id==2 || id==3 || id==21)) { 
                   hardestLightParton = abs(id);

@@ -37,6 +37,7 @@ JetEvent::JetEvent(size_t tmpStore)
    Class()->IgnoreTObjectStreamer();
    fN_Jet = 0;
    if (!fgJets) fgJets = new TClonesArray("JetData",tmpStore);
+   fSizeLim = tmpStore;
    fJets = fgJets;
 }
 
@@ -64,11 +65,7 @@ void JetEvent::AddJet( double Px, double Py, double Pz, double E, double Chf,
 
 JetData* JetEvent::InitJet()
 {
-   if (fN_Jet>=1000) {
-      fN_Jet = 0; // As a last resort, set the indexing to loop from beginning.
-      cout << "The container size for SimParticle is too small, set a larger one" 
-      "in the constructor" << endl;
-   }
+   assert(fSizeLim>fN_Jet);
    JetData *jet = (JetData*) fJets->ConstructedAt(fN_Jet++);
    return jet;
 }

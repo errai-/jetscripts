@@ -1,7 +1,7 @@
-////////////////////////////////////////////////////////////////////////
-// This holds all the auxiliary functions and classes of pythia8 sims //
-// Hannu Siikonen 7.3.2015                                            //
-////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+// This holds the auxiliary functions and classes that require pythia8 //
+// Hannu Siikonen 7.3.2015                                             //
+/////////////////////////////////////////////////////////////////////////
 
 #ifndef PYTHIA8_FUNCTIONS
 #define PYTHIA8_FUNCTIONS 
@@ -10,12 +10,10 @@
 #include <iostream>
 #include <cstdlib>
 #include <cassert>
+#include <cmath>
 
 /* Header file to access Pythia 8 program elements. */
 #include "Pythia8/Pythia.h"
-
-#include <cmath>
-
 #include "generic/help_functions.h"
 
 using namespace Pythia8;
@@ -37,42 +35,35 @@ static int gammaChecker( Event &event, int idx ) {
 
 
 static int statusCheck(int,int);
+static int hasTop(int);
+static int hasBottom(int);
+static int hasCharm(int);
+static int hasStrange(int);
+static int hasDown(int);
+static int hasUp(int);
 
 /* See HadronAndPartonSelector.cc in cmssw, indicates whether a hadron (used for 
  * flavour inspection) is in an excited state or not. This basically checks
- * whether a hadron has a daughter of the same flavour. */
-static int isExcitedHadronState(Event &event, int idx, int id) {
+ * whether a hadron has a daughter of the same flavour. 
+ * The parameter quarkId should be a PDG quark flavour. */
+static int isExcitedHadronState(Event &event, int idx, int quarkId) {
    assert( event.size() > idx );
+   assert( quarkId>=0 && quarkId<=6 );
 
    int dtr1 = event[idx].daughter1(), dtr2 = event[idx].daughter2();   
    if (dtr2 != 0){
       if (dtr1 < dtr2){
          for (int i = dtr1; i <= dtr2; i++) {
-            if ( statusCheck(id, event[i].id()) ) return 1;
+            if ( statusCheck(quarkId, event[i].id()) ) return 1;
          }
       } else {
-         if ( statusCheck(id, event[dtr1].id()) ) return 1;
-         if ( statusCheck(id, event[dtr2].id()) ) return 1;
+         if ( statusCheck(quarkId, event[dtr1].id()) ) return 1;
+         if ( statusCheck(quarkId, event[dtr2].id()) ) return 1;
       }
    } else if (dtr1 != 0) {
-      if ( statusCheck(id, event[dtr1].id()) ) return 1;
+      if ( statusCheck(quarkId, event[dtr1].id()) ) return 1;
    }
    return 0;
 }
-
-
-/* Helper function for isExcitedState */
-static int statusCheck( int id1, int id2 )
-{
-   switch (id1) {
-      case 5: return isBottom(id2);
-      case 4: return isCharm(id2);
-      case 3: return isStrange(id2);
-      case 2: return isDown(id2);
-      case 1: return isUp(id2);
-      default: return 0;
-   }
-}
-
 
 #endif // PYTHIA8_FUNCTIONS 
