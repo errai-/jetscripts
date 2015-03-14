@@ -1,12 +1,10 @@
-//////////////////////////////////////////////////////////////
-// This class sorts pythia8 jets with the fastjet algorithm.// 
-// See READMEi_ScriptInfo for further details.              //
-// Hannu Siikonen 11.03.2015                                //
-//////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// This class sorts simulated jets with the fastjet algorithm.// 
+// Hannu Siikonen 11.03.2015                                  //
+////////////////////////////////////////////////////////////////
 
 #include <iostream>
 #include <cmath>
-#include <ctime>
 #include <string>
 // #define NDEBUG /* Uncomment to skip asserts */
 #include <cassert>
@@ -19,7 +17,6 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
-#include "TClonesArray.h"
 
 /* scripts */
 #include "generic/help_functions.h"
