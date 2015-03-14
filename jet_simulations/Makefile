@@ -48,6 +48,9 @@ lib/libPrtclEvent.so: obj/PrtclEvent.o obj/PrtclEventDict.o
 lib/libJetEvent.so: obj/JetEvent.o obj/JetEventDict.o
 	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
 
+herwig/libStoreParticles.so : herwig/StoreParticles.cc lib/libPrtclEvent.so
+	$(CXX) -shared -fPIC $^ $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o $@
+
 # Objects
 
 obj/PrtclEvent.o: events/PrtclEvent.cpp

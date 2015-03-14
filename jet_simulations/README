@@ -13,8 +13,8 @@ Usage:
 // herwig: The files used for herwig simulations.
 
 Usage:
- --
- --
+ make herwig/StoreParticles.so
+ the herwig simulation has to be run within the herwig folder, see the readme there
 
 // pythia6: The files used for pythia6 simulations.
 TODO

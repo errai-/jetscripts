@@ -40,11 +40,11 @@ using std::vector;
 class JetAnalysis 
 {
 public : 
-   JetAnalysis(TTree * = 0);
+   JetAnalysis(TTree * = 0, const char* = "jet_storage.root");
 
    ~JetAnalysis();
    
-   virtual void     Init(TTree*, char* = "jet_storage.root"); // Chain
+   virtual void     Init(TTree*); // Chain
   
    virtual Int_t    GetEntry(Long64_t);
    virtual Long64_t LoadTree(Long64_t);

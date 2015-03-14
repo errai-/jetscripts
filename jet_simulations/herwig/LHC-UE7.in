@@ -90,6 +90,6 @@ cd /Herwig/Generators
 ##################################################
 # Save run for later usage with 'Herwig++ run'
 ##################################################
-saverun LHC-UE7-2_without_cutoff LHCGenerator
+saverun LHC-UE7-2 LHCGenerator
 
 

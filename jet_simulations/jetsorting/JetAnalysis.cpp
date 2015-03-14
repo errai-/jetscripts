@@ -4,7 +4,7 @@
 // Setup:
 /////////
 
-JetAnalysis::JetAnalysis(TTree *tree, char *outFile ) : fChain(0) 
+JetAnalysis::JetAnalysis(TTree *tree, const char *outFile ) : fChain(0) 
 {
    assert(tree);
    Init(tree);

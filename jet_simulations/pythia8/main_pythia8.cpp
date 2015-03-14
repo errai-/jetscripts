@@ -16,7 +16,6 @@
 
 // ROOT
 #include "TROOT.h"
-#include "TApplication.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -32,7 +31,6 @@ using std::string;
 
 int main(int argc, char **argv)
 {
-   TApplication theApp("event_generation", &argc, argv);
    size_t nEvent = 400;
    if (argc > 1) nEvent = atoi(argv[1]); assert( nEvent > 0 );
    

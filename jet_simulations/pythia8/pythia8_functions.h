@@ -34,14 +34,6 @@ static int gammaChecker( Event &event, int idx ) {
 }
 
 
-static int statusCheck(int,int);
-static int hasTop(int);
-static int hasBottom(int);
-static int hasCharm(int);
-static int hasStrange(int);
-static int hasDown(int);
-static int hasUp(int);
-
 /* See HadronAndPartonSelector.cc in cmssw, indicates whether a hadron (used for 
  * flavour inspection) is in an excited state or not. This basically checks
  * whether a hadron has a daughter of the same flavour. 

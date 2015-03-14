@@ -15,12 +15,12 @@ all : $(ALLCCFILES:.cc=.so)
 INCLUDE := $(INCLUDE) -I../include -I..
 
 #%.so : %.cc %.h 
-#	$(CXX) -shared -fPIC $(CPPFLAGS) $(ROOT) $(CXXFLAGS) $(LDFLAGS) $< -o $@  
+#	$(CXX) -shared -fPIC $(CPPFLAGS) $(ROOT) $(CXXFLAGS) $(LDFLAGS) $< -o $@
 
 # Main targets
 
 StoreParticles.so : src/StoreParticles.cc ../obj/libPrtclEvent.so
-	$(CXX) -shared -fPIC $^ $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o $@  
+	$(CXX) -shared -fPIC $^ $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o $@
 
 ../obj/PrtclDct.cc: ../include/PrtclEvent.h ../include/PrtclLinkDef.h
 	cd .. && $(MAKE) obj/PrtclDct.cc

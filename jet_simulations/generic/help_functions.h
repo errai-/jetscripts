@@ -71,7 +71,7 @@ private:
 
 
 /* Turn a given string into a suitable root file name */
-string rootFileName(char *inputName) {
+static string rootFileName(char *inputName) {
    string editString = inputName;
    assert(editString.size());
    if (editString.find(".root",editString.size()-5) != string::npos) {
@@ -100,6 +100,12 @@ static int chargeSign( int id )
 }
 
 
+static int hasTop(int);
+static int hasBottom(int);
+static int hasCharm(int);
+static int hasStrange(int);
+static int hasDown(int);
+static int hasUp(int);
 /* Helper function for isExcitedState */
 static int statusCheck( int quarkId, int hadronId )
 {
