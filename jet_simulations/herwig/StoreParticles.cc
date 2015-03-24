@@ -1,9 +1,4 @@
-/* -*- C++ -*-
- *
- * This is the implementation of the non-inlined, non-templated member
- * functions of the StoreParticles class. */
-
-#include "herwig/StoreParticles.h"
+#include "StoreParticles.h"
 #include "ThePEG/Interface/ClassDocumentation.h"
 #include "ThePEG/EventRecord/Particle.h"
 #include "ThePEG/Repository/UseRandom.h"
@@ -11,13 +6,8 @@
 #include "ThePEG/Utilities/DescribeClass.h"
 
 
-
 using namespace jetanalysis;
-
-StoreParticles::StoreParticles() {}
-
-StoreParticles::~StoreParticles() {}
-
+using namespace ThePEG;
 
 #ifndef LWH_AIAnalysisFactory_H
 #ifndef LWH 
@@ -26,20 +16,24 @@ StoreParticles::~StoreParticles() {}
 #include "ThePEG/Analysis/LWH/AnalysisFactory.h"
 #endif
 
-void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status) {
-   AnalysisHandler::analyze(event, ieve, loop, status);
-   
-   /* Rotate to CMS, extract final state particles and call analyze(particles). */
-   if ( loop > 0 || status != 0 || !event ) return;
+#include <iostream>
 
-   /* Get the final-state particles */
-   tPVector parts=event->getFinalState();
-  
-   /* Loop over all particles. 
-    * This should be cleaned up. Herwig is still a bit of a work in progress,
-    * so some of these commented lines could be useful.
-    * pEvent is used only partially, since the "more advanced" parts are at
-    * the moment working only with pythia8 */
+using std::cout;
+using std::endl;
+
+void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status) 
+{
+   /* Rotate to CMS, extract final state particles and call analyze(particles). */
+   AnalysisHandler::analyze(event, ieve, loop, status);
+   if ( loop > 0 || !event ) return;
+   cout << status << endl;
+   // if ( loop > 0 || status != 0 || !event ) return;
+
+   //tPVector parts=event->getFinalState();
+   tPVector parts;
+   event->select(std::back_inserter(parts),SelectAll());
+   
+   /* Loop over all particles. */ 
    for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit){
       pEvent->AddPrtcl((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),
          (*pit)->momentum().t(), (*pit)->id(), (*pit)->data().charge(),1);
@@ -50,54 +44,8 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status) {
    pEvent->Clear();
 }
 
-LorentzRotation StoreParticles::transform(tcEventPtr event) const {
-   return LorentzRotation();
-   /* Return the Rotation to the frame in which you want to perform the analysis. */
-}
-
-void StoreParticles::analyze(const tPVector & parts, double weight) {
-   AnalysisHandler::analyze(parts);
-   /* Calls analyze() for each particle. */
-}
-
-void StoreParticles::analyze(tPPtr, double weight) {}
-
-
-IBPtr StoreParticles::clone() const {
-   return new_ptr(*this);
-}
-
-IBPtr StoreParticles::fullclone() const {
-   return new_ptr(*this);
-}
-
-
-/* If needed, insert default implementations of virtual function defined
- * in the InterfacedBase class here (using ThePEG-interfaced-impl in Emacs). */
-
-void StoreParticles::doupdate() {
-   AnalysisHandler::doupdate();
-   // First update base class.
-   bool redo = touched();
-   // redo if touched.
-   //  UpdateChecker::check(aDependentMember, redo);
-   // Update referenced objects on which this depends redo is set to true
-   // if the dependent object is touched.
-   //  for_each(ContainerOfDependencies, UpdateChecker(redo));
-   // Update a container of references.
-   //  for_each(MapOfDependencies, UpdateMapChecker(redo));
-   // Update a map of references.
-   if ( !redo ) return;
-   // return if nothing has been touched. Otherwise do the actual update.
-   //  touch()
-  // Touch if anything has changed.
-}
-
-void StoreParticles::doinit() {
-  AnalysisHandler::doinit();
-}
-
-void StoreParticles::dofinish() {
+void StoreParticles::dofinish() 
+{
   AnalysisHandler::dofinish();
   
   herwigTree->GetCurrentFile();
@@ -106,13 +54,13 @@ void StoreParticles::dofinish() {
   cout << "StoreParticles: root tree has been written to a file" << endl;  
 }
 
-void StoreParticles::doinitrun() {
+void StoreParticles::doinitrun() 
+{
   AnalysisHandler::doinitrun();
 
   // create ROOT File
   herwigFile = new TFile ("herwig_particles.root","RECREATE");
-  Int_t comp   = 1;       // by default file is compressed
-  herwigFile->SetCompressionLevel(comp);
+  herwigFile->SetCompressionLevel(1); // by default file is compressed 
 
   if (!herwigFile) {
     cout << "StoreParticles: root file has not been created..." << endl;
@@ -133,32 +81,13 @@ void StoreParticles::doinitrun() {
   TBranch *branch = herwigTree->Branch("event", &pEvent, 32000,4);
   branch->SetAutoDelete(kFALSE);
   herwigTree->BranchRef();
-
 }
 
-void StoreParticles::rebind(const TranslationMap & trans) {
-  AnalysisHandler::rebind(trans);
-}
-
-IVector StoreParticles::getReferences() {
-  IVector ret = AnalysisHandler::getReferences();
-  return ret;
-}
-
-
-
-// *** Attention *** The following static variable is needed for the type
-// description system in ThePEG. Please check that the template arguments
-// are correct (the class and its base class), and that the constructor
-// arguments are correct (the class name and the name of the dynamically
-// loadable library where the class implementation can be found).
+/* *** Attention *** The following static variable is needed for the type
+ * description system in ThePEG. Please check that the template arguments
+ * are correct (the class and its base class), and that the constructor
+ * arguments are correct (the class name and the name of the dynamically
+ * loadable library where the class implementation can be found). */
 DescribeNoPIOClass<StoreParticles,AnalysisHandler>
-  describejetanalysisStoreParticles("jetanalysis::StoreParticles", "StoreParticles.so");
-
-void StoreParticles::Init() {
-
-  static ClassDocumentation<StoreParticles> documentation
-    ("There is no documentation for the StoreParticles class");
-
-}
+  describejetanalysisStoreParticles("jetanalysis::StoreParticles", "../lib/libStoreParticles.so");
 

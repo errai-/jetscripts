@@ -44,7 +44,7 @@ set QCDCuts:X2Min 0.055
 set /Herwig/UnderlyingEvent/MPIHandler:IdenticalToUE 0
 
 cd /Herwig/Analysis
-create jetanalysis::StoreParticles jetAnalysis StoreParticles.so
+create jetanalysis::StoreParticles jetAnalysis ../lib/libStoreParticles.so
 insert /Herwig/Generators/LHCGenerator:AnalysisHandlers 0 jetAnalysis
 
 #insert LHCGenerator:AnalysisHandlers 0 /Herwig/Analysis/HepMCFile

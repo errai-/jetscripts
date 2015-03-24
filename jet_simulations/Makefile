@@ -48,8 +48,8 @@ lib/libPrtclEvent.so: obj/PrtclEvent.o obj/PrtclEventDict.o
 lib/libJetEvent.so: obj/JetEvent.o obj/JetEventDict.o
 	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
 
-herwig/libStoreParticles.so : herwig/StoreParticles.cc lib/libPrtclEvent.so
-	$(CXX) -shared -fPIC $^ $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o $@
+lib/libStoreParticles.so : herwig/StoreParticles.cc lib/libPrtclEvent.so
+	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc ../lib/libPrtclEvent.so $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../$@
 
 # Objects
 
@@ -73,6 +73,17 @@ obj/jetanalysis.o: jetsorting/JetAnalysis.cpp lib/libJetEvent.so lib/libPrtclEve
 
 obj/ptcut.o: src/PTCut.cpp
 	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
+
+# Herwig
+
+HFILE := LHC-MB
+NUM := 1000
+
+herwig_read: lib/libStoreParticles.so
+	cd herwig && Herwig++ read $(HFILE).in
+
+herwig_run: lib/libStoreParticles.so herwig_read
+	cd herwig && Herwig++ run -N $(NUM) $(HFILE).run && mv *.root ../.
 
 # Clean.
 clean:

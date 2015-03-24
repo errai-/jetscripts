@@ -76,7 +76,7 @@ set /Herwig/Weights/reweightMinPT:Power 4.5
 set /Herwig/Weights/reweightMinPT:Scale 15*GeV
 
 cd /Herwig/Analysis
-create jetanalysis::StoreParticles jetAnalysis StoreParticles.so
+create jetanalysis::StoreParticles jetAnalysis ../lib/libStoreParticles.so
 insert /Herwig/Generators/LHCGenerator:AnalysisHandlers 0 jetAnalysis
 
 cd /Herwig/Generators
@@ -90,6 +90,6 @@ cd /Herwig/Generators
 ##################################################
 # Save run for later usage with 'Herwig++ run'
 ##################################################
-saverun LHC-UE7-2 LHCGenerator
+saverun LHC-UE7 LHCGenerator
 
 
