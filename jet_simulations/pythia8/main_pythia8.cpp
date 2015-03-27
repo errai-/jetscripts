@@ -30,6 +30,7 @@ int main(int argc, char **argv)
 {
    size_t nEvent = 400;
    if (argc > 1) nEvent = atoi(argv[1]); assert( nEvent > 0 );
+   bool addLeptons = false;
    
    /* Create Pythia instance and set it up to generate hard QCD processes
     * above pTHat = 20 GeV for pp collisions at 14 TeV. */
@@ -97,7 +98,7 @@ int main(int argc, char **argv)
             if (hasCharm(tmpId) && !isExcitedHadronState(event,prt,4)) {  
                ghostStatus = 13; /* c Hadrons */
             }
-         } else if (status==1 || status==2) {
+         } else if ( addLeptons && (status==1 || status==2) ) {
             ghostStatus = 13; /* Leptons */
          }
          

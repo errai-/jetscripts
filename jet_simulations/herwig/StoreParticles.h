@@ -17,8 +17,6 @@ using std::cout;
 using std::endl;
 
 // ROOT:
-#include "TH1F.h"
-#include "TCanvas.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "../events/PrtclEvent.h"
@@ -110,7 +108,10 @@ protected:
     * run. Fortunately, when the data is turned into HepMC format, the status 
     * codes are calculated. See ThePEG sources Vectors/HepMCConverter.h and
     * HepMCConverter.tcc. This is a mock-up of the things done in the member
-    * function createParticle, with all unnecessary things taken out.
+    * function createParticle, with all unnecessary things taken out. Even
+    * more untrivial: the CMSSW code uses a bit different interface - this 
+    * affects the Jet flavour definition. See 
+    * cmssw/GeneratorInterfacce/ThePEGInterface/src/HepMCConverter.cc
     */
    int getStatusCode( tPPtr ) const;
    
@@ -191,6 +192,8 @@ private:
     */
    StoreParticles & operator=(const StoreParticles &);
 
+   tcEventBasePtr eh;
+   
    TTree * herwigTree;
    TFile * herwigFile;
 
