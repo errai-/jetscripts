@@ -104,6 +104,16 @@ public:
 
 protected:
 
+   /**
+    * ThePEG uses surprisingly non-trivial structures for fetching the particle
+    * status and normally this is not calculated or stored at all during the 
+    * run. Fortunately, when the data is turned into HepMC format, the status 
+    * codes are calculated. See ThePEG sources Vectors/HepMCConverter.h and
+    * HepMCConverter.tcc. This is a mock-up of the things done in the member
+    * function createParticle, with all unnecessary things taken out.
+    */
+   int getStatusCode( tPPtr ) const;
+   
    /** @name Clone Methods. */
    //@{
    /**

@@ -4,7 +4,7 @@
 #include "ThePEG/Repository/UseRandom.h"
 #include "ThePEG/Repository/EventGenerator.h"
 #include "ThePEG/Utilities/DescribeClass.h"
-
+#include "ThePEG/PDT/StandardMatchers.h"
 
 using namespace jetanalysis;
 using namespace ThePEG;
@@ -21,12 +21,27 @@ using namespace ThePEG;
 using std::cout;
 using std::endl;
 
+int StoreParticles::getStatusCode(tPPtr part) const
+{
+   int status = 1;
+   size_t nChildren = part->children().size();
+   if ( nChildren > 0 || part->next() ) status = 11; 
+   if ( nChildren > 1 ) { 
+      long id = part->data().id();
+      if ( BaryonMatcher::Check(id) || MesonMatcher::Check(id) ||
+      id == ParticleID::muminus || id == ParticleID::muplus ||
+      id == ParticleID::tauminus || id == ParticleID::tauplus )
+         if ( part->mass() <= part->data().massMax() &&
+      part->mass() >= part->data().massMin() ) status = 2;
+   }
+   return status;
+}
+
 void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status) 
 {
    /* Rotate to CMS, extract final state particles and call analyze(particles). */
    AnalysisHandler::analyze(event, ieve, loop, status);
    if ( loop > 0 || !event ) return;
-   cout << status << endl;
    // if ( loop > 0 || status != 0 || !event ) return;
 
    //tPVector parts=event->getFinalState();
@@ -34,9 +49,12 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
    event->select(std::back_inserter(parts),SelectAll());
    
    /* Loop over all particles. */ 
-   for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit){
+   for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit) {
+      int pStatus = getStatusCode( *pit );
+      cout << pStatus << " " << (*pit)->id() << " " << (*pit)->PDGName() << endl;
       pEvent->AddPrtcl((*pit)->momentum().x(),(*pit)->momentum().y(),(*pit)->momentum().z(),
          (*pit)->momentum().t(), (*pit)->id(), (*pit)->data().charge(),1);
+      //(*pit)->print(cout);
    }
    // TODO ghost particles/partons
    
