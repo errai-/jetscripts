@@ -12,25 +12,33 @@ changes into config.mk according to system specific settings. The software shoul
 be installed in a path defined in a generic path (e.g. /usr/local) that is considered
 in LD_LIBRARY_PATH. With root, also the handling with thisroot.sh is sufficient.
 
+IMPORTANT (general):
+Either run this every time before starting running or add this to .bashr or
+similar (in the latter case $PWD has to be replaced with the path to the current
+folder):
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+
+IMPORTANT (pythia6):
+Do the same as above but for pythia6 libraries:
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:pythia6libdir
+
 Folder contents:
 
 // pythia8: The files used for pythia8 simulations.
 
 Usage:
- make main_pythia8
+ make pythia8
  ./pythia8.exe (number of events) (save file name) (setting file name)
 
 // herwig: The files used for herwig simulations.
 
 Usage:
- [make herwig_read HFILE=(read file name)]
+ make herwig_read HFILE=(read file name)
  make herwig_run NUM=(number of events) HFILE=(run file name)
 
 // pythia6: The files used for pythia6 simulations.
-TODO
 Usage:
- --
- --
+ make pythia6
 
 // jetsorting: The programs used for jet sorting and storaging.
 
@@ -39,8 +47,8 @@ Notes:
  combined and updated into a similar file as jetanalysis.
 
 Usage:
- make main_jetanalysis
- ./jetanalysis (mode of operation) (read file name) (save file name)
+ make jetanalysis
+ ./jetanalysis.exe (mode of operation) (read file name) (save file name)
 
 // events: Event classes used for storaging data.
 

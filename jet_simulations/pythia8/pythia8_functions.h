@@ -14,7 +14,7 @@
 
 /* Header file to access Pythia 8 program elements. */
 #include "Pythia8/Pythia.h"
-#include "generic/help_functions.h"
+#include "../generic/help_functions.h"
 
 using namespace Pythia8;
 

@@ -15,9 +15,8 @@ CFLAGS := $(CFLAGS) -O2 -ansi -pedantic -W -Wall -Wshadow -m64
 CXXFLAGS := $(CFLAGS) -std=c++11
 
 ROOT=$(shell root-config --cflags --glibs) -lGenVector
-PYTHIA=$(shell pythia8-config --cflags --libs)
+PYTHIA6=-lEG -lEGPythia6 -L/home/hannu/Cern/pythia6 -lPythia6  
+PYTHIA8=$(shell pythia8-config --cflags --libs)
 FASTJET=$(shell fastjet-config --cxxflags --libs)
-
-PYTHIALIB=/usr/local/lib/libpythia8.so
 
 INCLUDE := -I./include

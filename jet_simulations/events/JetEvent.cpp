@@ -1,4 +1,4 @@
-#include "events/JetEvent.h"
+#include "JetEvent.h"
 
 ClassImp(JetData)
 ClassImp(JetEvent)

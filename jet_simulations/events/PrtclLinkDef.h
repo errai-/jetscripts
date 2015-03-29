@@ -2,7 +2,7 @@
 
 #ifdef __CINT__
 #include <vector>
-#include <events/PrtclEvent.h>
+#include <PrtclEvent.h>
 
 #pragma link off all globals;
 #pragma link off all classes;

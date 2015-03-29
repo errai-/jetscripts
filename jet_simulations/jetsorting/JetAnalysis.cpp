@@ -1,4 +1,4 @@
-#include "jetsorting/JetAnalysis.h"
+#include "JetAnalysis.h"
 
 /////////
 // Setup:

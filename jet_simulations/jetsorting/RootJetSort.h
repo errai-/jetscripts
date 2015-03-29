@@ -36,11 +36,11 @@
 #include "fastjet/Selector.hh"
 
 // Header file for the classes stored in the TTree if any.
-#include "PrtclEvent.h"
+#include "../events/PrtclEvent.h"
 // Fixed size dimensions of array or collections stored in the TTree if any.
-#include "help_functions.h"
+#include "../generic/help_functions.h"
 // tdrStyle
-#include "tdrstyle_mod1.C"
+#include "../generic/tdrstyle_mod1.C"
 
 using std::cout;
 using std::endl;

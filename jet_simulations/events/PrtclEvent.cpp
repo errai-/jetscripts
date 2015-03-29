@@ -1,4 +1,4 @@
-#include "events/PrtclEvent.h"
+#include "PrtclEvent.h"
 
 ClassImp(PrtclData)
 ClassImp(PrtclEvent)

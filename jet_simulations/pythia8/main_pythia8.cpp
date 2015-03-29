@@ -19,9 +19,9 @@
 #include "TBranch.h"
 
 /* scripts */
-#include "generic/help_functions.h"
-#include "pythia8/pythia8_functions.h"
-#include "events/PrtclEvent.h"
+#include "../generic/help_functions.h"
+#include "pythia8_functions.h"
+#include "../events/PrtclEvent.h"
 
 using namespace Pythia8;
 using std::string;

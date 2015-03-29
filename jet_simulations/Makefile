@@ -5,86 +5,110 @@
 
 -include config.mk
 
-PYTHIALIB=/usr/local/lib/libpythia8.so
-
 .SECONDEXPANSION:
-.PHONY: all clean
+.PHONY: all clean herwig_read herwig_run pythia6 pythia8 jetanalysis ptcut rootjetsort
+VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
 
 INCLUDE := $(INCLUDE) -I.
 
 all:
 	@echo "No make for all objects provided."
 
-# Main targets
+# Generic
 
-main_jetanalysis: jetsorting/$$@.cpp obj/jetanalysis.o lib/libPrtclEvent.so lib/libJetEvent.so
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o \
-jetanalysis.exe
+libPrtclEvent.so: PrtclEvent.o PrtclEventDict.o
+	cd events && $(CXX) -fPIC -shared $(CXXFLAGS) PrtclEvent.o \
+	PrtclEventDict.o -o ../lib/$@
 
-rootjetsort: src/main_$$@.cpp obj/rootjetsort.o obj/libPrtclEvent.so
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
+PrtclEvent.o: PrtclEvent.cpp PrtclEvent.h
+	cd events && $(CXX) PrtclEvent.cpp -fPIC -pthread $(INCLUDE) \
+	$(CXXFLAGS) $(ROOT) -c -w -ldl -o $@
 
-ptcut: src/main_$$@.cpp obj/ptcut.o obj/libPrtclEvent.so
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o $@.exe
+PrtclEventDict.o: PrtclDct.cc
+	cd events && $(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread \
+	-c ../events/PrtclDct.cc -o $@
 
-obj/PrtclDct.cc: events/PrtclEvent.h events/PrtclLinkDef.h
-	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) $^
+PrtclDct.cc: PrtclEvent.h PrtclLinkDef.h
+	cd events && $(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) \
+	PrtclEvent.h PrtclLinkDef.h
 
-obj/JetDct.cc: events/JetEvent.h events/JetLinkDef.h
-	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) $^
 
-main_pythia8: pythia8/$$@.cpp $(PYTHIALIB) lib/libPrtclEvent.so
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o \
-pythia8.exe
+libJetEvent.so: JetEvent.o JetEventDict.o
+	cd events && $(CXX) -fPIC -shared $(CXXFLAGS) JetEvent.o JetEventDict.o \
+	-o ../lib/$@
 
-main_test: pythia8/$$@.cpp $(PYTHIALIB)
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o test.exe
+JetEvent.o: JetEvent.cpp JetEvent.h
+	cd events && $(CXX) -fPIC -pthread JetEvent.cpp $(INCLUDE) $(CXXFLAGS) \
+	$(ROOT) -c -w -ldl -o $@
 
-# Shared objects
+JetEventDict.o: JetDct.cc
+	cd events && $(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread \
+	-c ../events/JetDct.cc -o $@
 
-lib/libPrtclEvent.so: obj/PrtclEvent.o obj/PrtclEventDict.o
-	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
+JetDct.cc: JetEvent.h JetLinkDef.h
+	cd events && $(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) \
+	JetEvent.h JetLinkDef.h
 
-lib/libJetEvent.so: obj/JetEvent.o obj/JetEventDict.o
-	$(CXX) -fPIC -shared $(CXXFLAGS) $^ -o $@
+# Jet analysis
 
-lib/libStoreParticles.so : herwig/StoreParticles.cc lib/libPrtclEvent.so
-	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc ../lib/libPrtclEvent.so $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../$@
+jetanalysis: jetsorting/main_$$@.cpp jetanalysis.o libPrtclEvent.so libJetEvent.so
+	cd jetsorting && $(CXX) main_$@.cpp jetanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../jetanalysis.exe
 
-# Objects
+jetanalysis.o: jetsorting/JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
+	cd jetsorting && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
-obj/PrtclEvent.o: events/PrtclEvent.cpp
-	$(CXX) -fPIC -pthread $^ $(INCLUDE) $(CXXFLAGS) $(ROOT) -c -w -ldl -o $@
 
-obj/PrtclEventDict.o: obj/PrtclDct.cc
-	$(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread -c $^ -o $@
+rootjetsort: main_$$@.cpp rootjetsort.o libPrtclEvent.so
+	cd jetsorting && $(CXX) main_$@.cpp rootjetsort.o -L../lib -lPrtclEvent \
+	-w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../$@.exe
 
-obj/JetEvent.o: events/JetEvent.cpp
-	$(CXX) -fPIC -pthread $^ $(INCLUDE) $(CXXFLAGS) $(ROOT) -c -w -ldl -o $@
+rootjetsort.o: RootJetSort.cpp
+	cd jetsorting && $(CXX) -c RootJetSort.cpp $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
-obj/JetEventDict.o: obj/JetDct.cc
-	$(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread -c $^ -o $@
 
-obj/rootjetsort.o: src/RootJetSort.cpp
-	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
+ptcut: main_$$@.cpp ptcut.o libPrtclEvent.so
+	cd jetsorting && $(CXX) main_$@.cpp ptcut.o -L../lib -lPrtclEvent -w 
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../$@.exe
 
-obj/jetanalysis.o: jetsorting/JetAnalysis.cpp lib/libJetEvent.so lib/libPrtclEvent.so
-	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
+ptcut.o: PTCut.cpp
+	cd jetsorting && $(CXX) -c PTCut.cpp $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
-obj/ptcut.o: src/PTCut.cpp
-	$(CXX) -c $^ $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
+# Pythia8
+
+pythia8: main_$$@.cpp libPrtclEvent.so
+	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o ../pythia8.exe
+
+test: main_$$@.cpp
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA8) \
+	-ldl -o test.exe
+
+# Pythia6
+
+pythia6: main_$$@.cpp
+	cd pythia6 && $(CXX) main_$@.cpp -w $(INCLUDE) $(CXXFLAGS) $(ROOT) \
+	$(PYTHIA6) -ldl -o ../pythia6.exe
 
 # Herwig
 
-HFILE := LHC-MB
+# The LHC-UE7-2 setting file, used by ATLAS
+HFILE := LHC-UE7
 NUM := 1000
 
-herwig_read: lib/libStoreParticles.so
+herwig_read: libStoreParticles.so
 	cd herwig && Herwig++ read $(HFILE).in
 
-herwig_run: lib/libStoreParticles.so herwig_read
+herwig_run: libStoreParticles.so
 	cd herwig && Herwig++ run -N $(NUM) $(HFILE).run && mv *.root ../.
+
+libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
+	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \
+	-L../lib -lPrtclEvent $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
+
 
 # Clean.
 clean:
-	rm -f *.log *.exe *.d *.so
+	rm -f *.log *.exe *.d *.so events/*.o jetsorting/*.o events/*Dct.* lib/* \
+	herwig/*log herwig/*run herwig/*out herwig/*tex

@@ -7,7 +7,6 @@
 // (special thanks to Rene Brun's ROOT examples)                     //
 ///////////////////////////////////////////////////////////////////////
 
-//#include "TROOT.h"
 #include <iostream>
 #include <cmath>
 #include <cassert>
@@ -17,7 +16,6 @@
 #include "TClonesArray.h"
 #include "TProcessID.h"
 #include "TMath.h"
-#include "TLorentzVector.h"
 #include "TClass.h"
 #include "Math/Vector3D.h"
 #include "Math/Vector4D.h"

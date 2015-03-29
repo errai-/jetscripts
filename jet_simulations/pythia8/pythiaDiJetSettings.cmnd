@@ -1,0 +1,14 @@
+! This file contains commands to be read in for a Pythia8 run for the file eventTTree.cc
+! Lines not beginning with a letter or digit are comments.
+! Names are case-insensitive  -  but spellings-sensitive!
+! Settings by Aman
+
+HardQCD:all = on
+PhaseSpace:pTHatMin = 30.
+Next:numberShowInfo = 0
+Next:numberShowProcess = 0
+Next:numberShowEvent = 0
+PhaseSpace:bias2Selection = on
+PhaseSpace:bias2SelectionPow = 4.5
+Beams:eCM = 8000.
+Next:numberCount = 100
