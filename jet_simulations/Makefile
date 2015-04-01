@@ -77,7 +77,7 @@ ptcut.o: PTCut.cpp
 
 # Pythia8
 
-pythia8: main_$$@.cpp libPrtclEvent.so
+pythia8: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
 	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o ../pythia8.exe
 
@@ -87,7 +87,7 @@ test: main_$$@.cpp
 
 # Pythia6
 
-pythia6: main_$$@.cpp
+pythia6: main_$$@.cpp pythia6_functions.h
 	cd pythia6 && $(CXX) main_$@.cpp -w $(INCLUDE) $(CXXFLAGS) $(ROOT) \
 	$(PYTHIA6) -ldl -o ../pythia6.exe
 

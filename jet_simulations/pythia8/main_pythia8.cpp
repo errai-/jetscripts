@@ -39,6 +39,7 @@ int main(int argc, char **argv)
       settings = "pythia8/";
       settings += argv[3];
    }
+   
    Pythia pythia;
    Event& event = pythia.event;
    pythia.readFile(settings.c_str());
