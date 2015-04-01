@@ -87,9 +87,9 @@ test: main_$$@.cpp
 
 # Pythia6
 
-pythia6: main_$$@.cpp pythia6_functions.h
-	cd pythia6 && $(CXX) main_$@.cpp -w $(INCLUDE) $(CXXFLAGS) $(ROOT) \
-	$(PYTHIA6) -ldl -o ../pythia6.exe
+pythia6: main_$$@.cpp libPrtclEvent.so pythia6_functions.h
+	cd pythia6 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+	$(CXXFLAGS) $(ROOT) $(PYTHIA6) -ldl -o ../pythia6.exe
 
 # Herwig
 
