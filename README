@@ -1,4 +1,27 @@
-Data analysis and simulation files for the CMS project.
-Subfolders include root files, pythia8 analysis and 
-general data analysis.
+README updated 29.4.2015
 
+This is a collection of data analysis and simulation tools used with the CMS
+project. Developed under Helsinki Institute of Physics, which contributes to
+the CMS project.
+
+data_analysis:
+Tools for analyzing CMS jet data. Aim is to conveniently and quickly make plots
+of different aspects.
+Last updates in autumn 2014
+
+jet_simulations:
+Simulation tools for generating particle data with pythia6, pythia8 and
+Herwig++. A common jet sorting algorithm to turn the particle data into jet
+data.
+Currently actively developed.
+
+simulation_analysis:
+A collection of scripts for turning simulated jet data into various plots.
+Mostly not compatible with the newest versions of the simulations, these are to
+be updated.
+Last updates in December 2014
+
+useful_structures:
+A collection of useful small scripts and old code versions, which may come in
+handy in certain circumstances.
+Updated occasionally, files remain mostly static after they are added here.
