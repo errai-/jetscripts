@@ -11,7 +11,7 @@ CFLAGS :=
 #CFLAGS := -v -fsanitize=undefined 
 #######################################
 
-CFLAGS := $(CFLAGS) -O2 -ansi -pedantic -W -Wall -Wshadow -m64 
+CFLAGS := $(CFLAGS) -g -Wall -Wextra -Werror -Wshadow -Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unknown-pragmas -march=native -O3 -pedantic -m64
 CXXFLAGS := $(CFLAGS) -std=c++11
 
 ROOT=$(shell root-config --cflags --glibs) -lGenVector

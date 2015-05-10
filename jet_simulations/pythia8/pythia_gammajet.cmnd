@@ -1,10 +1,12 @@
 ! This file contains commands to be read in for a Pythia8 run for the file eventTTree.cc
 ! Lines not beginning with a letter or digit are comments.
 ! Names are case-insensitive  -  but spellings-sensitive!
-! Settings by Aman
 
-HardQCD:all = on
-PhaseSpace:pTHatMin = 30.
+PromptPhoton:qg2qgamma = on
+PromptPhoton:qqbar2ggamma = on
+PromptPhoton:gg2ggamma = on
+
+PhaseSpace:pTHatMin = 10.
 Next:numberShowInfo = 0
 Next:numberShowProcess = 0
 Next:numberShowEvent = 0

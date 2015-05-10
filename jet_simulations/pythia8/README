@@ -1,4 +1,7 @@
-Last update 13.03.2015
+Last update 29.04.2015
 
 Files required for pythia8 simulations. See the parent directory README for
 further information.
+
+Settings files (*.cmnd) and pythia routine partially contributed by Aman
+Abhishek.

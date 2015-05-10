@@ -1,11 +1,12 @@
 ###################################################################
 ## Makefile for building ROOT-fastjet analysis of simulated data ## 
-## Hannu Siikonen, 11.03.2015                                    ##  
+## Hannu Siikonen, 6.5.2015                                      ##  
 ###################################################################
 
--include config.mk
+include config.mk
 
 .SECONDEXPANSION:
+.DELETE_ON_ERROR:
 .PHONY: all clean herwig_read herwig_run pythia6 pythia8 jetanalysis ptcut rootjetsort
 VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
 

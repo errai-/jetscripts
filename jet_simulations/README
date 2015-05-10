@@ -1,10 +1,17 @@
-Last update 13.3.2015
+Author: Hannu Siikonen
+Last update: 6.5.2015
 
-This software collection is designed for simulating proton collisions, saving the
-particle data and processing the particle data to suitable jet data. The simulations
-can be done with pythia8, Herwig++ and pythia6 (TODO). 
+////////////////////////////////////////////////////////////////////////////////
 
-Setup:
+INTRO:
+
+This software collection is designed for simulating collisions at the LHC, 
+saving the particle data and processing it to suitable jet data. Simulations are
+executed with pythia6/8 or Herwig++.
+
+////////////////////////////////////////////////////////////////////////////////
+
+SETUP:
 
 make sure that ROOT, pythia8 and herwig++ & ThePEG are correctly installed. These scripts
 are working with ROOT 5.34, ROOT 6 is still problematic with the simulators. Make
@@ -69,3 +76,23 @@ Usage:
 // obj, lib: Objects, libraries etc. needed while building the programs.
 
 // generic: Some generic files and programs that don't fit elsewhere.
+
+////////////////////////////////////////////////////////////////////////////////
+
+USED STATUS CODES:
+
+1: Generic final particles
+
+2: For gamma/Z-jets the stable gammas and Z's
+
+3: Gammas originating from pi0
+
+4: Outgoing hardest subprocess
+
+5: Ghost partons
+6: Ghost s hadron
+7: Ghost c hadron
+8: Ghost b hadron
+9: Ghost t hadron (reserved for future usage)
+
+////////////////////////////////////////////////////////////////////////////////
