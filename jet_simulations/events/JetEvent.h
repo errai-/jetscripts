@@ -29,7 +29,7 @@ public:
    
    void SetPxPyPzE(double,double,double,double);
    void SetParams(double,double,double,double,double,double,double,double,
-      double,double,int);
+      double,double,double,int);
    
    Double_t P() const { return fP4.P(); }
    Double_t Pt() const { return fP4.Pt(); }
@@ -56,6 +56,8 @@ private:
    double fElm;
    double fMum;
    
+   double fWeight;
+   
    int fFlav;
  
 public:
@@ -70,7 +72,7 @@ public:
    virtual ~JetEvent();
 
    void AddJet(double,double,double,double,double,double,double,double,double,
-      double, double, double, double, double,int);
+      double,double,double,double,double,double,int);
    JetData *InitJet();
    
    void Clear(Option_t *option ="");

@@ -84,24 +84,6 @@ static string rootFileName(char *inputName) {
 }
 
 
-static int chargeSign( int id )
-{
-    if ( id == 1 ) return 1;
-    if ( id == -2 ) return 1;
-    if ( id == -3 ) return 1;
-    if ( id == 4 ) return 1;
-    if ( id == -5 ) return 1;
-    if ( id == 6 ) return 1;
-    if ( id == -1 ) return -1;
-    if ( id == 2 ) return -1;
-    if ( id == 3 ) return -1;
-    if ( id == -4 ) return -1;
-    if ( id == 5 ) return -1;
-    if ( id == -6 ) return -1;
-    return 1;
-}
-
-
 /* Some functions for PDG particle code recognition for hadrons: 
  * (these are basically implementations from CMSSW) */
 namespace HadrFuncs

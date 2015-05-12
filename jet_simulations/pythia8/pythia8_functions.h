@@ -104,7 +104,7 @@ static void ghostParticleAdd(PrtclEvent* pEvent, Event& event, size_t prt)
     if (ghostStatus) { particleAdd(pEvent,event[prt],ghostStatus); }
 }
 
-static void pythia8ParticleLoop(Pythia&, Event&,PrtclEvent*,const int);
+static bool pythia8ParticleLoop(Pythia&, Event&,PrtclEvent*,const int);
 
 /* Main loop for storing events 
  * mode:
@@ -161,7 +161,7 @@ bool pythia8ParticleLoop(Pythia& pythia, Event& event,PrtclEvent* pEvent,const i
 {
     int gammaIdx = -1;
     
-    pEvent->weight = pythia.info.weight();
+    pEvent->fWeight = pythia.info.weight();
     /* Particle loop may save the same particle twice if it is in multiple categories */
     for (size_t prt = 0; prt!=event.size(); ++prt){
         bool hardSubProc = event[prt].status()==-23;
@@ -192,7 +192,7 @@ bool pythia8ParticleLoop(Pythia& pythia, Event& event,PrtclEvent* pEvent,const i
                     prevId = probeId;
                     probeId = event[probeId].mother1();
                 }
-                if (event[probeId]==23) {
+                if (event[probeId].id()==23) {
                     particleAdd(pEvent,event[prevId],2);
                 } else {
                     particleAdd(pEvent,event[prt],1);

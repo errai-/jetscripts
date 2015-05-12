@@ -67,7 +67,7 @@ public:
     void Reset(Option_t *option ="");
 
     TClonesArray *GetParts() const { return fPrtcls; }
-    double weight;
+    double fWeight;
 
 private:
     size_t fN_Prtcl; //! Present amount of particles in the tree 

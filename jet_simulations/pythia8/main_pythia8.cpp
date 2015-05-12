@@ -17,7 +17,7 @@ using std::stoi;
 int main(int argc, char **argv)
 {
     int nEvent = 400;
-    string fileName = "pythia8_particles_";
+    string fileName = "particles_pythia8_";
     string settings = "pythia8/";
     int choiceId = 1;
     
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     }
     switch (choiceId) {
         case 0:
-            settings += "pythiaSetting.cmnd";
+            settings += "pythiaSettings.cmnd";
             fileName += "generic_";
             break;
         case 1:
