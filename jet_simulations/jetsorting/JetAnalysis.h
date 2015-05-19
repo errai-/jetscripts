@@ -9,6 +9,7 @@
 
 // General
 #include <iostream>
+#include <cstdio>
 #include <ctime>
 #include <cmath>
 #include <vector>

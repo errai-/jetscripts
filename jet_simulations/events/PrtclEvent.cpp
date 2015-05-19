@@ -27,6 +27,7 @@ void PrtclData::SetParams(int id, double charge, int status)
 PrtclEvent::PrtclEvent(size_t storageSize)
 {
     Class()->IgnoreTObjectStreamer();
+    PrtclData::Class()->IgnoreTObjectStreamer();
     fN_Prtcl = 0;
     if (!fgPrtcls) fgPrtcls = new TClonesArray("PrtclData",storageSize);
     fSizeLim = storageSize;

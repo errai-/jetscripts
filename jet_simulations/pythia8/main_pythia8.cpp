@@ -20,17 +20,25 @@ int main(int argc, char **argv)
     string fileName = "particles_pythia8_";
     string settings = "pythia8/";
     int choiceId = 1;
+    string nameId = "1";
+    int multiplier = 1;
     
-    if (argc<2 || argc>3) {
-        cout << "Usage: ./pythia8.exe [Number of events] (Settings file index) " << endl;
+    if (argc<2 || argc>5) {
+        cout << "Usage: ./pythia8.exe [Number of events] (Settings file index) (Number of threads to be used)" << endl;
         return 0;
     } 
     if (argc >= 2) {
         nEvent = stoi(argv[1]);
         assert( nEvent > 0 );
     } 
-    if (argc == 3) {
+    if (argc >= 3) {
         choiceId = stoi(argv[2]);
+    }
+    if (argc >= 4) {
+        nameId = argv[3];
+    }
+    if (argc >= 5) {
+        multiplier = stoi(argv[4]);
     }
     switch (choiceId) {
         case 0:
@@ -56,12 +64,23 @@ int main(int argc, char **argv)
             return 0;
             break;
     }
+    string fileNameFinal = fileName;
     fileName += std::to_string(nEvent);
+    fileNameFinal += std::to_string(nEvent*multiplier);
+    
+    if (multiplier > 1) {
+        fileName += "_";
+        fileName += nameId;
+    }
+    
     fileName += ".root";
+    fileNameFinal += ".root";
     cout << "Using settings " << settings << endl;
     cout << "Saving to file " << fileName << endl;
+    if (multiplier>1) {
+        TFile *outFile = new TFile(fileNameFinal.c_str(), "RECREATE");
+        outFile->Close();
+    }
     
-    /* Create Pythia instance and set it up to generate hard QCD processes
-     * above pTHat = 20 GeV for pp collisions at 14 TeV. */
-    return pythia8EventLoop(nEvent, settings, fileName, choiceId);
+    return pythia8EventLoop(nEvent, settings, fileName, choiceId, stoi(nameId));
 }

@@ -70,28 +70,28 @@ void JetAnalysis::Init(TTree *tree)
 
 Int_t JetAnalysis::GetEntry(Long64_t entry)
 {
-   if (!fChain) return 0;
-   return fChain->GetEntry(entry);
+    if (!fChain) return 0;
+    return fChain->GetEntry(entry);
 }
 
 
 Long64_t JetAnalysis::LoadTree(Long64_t entry)
 {
-   /* Set the environment to read one entry */
-   if (!fChain) return -5;
-   Long64_t centry = fChain->LoadTree(entry);
-   if (centry < 0) return centry;
-   if (fChain->GetTreeNumber() != fCurrent) {
-      fCurrent = fChain->GetTreeNumber();
-   }
-   return centry;
+    /* Set the environment to read one entry */
+    if (!fChain) return -5;
+    Long64_t centry = fChain->LoadTree(entry);
+    if (centry < 0) return centry;
+    if (fChain->GetTreeNumber() != fCurrent) {
+        fCurrent = fChain->GetTreeNumber();
+    }
+    return centry;
 }
 
 
 void JetAnalysis::Show(Long64_t entry)
 {
-   if (!fChain) return;
-   fChain->Show(entry);
+    if (!fChain) return;
+    fChain->Show(entry);
 }
 
 
@@ -101,39 +101,40 @@ void JetAnalysis::Show(Long64_t entry)
 
 void JetAnalysis::EventLoop() 
 {
-   if (fChain == 0) return;
+    if (fChain == 0) return;
 
-   Long64_t nentries = fChain->GetEntries();
-   mTimer.setParams(nentries,500); mTimer.startTiming();  
-  
-   for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
-      mFlavorIndices.clear();
-      if (jentry!=0&&jentry%500==0) mTimer.printTime();
+    Long64_t nentries = fChain->GetEntries();
+    mTimer.setParams(nentries,500); mTimer.startTiming();  
     
-      Long64_t ientry = LoadTree(jentry);
-      if (ientry < 0) break; fChain->GetEntry(jentry);
-      assert( fPrtcls_ < kMaxfPrtcls );
-      
-      ParticlesToJetsorterInput();
-      
-      /* Fastjet algorithm */
-      fastjet::ClusterSequence clustSeq(fjInputs, *jetDef);
-      vector<fastjet::PseudoJet> inclusiveJets = clustSeq.inclusive_jets( pTMin );    
-      sortedJets = sorted_by_pt(inclusiveJets);
-      
-      if (!GoodEvent()) continue;
-      
-      JetLoop();
+    int good=0,bad=0;
+    for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
+        mFlavorIndices.clear();
+        if (jentry!=0&&jentry%500==0) mTimer.printTime();
+        
+        Long64_t ientry = LoadTree(jentry);
+        if (ientry < 0) break; fChain->GetEntry(jentry);
+        assert( fPrtcls_ < kMaxfPrtcls );
+        
+        ParticlesToJetsorterInput();
+        
+        /* Fastjet algorithm */
+        fastjet::ClusterSequence clustSeq(fjInputs, *jetDef);
+        vector<fastjet::PseudoJet> inclusiveJets = clustSeq.inclusive_jets( pTMin );    
+        sortedJets = sorted_by_pt(inclusiveJets);
+        
+        if (!GoodEvent()) continue;
+        
+        JetLoop();
+        
+        fOutTree->Fill();
+        fjEvent->Clear();
+    }
     
-      fOutTree->Fill();
-      fjEvent->Clear();
-   }
-  
-   fOutFile = fOutTree->GetCurrentFile();
-   fOutTree->AutoSave("Overwrite");
-   delete fjEvent;  fjEvent = 0;
-   
-   fOutFile->Close();
+    fOutFile = fOutTree->GetCurrentFile();
+    fOutTree->AutoSave("Overwrite");
+    delete fjEvent;  fjEvent = 0;
+    
+    fOutFile->Close();
 }    
 
 
@@ -259,15 +260,19 @@ void JetAnalysis::PhysicsFlavor(size_t i)
 {
     mFlavour = 0;
     for ( size_t k = 0; k != mPartonList.size(); ++k ) {
-        if (sortedJets[i].delta_R( hiddenInputs[mPartonList[k]] ) < R) {
+        printf("Id: %d, UI: %d",mPartonList[k],hiddenInputs[mPartonList[k]].user_index());
+        double dR = sortedJets[i].delta_R( hiddenInputs[mPartonList[k]] );
+        if ( dR < R) {
             if (mFlavour!=0) {
                 mFlavour = 0;
-                break;
+                cout << dR << "persepolis :DD" << endl;
+                //break;
             } else {
                 mFlavour = abs(hiddenInputs[mPartonList[k]].user_index());
             }
         }
     }
+    printf("Flavour: %f\n",mFlavour);
 }
     
 void JetAnalysis::FlavorLoop(size_t i)

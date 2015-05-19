@@ -113,15 +113,21 @@ static bool pythia8ParticleLoop(Pythia&, Event&,PrtclEvent*,const int);
  *  2 - gammajet
  *  3 - Zjet */
 static int pythia8EventLoop(int nEvent, string settings, string fileName, 
-                            const int mode ) 
+                            const int mode, const int threadId ) 
 {
     /* Init pythia */
     Pythia pythia; Event& event = pythia.event;
-    pythia.readFile(settings.c_str()); pythia.init();
+    
+    pythia.readFile(settings.c_str()); 
+    pythia.settings.readString("Random:setSeed = on");
+    string seed = "Random:seed = ";
+    seed += std::to_string(threadId*10000);
+    pythia.settings.readString(seed);
+    pythia.init();
     pythia.settings.listChanged();
     
     /* Try to create a new file */
-    TFile *outFile = new TFile(fileName.c_str(), "NEW");
+    TFile *outFile = new TFile(fileName.c_str(), "RECREATE");
     if (!outFile->IsOpen()) return 1;
     outFile->SetCompressionLevel(1); /* File is compressed */
     

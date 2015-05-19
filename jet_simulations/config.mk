@@ -18,5 +18,8 @@ ROOT=$(shell root-config --cflags --glibs) -lGenVector
 PYTHIA6=-lEG -lEGPythia6 -L/home/hannu/Cern/pythia6 -lPythia6  
 PYTHIA8=$(shell pythia8-config --cflags --libs)
 FASTJET=$(shell fastjet-config --cxxflags --libs)
+CINTERPRET=$(ROOTSYS)/bin/rootcling
+# ROOT 5:
+#CINTERPRET=$(shell $(ROOTSYS)/bin/rootcint)
 
 INCLUDE := -I./include

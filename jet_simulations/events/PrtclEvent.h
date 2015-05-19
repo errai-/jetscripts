@@ -25,7 +25,8 @@
 class PrtclData : public TObject 
 {
 public:
-    PrtclData() { Class()->IgnoreTObjectStreamer(); }
+    
+    PrtclData() { }
     virtual ~PrtclData() { }
 
     void SetPxPyPzE(double,double,double,double);

@@ -12,6 +12,15 @@ VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
 
 INCLUDE := $(INCLUDE) -I.
 
+# Parameter vals:
+
+# The LHC-UE7-2 setting file, used by ATLAS
+HFILE := LHC-UE7
+
+NUM_EVT := 1000
+MODE := 1
+NUM_PROC := 1
+
 all:
 	@echo "No make for all objects provided."
 
@@ -30,8 +39,8 @@ PrtclEventDict.o: PrtclDct.cc
 	-c ../events/PrtclDct.cc -o $@
 
 PrtclDct.cc: PrtclEvent.h PrtclLinkDef.h
-	cd events && $(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) \
-	PrtclEvent.h PrtclLinkDef.h
+	cd events && $(CINTERPRET) -f $@ -c -p $(INCLUDE) $(CFLAGS) \
+	PrtclEvent.h PrtclLinkDef.h && mv PrtclDct_rdict.pcm ..
 
 
 libJetEvent.so: JetEvent.o JetEventDict.o
@@ -79,8 +88,11 @@ ptcut.o: PTCut.cpp
 # Pythia8
 
 pythia8: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
-	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+	cd pythia8 && $(CXX) main_$@.cpp -fopenmp -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o ../pythia8.exe
+
+run_pythia8:
+	bash pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
 test: main_$$@.cpp
 	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA8) \
@@ -94,15 +106,11 @@ pythia6: main_$$@.cpp libPrtclEvent.so pythia6_functions.h
 
 # Herwig
 
-# The LHC-UE7-2 setting file, used by ATLAS
-HFILE := LHC-UE7
-NUM := 1000
-
 herwig_read: libStoreParticles.so
 	cd herwig && Herwig++ read $(HFILE).in
 
 herwig_run: libStoreParticles.so
-	cd herwig && Herwig++ run -N $(NUM) $(HFILE).run && mv *.root ../.
+	cd herwig && Herwig++ run -N $(NUM_EVT) $(HFILE).run && mv *.root ../.
 
 libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
 	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \

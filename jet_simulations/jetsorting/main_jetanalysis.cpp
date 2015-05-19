@@ -58,6 +58,11 @@ int main(int argc, char* argv[])
                     mode = 3;
                 }
                 output += i;
+                if (definition==1) {
+                    output += "physics_";
+                } else {
+                    output += "hadronic_";
+                }
             }
             tmpStr = "";
         } else {

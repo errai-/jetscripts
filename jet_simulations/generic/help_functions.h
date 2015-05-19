@@ -38,7 +38,12 @@ public:
         
     Timer(int eventNo, int dEvent): mTotal(eventNo), mDelta(dEvent) {}
         
-    ~Timer(){}
+    ~Timer() 
+    {
+        cout << "Time elapsed: "; 
+        cout << duration_cast<seconds>(high_resolution_clock::now()-mStart).count();
+        cout << " s." << endl;
+    }
 
     void setParams(int eventNo, int dEvent) 
     {
