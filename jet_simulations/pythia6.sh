@@ -6,11 +6,11 @@ NUM_PROC=$3
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
 
-cd pythia8
+cd pythia6
 pidArr=()
 for (( i=1; i<=$NUM_PROC; i++ ))
 do
-    ./pythia8.exe $EVT_PER_RUN $JOB_TYPE $i $NUM_PROC &
+    ./pythia6.exe $EVT_PER_RUN $JOB_TYPE $i $NUM_PROC &
     pidArr+=($!)
     pidArr+=" "
 done

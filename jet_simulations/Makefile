@@ -18,7 +18,7 @@ INCLUDE := $(INCLUDE) -I.
 HFILE := LHC-UE7
 
 NUM_EVT := 1000
-MODE := 1
+MODE := 0
 NUM_PROC := 1
 
 all:
@@ -105,7 +105,10 @@ test: main_$$@.cpp
 
 pythia6: main_$$@.cpp libPrtclEvent.so pythia6_functions.h
 	cd pythia6 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
-	$(CXXFLAGS) $(ROOT) $(PYTHIA6) -ldl -o ../pythia6.exe
+	$(CXXFLAGS) $(ROOT) $(PYTHIA6) -ldl -o pythia6.exe
+
+run_pythia6:
+	bash pythia6.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
 # Herwig
 
