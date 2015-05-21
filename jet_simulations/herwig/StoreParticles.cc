@@ -17,11 +17,15 @@ using namespace ThePEG;
 #endif
 
 #include <iostream>
+#include <fstream>
+#include <string>
+
 #include "../generic/help_functions.h"
 #include "herwig_functions.h"
 
 using std::cout;
 using std::endl;
+using std::string;
 
 int StoreParticles::getStatusCode(tPPtr part) const
 {
@@ -81,10 +85,10 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
       if ( (pStatus==2) && ( (absId<=6 && absId>0) || absId==21 ) ) {
             ghostStatus = 11; /* Partons */
       } else if (absId >= 100) { /* Status codes below this are not conventional hadrons */
-         if (hasBottom(absId) && !isExcitedHadronState(*pit,5) ) {
+         if (HadrFuncs::hasBottom(absId) && !isExcitedHadronState(*pit,5) ) {
             ghostStatus = 12; /* b Hadrons */
          }
-         if (hasCharm(absId) && !isExcitedHadronState(*pit,4) ) {
+         if (HadrFuncs::hasCharm(absId) && !isExcitedHadronState(*pit,4) ) {
             ghostStatus = 13; /* c Hadrons */
          }
       } /* Add Leptons here if needed */
@@ -112,31 +116,67 @@ void StoreParticles::dofinish()
 
 void StoreParticles::doinitrun() 
 {
-  AnalysisHandler::doinitrun();
+    AnalysisHandler::doinitrun();
+    string fileName = "particles_herwig";
+    
+    string runInfo = generator()->runName();
+    size_t pos = runInfo.find("++")+2;
+    if (runInfo.size() > 0) {
+        runInfo = runInfo.substr(pos);
+        pos = runInfo.find("_");
+        int multiplier = std::stoi(runInfo.substr(0,pos));
+        
+        runInfo = runInfo.substr(pos+1);
+        pos = runInfo.find("_");
+        int runIdx = std::stoi(runInfo.substr(0,pos));
+        
+        runInfo = runInfo.substr(pos+1);
+        pos = runInfo.find("_");
+        int mode = std::stoi(runInfo.substr(0,pos));
+        
+        fileName += "_";
+        if (mode == 0) {
+            fileName += "generic_";
+        }
+        string fileNameFinal = fileName;
+        fileName += std::to_string( generator()->N() );
+        if (multiplier > 1) {
+            if (runIdx==1) {
+                fileNameFinal += std::to_string( multiplier*generator()->N() );
+                fileNameFinal += ".root";
+                
+                TFile *outFile = new TFile(fileNameFinal.c_str(), "RECREATE");
+                outFile->Close();
+            }
+            fileName += "_";
+            fileName += std::to_string( runIdx );
+        }
+    }
+    fileName += ".root";
+    
+    herwigFile = new TFile (fileName.c_str(),"RECREATE");
+    herwigFile->SetCompressionLevel(1); // by default file is compressed 
 
-  // create ROOT File
-  herwigFile = new TFile ("herwig_particles.root","RECREATE");
-  herwigFile->SetCompressionLevel(1); // by default file is compressed 
+    if (!herwigFile) {
+        cout << "StoreParticles: root file has not been created..." << endl;
+        return;
+    }
+    
+    // create ROOT Tree
+    herwigTree = new TTree ("HerwigTree","Tree filled with herwig data.");
+    if (!herwigTree) {
+        cout << "StoreParticles: root tree has not been created..." << endl;
+        return;
+    }
+    herwigTree->SetAutoSave(100000000); /* autosave when 0.1 Gbyte written */
+    herwigTree->SetCacheSize(10000000);  /* set a 10 MBytes cache (useless when writing local files) */
 
-  if (!herwigFile) {
-    cout << "StoreParticles: root file has not been created..." << endl;
-    return;
-  }
-  
-  // create ROOT Tree
-  herwigTree = new TTree ("HerwigTree","Tree filled with herwig data.");
-  if (!herwigTree) {
-    cout << "StoreParticles: root tree has not been created..." << endl;
-    return;
-  }
-  herwigTree->SetAutoSave(1000000000); /* autosave when 1 Gbyte written */
-  herwigTree->SetCacheSize(10000000);  /* set a 10 MBytes cache (useless when writing local files) */
-
-  TTree::SetBranchStyle(1); /* new style by default */
-  pEvent = new PrtclEvent;
-  TBranch *branch = herwigTree->Branch("event", &pEvent, 32000,4);
-  branch->SetAutoDelete(kFALSE);
-  herwigTree->BranchRef();
+    TTree::SetBranchStyle(1); /* new style by default */
+    pEvent = new PrtclEvent;
+    TBranch *branch = herwigTree->Branch("event", &pEvent, 32000,4);
+    branch->SetAutoDelete(kFALSE);
+    herwigTree->BranchRef();
+    
 }
 
 /* *** Attention *** The following static variable is needed for the type

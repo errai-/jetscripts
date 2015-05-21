@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 {
     int nEvent = 400;
     string fileName = "particles_pythia8_";
-    string settings = "pythia8/";
+    string settings = "";
     int choiceId = 1;
     string nameId = "1";
     int multiplier = 1;
@@ -67,20 +67,20 @@ int main(int argc, char **argv)
     string fileNameFinal = fileName;
     fileName += std::to_string(nEvent);
     fileNameFinal += std::to_string(nEvent*multiplier);
+    fileNameFinal += ".root";
     
     if (multiplier > 1) {
         fileName += "_";
         fileName += nameId;
+        if (nameId=="1") {
+            TFile *outFile = new TFile(fileNameFinal.c_str(), "RECREATE");
+            outFile->Close();
+        }
     }
-    
     fileName += ".root";
-    fileNameFinal += ".root";
+    
     cout << "Using settings " << settings << endl;
     cout << "Saving to file " << fileName << endl;
-    if (multiplier>1) {
-        TFile *outFile = new TFile(fileNameFinal.c_str(), "RECREATE");
-        outFile->Close();
-    }
     
     return pythia8EventLoop(nEvent, settings, fileName, choiceId, stoi(nameId));
 }

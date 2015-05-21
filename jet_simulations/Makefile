@@ -26,6 +26,8 @@ all:
 
 # Generic
 
+## Particle
+
 libPrtclEvent.so: PrtclEvent.o PrtclEventDict.o
 	cd events && $(CXX) -fPIC -shared $(CXXFLAGS) PrtclEvent.o \
 	PrtclEventDict.o -o ../lib/$@
@@ -40,8 +42,9 @@ PrtclEventDict.o: PrtclDct.cc
 
 PrtclDct.cc: PrtclEvent.h PrtclLinkDef.h
 	cd events && $(CINTERPRET) -f $@ -c -p $(INCLUDE) $(CFLAGS) \
-	PrtclEvent.h PrtclLinkDef.h && mv PrtclDct_rdict.pcm ..
+	PrtclEvent.h PrtclLinkDef.h && mv PrtclDct_rdict.pcm ../lib/.
 
+## Jet
 
 libJetEvent.so: JetEvent.o JetEventDict.o
 	cd events && $(CXX) -fPIC -shared $(CXXFLAGS) JetEvent.o JetEventDict.o \
@@ -57,7 +60,7 @@ JetEventDict.o: JetDct.cc
 
 JetDct.cc: JetEvent.h JetLinkDef.h
 	cd events && $(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDE) $(CFLAGS) \
-	JetEvent.h JetLinkDef.h
+	JetEvent.h JetLinkDef.h && mv JetDct_rdict.pcm ../lib/.
 
 # Jet analysis
 
@@ -89,7 +92,7 @@ ptcut.o: PTCut.cpp
 
 pythia8: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
 	cd pythia8 && $(CXX) main_$@.cpp -fopenmp -w -L../lib -lPrtclEvent $(INCLUDE) \
-	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o ../pythia8.exe
+	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o pythia8.exe
 
 run_pythia8:
 	bash pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
@@ -109,8 +112,8 @@ pythia6: main_$$@.cpp libPrtclEvent.so pythia6_functions.h
 herwig_read: libStoreParticles.so
 	cd herwig && Herwig++ read $(HFILE).in
 
-herwig_run: libStoreParticles.so
-	cd herwig && Herwig++ run -N $(NUM_EVT) $(HFILE).run && mv *.root ../.
+run_herwig:
+	bash herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC) $(HFILE)
 
 libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
 	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \

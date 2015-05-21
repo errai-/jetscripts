@@ -108,14 +108,14 @@ static bool pythia8ParticleLoop(Pythia&, Event&,PrtclEvent*,const int);
 
 /* Main loop for storing events 
  * mode:
- *  0 - generic dijet
+ *  0 - generic case
  *  1 - standard dijet
  *  2 - gammajet
  *  3 - Zjet */
 static int pythia8EventLoop(int nEvent, string settings, string fileName, 
                             const int mode, const int threadId ) 
 {
-    /* Init pythia */
+    /* Init pythia with a custom seed */
     Pythia pythia; Event& event = pythia.event;
     
     pythia.readFile(settings.c_str()); 

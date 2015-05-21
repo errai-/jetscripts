@@ -3,8 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////
 // A generic event class for storing jet data from simulations.      //
-// Hannu Siikonen 23.2.2015                                          //
-// (special thanks to Rene Brun's ROOT examples)                     //
+// Hannu Siikonen 19.5.2015                                          //
 ///////////////////////////////////////////////////////////////////////
 
 #include <iostream>
@@ -24,7 +23,7 @@
 // The information concerning one jet, stored to a ROOT tree.
 class JetData : public TObject {
 public:
-   JetData() { Class()->IgnoreTObjectStreamer(); }
+   JetData() { }
    virtual ~JetData() { }
    
    void SetPxPyPzE(double,double,double,double);
@@ -86,7 +85,7 @@ private:
    static TClonesArray *fgJets;
  
 public:
-   ClassDef(JetEvent, 1)
+   ClassDef(JetEvent,1)
 };
 
 

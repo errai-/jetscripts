@@ -90,10 +90,10 @@ Download https://root.cern.ch/download/pythia6.tar.gz and extract it to a good l
 Remove the pythia*.f file and replace it with the newest pythia6 version available.
 Run a makePythia6 binary corresponding to the used computer architechture.
 
- #IV] ROOT 6[.03/05] (dependency: Pythia6)
+ #IV] ROOT 6[.03/05] (dependency: Pythia6, Pythia8 [optional])
 
 Run:
- ./configure --enable-pythia6 --with-pythia6-libdir="Location chosen in #III)"
+ ./configure --with-pythia6-libdir="Location chosen in #III)"
 - Links root with pythia6 and other necessary components.
   Note that pythia8 is not linked with root, since this will lead to inconveniences.
 
@@ -103,6 +103,10 @@ Run:
 
 In .bashrc, add:
  source "rootDir"/bin/thisroot.sh
+
+Remarks:
+ Having or not having pythia8 explicitly linked for root should not be an issue. TPythia8 can be a convenient and
+ fast way to access pythia8 features, but it also removes some of the agility of the plain pythia8.
 
  #V] ThePEG
 

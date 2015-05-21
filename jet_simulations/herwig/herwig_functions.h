@@ -55,7 +55,7 @@ static int isExcitedHadronState(tPPtr part, int quarkId) {
    ParticleVector children = part->children();
    for (ParticleVector::const_iterator child = children.begin();
         child != children.end(); ++child ) {
-      if ( statusCheck( quarkId, (*child)->id() ) ) return 1;
+      if ( HadrFuncs::statusCheck( quarkId, (*child)->id() ) ) return 1;
    }
    return 0;
 }

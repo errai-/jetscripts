@@ -35,6 +35,7 @@ void JetData::SetParams(double chf, double nhf, double phf, double elf, double
 JetEvent::JetEvent(size_t tmpStore)
 {
     Class()->IgnoreTObjectStreamer();
+    JetData::Class()->IgnoreTObjectStreamer();
     fN_Jet = 0;
     if (!fgJets) fgJets = new TClonesArray("JetData",tmpStore);
     fSizeLim = tmpStore;

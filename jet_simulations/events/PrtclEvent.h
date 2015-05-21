@@ -3,8 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////
 // A generic event class for storing particle data from simulations. //
-// Hannu Siikonen 11.3.2015                                          //
-// (special thanks to Rene Brun's ROOT examples)                     //
+// Hannu Siikonen 19.5.2015                                          //
 ///////////////////////////////////////////////////////////////////////
 
 #include <iostream>
@@ -78,7 +77,7 @@ private:
     static TClonesArray *fgPrtcls;
 
 public:
-    ClassDef(PrtclEvent, 1)
+    ClassDef(PrtclEvent,1)
 };
 
 
