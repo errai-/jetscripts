@@ -91,15 +91,11 @@ ptcut.o: PTCut.cpp
 # Pythia8
 
 pythia8: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
-	cd pythia8 && $(CXX) main_$@.cpp -fopenmp -w -L../lib -lPrtclEvent $(INCLUDE) \
+	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o pythia8.exe
 
 run_pythia8:
 	bash pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
-
-test: main_$$@.cpp
-	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA8) \
-	-ldl -o test.exe
 
 # Pythia6
 

@@ -1,7 +1,22 @@
-13.03.2015
+26.05.2015
 
 A storage for various plotting functions. Finished simulation (jet) files
 should be moved e.g. here for further processing.
 
+////////////////////////////////////////////////////////////////////////////////
+
+Flavour: jet flavour analysis plotting scripts. Legacy from Aman Abhishek,
+imported to work with the jet_simulations -fileset.
+
+Usage (within root command line):
+.L Stack.cc+/Plot.cc+/Compare.cc+
+Stack("jetfile.root")
+Plot("jetfile.root")
+Compare("jetfile1.root","jetfile2.root","jetfile3.root","jetfile4.root",
+        "jetfile5.root","jetfiel6.root")
+
+////////////////////////////////////////////////////////////////////////////////
+
 Ptcut and jetsorter are somewhat deprecated but they might still be useful.
+
 

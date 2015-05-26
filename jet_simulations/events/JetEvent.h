@@ -23,42 +23,43 @@
 // The information concerning one jet, stored to a ROOT tree.
 class JetData : public TObject {
 public:
-   JetData() { }
-   virtual ~JetData() { }
-   
-   void SetPxPyPzE(double,double,double,double);
-   void SetParams(double,double,double,double,double,double,double,double,
-      double,double,double,int);
-   
-   Double_t P() const { return fP4.P(); }
-   Double_t Pt() const { return fP4.Pt(); }
-   Double_t Eta() const { return fP4.Eta(); }
-   Double_t Phi() const { return fP4.Phi(); }
-   Double_t Mass() const { return fP4.M(); }  
+    JetData() { }
+    virtual ~JetData() { }
+    
+    void SetPxPyPzE(double,double,double,double);
+    void SetParams(double,double,double,double,double,double,double,double,
+        double,double,int,int,double,double);
+    
+    Double_t P() const { return fP4.P(); }
+    Double_t Pt() const { return fP4.Pt(); }
+    Double_t Eta() const { return fP4.Eta(); }
+    Double_t Phi() const { return fP4.Phi(); }
+    Double_t Mass() const { return fP4.M(); }  
 
 private:
    /* Use a pure ROOT LorentzVector so that for instance Pt can be found out
     * even without the sources of this event class. This is a slightly better 
     * format than TLorentzVector and is in use for instance in the KKousouris 
     * scripts (indirectly, through CMSSW). */ 
-   ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
+    ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
+    
+    double fChf;
+    double fNhf;
+    double fPhf;
+    double fElf;
+    double fMuf;
+    
+    double fChm;
+    double fNhm;
+    double fPhm;
+    double fElm;
+    double fMum;
+    
+    int fFlav;
+    int fConstituents;
+    double fPTD;
+    double fSigma2;
    
-   double fChf;
-   double fNhf;
-   double fPhf;
-   double fElf;
-   double fMuf;
-   
-   double fChm;
-   double fNhm;
-   double fPhm;
-   double fElm;
-   double fMum;
-   
-   double fWeight;
-   
-   int fFlav;
- 
 public:
    ClassDef(JetData,1)
 };
@@ -71,7 +72,7 @@ public:
    virtual ~JetEvent();
 
    void AddJet(double,double,double,double,double,double,double,double,double,
-      double,double,double,double,double,double,int);
+      double,double,double,double,double,double,int,int,double,double);
    JetData *InitJet();
    
    void Clear(Option_t *option ="");
@@ -83,6 +84,7 @@ private:
 
    TClonesArray *fJets;
    static TClonesArray *fgJets;
+   double fWeight;
  
 public:
    ClassDef(JetEvent,1)

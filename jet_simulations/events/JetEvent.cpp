@@ -16,7 +16,8 @@ void JetData::SetPxPyPzE(double px, double py, double pz, double e)
 
 
 void JetData::SetParams(double chf, double nhf, double phf, double elf, double 
-   muf, double chm, double nhm, double phm, double elm, double mum, double weight, int flav)
+    muf, double chm, double nhm, double phm, double elm, double mum, int flav,
+    int constit, double PTD, double S2)
 {
     fChf = chf;
     fNhf = nhf;
@@ -29,6 +30,9 @@ void JetData::SetParams(double chf, double nhf, double phf, double elf, double
     fElm = elm;
     fMum = mum;
     fFlav = flav;
+    fConstituents = constit;
+    fPTD = PTD;
+    fSigma2 = S2;
 }
 
 
@@ -51,15 +55,17 @@ JetEvent::~JetEvent()
 
 void JetEvent::AddJet( double Px, double Py, double Pz, double E, double Chf, 
     double Nhf, double Phf, double Elf, double Muf, double Chm, double Nhm, 
-    double Phm, double Elm, double Mum, double weight, int flav)
+    double Phm, double Elm, double Mum, double weight, int flav, int constit,
+    double PTD, double S2)
 {
     Int_t ObjectNumber = TProcessID::GetObjectCount();
     
     JetData *jet;
     
     jet = InitJet();
+    fWeight = weight;
     jet->SetPxPyPzE(Px,Py,Pz,E);
-    jet->SetParams(Chf,Nhf,Phf,Elf,Muf,Chm,Nhm,Phm,Elm,Mum,weight,flav);
+    jet->SetParams(Chf,Nhf,Phf,Elf,Muf,Chm,Nhm,Phm,Elm,Mum,flav,constit,PTD,S2);
     
     TProcessID::SetObjectCount(ObjectNumber);
 }

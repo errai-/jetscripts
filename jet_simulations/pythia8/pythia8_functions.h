@@ -73,6 +73,65 @@ static int isExcitedHadronState(Event& event, int idx, int quarkId)
 }
 
 
+static bool pythia8ParticleLoop(Pythia&, Event&,PrtclEvent*,const int);
+
+/* Main loop for storing events 
+ * mode:
+ *  0 - generic case
+ *  1 - standard dijet
+ *  2 - gammajet
+ *  3 - Zjet */
+static int pythia8EventLoop(int nEvent, string settings, string fileName, 
+                            const int mode, const int threadId ) 
+{
+    /* Init pythia with a custom seed */
+    Pythia pythia; Event& event = pythia.event;
+    
+    pythia.readFile(settings.c_str()); 
+    pythia.settings.readString("Random:setSeed = on");
+    string seed = "Random:seed = ";
+    seed += std::to_string(threadId*10000);
+    pythia.settings.readString(seed);
+    pythia.settings.readString("Next:numberCount = 0");
+    pythia.init();
+    pythia.settings.listChanged();
+    
+    /* Try to create a new file */
+    TFile *outFile = new TFile(fileName.c_str(), "RECREATE");
+    if (!outFile->IsOpen()) return 1;
+    outFile->SetCompressionLevel(1); /* File is compressed */
+    
+    /* Create a tree. Autosave every 100 Mb, cache of 10 Mb */ 
+    TTree *tree = new TTree("Pythia8Tree","Tree filled with pythia8 data.");
+    tree->SetAutoSave(100000000);
+    tree->SetCacheSize(10000000);    
+    TTree::SetBranchStyle(1); /* New branch style */
+
+    /* Connect an event to the tree */
+    PrtclEvent *pEvent = new PrtclEvent();
+    TBranch *branch = tree->Branch("event", &pEvent, 32000,4);
+    branch->SetAutoDelete(kFALSE);
+    tree->BranchRef();
+
+    int timerStep = 1000;
+    Timer timer; timer.setParams(nEvent,timerStep); timer.startTiming();
+    /* Simulation loop: */
+    for (size_t ev = 0; ev != nEvent; ++ev) {
+        if (!pythia.next()) continue;
+        if (ev%timerStep==0&&ev>0) timer.printTime();
+        
+        if (pythia8ParticleLoop(pythia,event,pEvent,mode)) tree->Fill();
+        pEvent->Clear();
+    }
+
+    outFile = tree->GetCurrentFile();
+    tree->AutoSave("Overwrite");
+
+    delete pEvent;  pEvent = 0;
+    outFile->Close();
+    return 0;
+}
+
 static void particleAdd(PrtclEvent* pEvent, Particle& part, int saveStatus)
 {
     pEvent->AddPrtcl(part.px(),part.py(),part.pz(),part.e(),part.id(), 
@@ -98,68 +157,10 @@ static void ghostParticleAdd(PrtclEvent* pEvent, Event& event, size_t prt)
         }
         if (HadrFuncs::hasBottom(id) && !isExcitedHadronState(event,prt,5)) {
             ghostStatus = 7; /* b Hadrons */
-        } 
+        }
     }
 
     if (ghostStatus) { particleAdd(pEvent,event[prt],ghostStatus); }
-}
-
-static bool pythia8ParticleLoop(Pythia&, Event&,PrtclEvent*,const int);
-
-/* Main loop for storing events 
- * mode:
- *  0 - generic case
- *  1 - standard dijet
- *  2 - gammajet
- *  3 - Zjet */
-static int pythia8EventLoop(int nEvent, string settings, string fileName, 
-                            const int mode, const int threadId ) 
-{
-    /* Init pythia with a custom seed */
-    Pythia pythia; Event& event = pythia.event;
-    
-    pythia.readFile(settings.c_str()); 
-    pythia.settings.readString("Random:setSeed = on");
-    string seed = "Random:seed = ";
-    seed += std::to_string(threadId*10000);
-    pythia.settings.readString(seed);
-    pythia.init();
-    pythia.settings.listChanged();
-    
-    /* Try to create a new file */
-    TFile *outFile = new TFile(fileName.c_str(), "RECREATE");
-    if (!outFile->IsOpen()) return 1;
-    outFile->SetCompressionLevel(1); /* File is compressed */
-    
-    /* Create a tree. Autosave every 100 Mb, cache of 10 Mb */ 
-    TTree *tree = new TTree("Pythia8Tree","Tree filled with pythia8 data.");
-    tree->SetAutoSave(100000000);
-    tree->SetCacheSize(10000000);    
-    TTree::SetBranchStyle(1); /* New branch style */
-
-    /* Connect an event to the tree */
-    PrtclEvent *pEvent = new PrtclEvent();
-    TBranch *branch = tree->Branch("event", &pEvent, 32000,4);
-    branch->SetAutoDelete(kFALSE);
-    tree->BranchRef();
-
-    int timerStep = 100;
-    Timer timer; timer.setParams(nEvent,timerStep); timer.startTiming();
-    /* Simulation loop: */
-    for (size_t ev = 0; ev != nEvent; ++ev) {
-        if (!pythia.next()) continue;
-        if (ev!=0&&ev%timerStep==0) timer.printTime();
-        
-        if (pythia8ParticleLoop(pythia,event,pEvent,mode)) tree->Fill();
-        pEvent->Clear();
-    }
-
-    outFile = tree->GetCurrentFile();
-    tree->AutoSave("Overwrite");
-
-    delete pEvent;  pEvent = 0;
-    outFile->Close();
-    return 0;
 }
 
 /* Returns true if event is to be saved */

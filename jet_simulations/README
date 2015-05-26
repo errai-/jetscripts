@@ -1,5 +1,5 @@
 Author: Hannu Siikonen
-Last update: 6.5.2015
+Last update: 21.5.2015
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -11,46 +11,69 @@ executed with pythia6/8 or Herwig++.
 
 ////////////////////////////////////////////////////////////////////////////////
 
+USED STATUS CODES:
+
+1: Generic final particles
+
+2: For gamma/Z-jets the stable gammas and Z's, for generic gammas originating from pi0
+
+3: Outgoing hardest subprocess
+
+4: Ghost partons
+5: Ghost s hadron
+6: Ghost c hadron
+7: Ghost b hadron
+8: Ghost t hadron (reserved for future usage)
+
+////////////////////////////////////////////////////////////////////////////////
+
 SETUP:
 
-make sure that ROOT, pythia8 and herwig++ & ThePEG are correctly installed. These scripts
-are working with ROOT 5.34, ROOT 6 is still problematic with the simulators. Make
-changes into config.mk according to system specific settings. The software should
-be installed in a path defined in a generic path (e.g. /usr/local) that is considered
-in LD_LIBRARY_PATH. With root, also the handling with thisroot.sh is sufficient.
+See installation instructions from the parent folder. ROOT is needed always, and
+pythia8 is good to be installed. Pythia6 and Herwig++ are more optional. As of now,
+the installation used ROOT 6. This should be compatible with the latest ROOT 5
+versions, but there can emerge problems.
 
-IMPORTANT (general):
-Either run this every time before starting running or add this to .bashr or
-similar (in the latter case $PWD has to be replaced with the path to the current
-folder):
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+////////////////////////////////////////////////////////////////////////////////
 
-IMPORTANT (pythia6):
-Do the same as above but for pythia6 libraries:
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:pythia6libdir
+PYTHIA8: The files used for pythia8 simulations.
 
-Folder contents:
-
-// pythia8: The files used for pythia8 simulations.
-
-Usage:
+Build:
  make pythia8
- ./pythia8.exe (number of events) (save file name) (setting file name)
+Run:
+ make run_pythia8 NUM_EVT=NNNNN NUM_PROC=X MODE=Y
+Note:
+ All the parameters are optional, since they are initialized with some reasonable values.
+ MODE can be set to 0: generic, 1: dijet, 2: gammajet, 3: Zjet
 
-// herwig: The files used for herwig simulations.
+////////////////////////////////////////////////////////////////////////////////
 
-Usage:
+HERWIG++: The files used for herwig simulations.
+
+Build:
  make herwig_read HFILE=(read file name)
- make herwig_run NUM=(number of events) HFILE=(run file name)
+Run:
+ make run_herwig NUM_EVT=NNNNN NUM_PROC=X MODE=Y HFILE=FFFFF
+Note:
+ HFILE tells which initial setup is used for Herwig++. This has a good initial value and
+ usually does not need to be changed. MODE can be set to 0: generic.
 
-// pythia6: The files used for pythia6 simulations.
-Usage:
+////////////////////////////////////////////////////////////////////////////////
+
+PYTHIA6: The files used for pythia6 simulations.
+Buld:
  make pythia6
+Run:
+ make run_pythia6 NUM_EVT=NNNNN NUM_PROC=X MODE=Y
+Note:
+ MODE can be set to 0: generic
+
+////////////////////////////////////////////////////////////////////////////////
 
 // jetsorting: The programs used for jet sorting and storaging.
 
 Notes:
- rootjetsor and ptcut are in principle functional, but these are to be 
+ rootjetsort and ptcut are in principle functional, but these are to be 
  combined and updated into a similar file as jetanalysis.
 
 Usage:
@@ -76,23 +99,3 @@ Usage:
 // obj, lib: Objects, libraries etc. needed while building the programs.
 
 // generic: Some generic files and programs that don't fit elsewhere.
-
-////////////////////////////////////////////////////////////////////////////////
-
-USED STATUS CODES:
-
-1: Generic final particles
-
-2: For gamma/Z-jets the stable gammas and Z's
-
-3: Gammas originating from pi0
-
-4: Outgoing hardest subprocess
-
-5: Ghost partons
-6: Ghost s hadron
-7: Ghost c hadron
-8: Ghost b hadron
-9: Ghost t hadron (reserved for future usage)
-
-////////////////////////////////////////////////////////////////////////////////

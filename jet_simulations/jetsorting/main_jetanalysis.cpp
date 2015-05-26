@@ -96,6 +96,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    cout << mode << endl;
     /* Analysis process */
     JetAnalysis treeHandle(forest, output.c_str(), mode, definition);
     treeHandle.EventLoop();

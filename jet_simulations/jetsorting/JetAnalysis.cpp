@@ -24,7 +24,7 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile, int mode, int definit
     fJetBranch->SetAutoDelete(kFALSE);
     fOutTree->BranchRef();
     
-    jetsPerEvent = 1;
+    jetsPerEvent = 2;
 }
 
 JetAnalysis::~JetAnalysis() 
@@ -142,6 +142,8 @@ void JetAnalysis::ParticlesToJetsorterInput()
 {
     fjInputs.clear();
     hiddenInputs.clear();
+    mPartonList.clear();
+    mLeptonList.clear();
     int hiddenCount = 0;
     
     for (size_t i = 0; i != fPrtcls_; ++i) {
@@ -189,14 +191,14 @@ bool JetAnalysis::GoodEvent()
         if( sortedJets.size()<2 ) { 
             return false;
         } else if( sortedJets.size()>2 ) {
-            return sortedJets[0].delta_phi_to(sortedJets[0])>2.8 && 
-            0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())>sortedJets[2].pt();
+            return fabs(sortedJets[0].delta_phi_to(sortedJets[1]))>2.8 && 0.15
+                *fabs(sortedJets[0].pt()+sortedJets[1].pt())>sortedJets[2].pt();
         }
-        return sortedJets[0].delta_phi_to( sortedJets[1] )>2.8;
+        return fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))>2.8;
     } else if (mMode == 2) { 
         /* gamma-jet events */
         if ( sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() || 
-             hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R ) { 
+             hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R ) {
             return false;
         } 
         return true;
@@ -229,9 +231,9 @@ void JetAnalysis::JetLoop()
     int counter = 0;
     for (size_t i = 0; i < sortedJets.size(); i++) {
         /* Sanity checks/cuts: */
-        if ( counter++ == jetsPerEvent ) break;
         if ( sortedJets[i].constituents().size() < 2 ) continue;
         //if (fabs(sortedJets[i].pseudorapidity()) > etaMax) continue;
+        if ( i == jetsPerEvent ) break;
         
         jetParts = sorted_by_pt(sortedJets[i].constituents());
 
@@ -248,11 +250,10 @@ void JetAnalysis::JetLoop()
         Cuts(i);
         
         int multiplicity = cutJetParts.size();
-        int ptd = PTD(i);
-        int sigma2 = Sigma2(i);
         
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
-            sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,fWeight,mFlavour);
+            sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
+            fWeight,mFlavour,multiplicity,PTD(i),Sigma2(i));
     }
 }
 
@@ -260,19 +261,16 @@ void JetAnalysis::PhysicsFlavor(size_t i)
 {
     mFlavour = 0;
     for ( size_t k = 0; k != mPartonList.size(); ++k ) {
-        printf("Id: %d, UI: %d",mPartonList[k],hiddenInputs[mPartonList[k]].user_index());
         double dR = sortedJets[i].delta_R( hiddenInputs[mPartonList[k]] );
         if ( dR < R) {
             if (mFlavour!=0) {
                 mFlavour = 0;
-                cout << dR << "persepolis :DD" << endl;
-                //break;
+                break;
             } else {
                 mFlavour = abs(hiddenInputs[mPartonList[k]].user_index());
             }
         }
     }
-    printf("Flavour: %f\n",mFlavour);
 }
     
 void JetAnalysis::FlavorLoop(size_t i)
@@ -447,7 +445,7 @@ void JetAnalysis::TypeSort()
 
 void JetAnalysis::Cuts(int i)
 {
-    cutJetParts.resize(0);
+    cutJetParts.clear();
     vector<fastjet::PseudoJet> tmpParts;
     /* Implicit cuts */
     for (size_t q = 0; q != jetParts.size(); ++q) {
@@ -515,7 +513,7 @@ double JetAnalysis::PTD(int i)
 double JetAnalysis::Sigma2(int i)
 {
     double e[4] = {0,0,0,0};
-    double phi(0), eta(0), pT2(0);
+    double phi = 0, eta = 0, pT2 = 0;
     
     for(size_t q = 0; q != cutJetParts.size(); ++q) {
         pT2 += pow(cutJetParts[q].pt(),2);
@@ -528,13 +526,14 @@ double JetAnalysis::Sigma2(int i)
     {
         e[0] += pow(cutJetParts[q].pt()*(cutJetParts[q].eta()-eta),2);
         e[3] += pow(cutJetParts[q].pt()*TVector2::Phi_mpi_pi( cutJetParts[q].phi()-phi ),2);
-        e[1] -= pow(cutJetParts[q].pt(),2)*fabs( (cutJetParts[q].eta()-eta)*
-                    TVector2::Phi_mpi_pi(cutJetParts[q].phi()-phi) );    
+        /* TODO: is it ok that eta has no absolute around it? */
+        e[1] -= pow(cutJetParts[q].pt(),2)*(cutJetParts[q].eta()-eta)*
+                    fabs(TVector2::Phi_mpi_pi(cutJetParts[q].phi()-phi) );    
     }
     e[2] = e[1];
 
     TMatrixDSymEigen me( TMatrixDSym(2,e) );
     TVectorD eigenval = me.GetEigenValues();
 
-    return sqrt(abs(eigenval[1])/pT2);
+    return sqrt(fabs(eigenval[1])/pT2);
 }
