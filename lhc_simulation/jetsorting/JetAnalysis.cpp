@@ -4,7 +4,8 @@
 // Setup:
 /////////
 
-JetAnalysis::JetAnalysis(TTree *tree, const char *outFile, int mode, int definition ) 
+JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2, 
+                         int mode, int definition ) 
                          : fChain(0), mMode(mode), mDefinition(definition)
 {
     assert(tree);
@@ -13,16 +14,21 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile, int mode, int definit
     jetDef = new fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
     
     /* Tree: autosave every 1 Gb, 10 Mb cache */ 
-    fOutFile = new TFile(outFile, "RECREATE");
+    fOutFile = new TFile(outFile1, "RECREATE");
     fOutFile->SetCompressionLevel(1);
     fOutTree = new TTree("JetTree","Tree with jet data");
     fOutTree->SetAutoSave(1000000000); fOutTree->SetCacheSize(10000000);  
     TTree::SetBranchStyle(1);
-    
+    fOutFileName = outFile2;
     fjEvent = new JetEvent;
     fJetBranch = fOutTree->Branch("event", &fjEvent, 32000, 4);
     fJetBranch->SetAutoDelete(kFALSE);
     fOutTree->BranchRef();
+    
+    gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
+    
+    InitCI();
+    InitFP();  
     
     jetsPerEvent = 2;
 }
@@ -48,21 +54,51 @@ void JetAnalysis::Init(TTree *tree)
     fCurrent = -1;
     fChain->SetMakeClass(1);
 
-    fChain->SetBranchAddress("fWeight", &fWeight, &b_event_fWeight);
-    fChain->SetBranchAddress("fPrtcls", &fPrtcls_, &b_event_fPrtcls_);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fX", fPrtcls_fP4_fCoordinates_fX, 
-                                                         &b_fPrtcls_fP4_fCoordinates_fX);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fY", fPrtcls_fP4_fCoordinates_fY, 
-                                                         &b_fPrtcls_fP4_fCoordinates_fY);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fZ", fPrtcls_fP4_fCoordinates_fZ, 
-                                                         &b_fPrtcls_fP4_fCoordinates_fZ);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fPrtcls_fP4_fCoordinates_fT, 
-                                                         &b_fPrtcls_fP4_fCoordinates_fT);
-    fChain->SetBranchAddress("fPrtcls.fPDGCode", fPrtcls_fPDGCode, &b_fPrtcls_fPDGCode);
-    fChain->SetBranchAddress("fPrtcls.fChargeTimes3", fPrtcls_fChargeTimes3, &b_fPrtcls_fChargeTimes3);
-    fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fPrtcls_fAnalysisStatus, &b_fPrtcls_fAnalysisStatus);
+    fChain->SetBranchAddress("fWeight", &fWeight, &b_fWeight);
+    fChain->SetBranchAddress("fPrtcls", &fPrtcls_, &b_fPrtcls_);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fX", fX, &b_fX);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fY", fY, &b_fY);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fZ", fZ, &b_fZ);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT, &b_fT);
+    fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode, &b_fPDGCode);
+    fChain->SetBranchAddress("fPrtcls.fChargeTimes3", fChargeTimes3, &b_fChargeTimes3);
+    fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus, &b_fAnalysisStatus);
 }
 
+
+void JetAnalysis::InitCI(){
+  // Create file on which histogram(s) can be saved.
+  chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
+  chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
+  chargeIndicator.push_back(new TH1D("gluonjet charge","",30,-15,15) );
+  chargeIndicator.push_back(new TH1D("quarkjet charge","",30,-15,15) );
+  chargeIndicator.push_back(new TH1D("gluonjet wcharge","",200,-1,1) );
+  chargeIndicator.push_back(new TH1D("quarkjet wcharge","",200,-1,1) );
+  chargeIndicator.push_back(new TH1D("gluonjet w2charge","",200,-0.8,0.8) );
+  chargeIndicator.push_back(new TH1D("quarkjet w2charge","",200,-0.8,0.8) );
+  chargeIndicator.push_back(new TH1D("gluonjet w","",250,0,1) );
+  chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
+}
+
+void JetAnalysis::InitFP(){
+  for (int idx = 0; idx != 16; ++idx){
+    std::stringstream tmpString("");
+    tmpString << "g" << idx;
+    fractionProfilesGluon.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+    tmpString.str("");
+    tmpString << "q" << idx;
+    fractionProfilesQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+    tmpString.str("");
+    tmpString << "lq" << idx;
+    fractionProfilesLQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+    tmpString.str("");
+    tmpString << "hq" << idx;
+    fractionProfilesHQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+    tmpString.str("");
+    tmpString << "a" << idx;
+    fractionProfilesAll.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+  }
+}
 
 ///////////////////////////////////////////////////
 // Generic functions, these should not be modified:
@@ -104,12 +140,12 @@ void JetAnalysis::EventLoop()
     if (fChain == 0) return;
 
     Long64_t nentries = fChain->GetEntries();
-    mTimer.setParams(nentries,500); mTimer.startTiming();  
+    mTimer.setParams(nentries,2000); mTimer.startTiming();  
     
     int good=0,bad=0;
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
         mFlavorIndices.clear();
-        if (jentry!=0&&jentry%500==0) mTimer.printTime();
+        if (jentry!=0&&jentry%2000==0) mTimer.printTime();
         
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break; fChain->GetEntry(jentry);
@@ -127,12 +163,15 @@ void JetAnalysis::EventLoop()
         JetLoop();
         
         fOutTree->Fill();
+        
         fjEvent->Clear();
     }
     
     fOutFile = fOutTree->GetCurrentFile();
     fOutTree->AutoSave("Overwrite");
     delete fjEvent;  fjEvent = 0;
+    
+    WriteResults();
     
     fOutFile->Close();
 }    
@@ -147,10 +186,8 @@ void JetAnalysis::ParticlesToJetsorterInput()
     int hiddenCount = 0;
     
     for (size_t i = 0; i != fPrtcls_; ++i) {
-        fastjet::PseudoJet particleTemp(fPrtcls_fP4_fCoordinates_fX[i],
-            fPrtcls_fP4_fCoordinates_fY[i], fPrtcls_fP4_fCoordinates_fZ[i],
-            fPrtcls_fP4_fCoordinates_fT[i]);
-        int stat = fPrtcls_fAnalysisStatus[i];
+        fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
+        int stat = fAnalysisStatus[i];
         
         /* Ghost partons, hadrons and normal particles */
         if (stat==4 && mDefinition==2) {
@@ -172,7 +209,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
             hiddenInputs.push_back(particleTemp);
         } else if (stat==3 && mDefinition==1) {
             mPartonList.push_back(hiddenCount++);
-            particleTemp.set_user_index( fPrtcls_fPDGCode[i] );
+            particleTemp.set_user_index( fPDGCode[i] );
             hiddenInputs.push_back(particleTemp);
         }
         
@@ -246,12 +283,14 @@ void JetAnalysis::JetLoop()
         
         ParticleLoop(i); /* Operations on jet particles */
         
-        TypeSort(); /* Get ready for adding the jet */
+        Cuts();
         
-        Cuts(i);
+        TypeSort(); /* Get ready for adding the jet */
+
+        HistFill(i);
         
         int multiplicity = cutJetParts.size();
-        
+       
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
             fWeight,mFlavour,multiplicity,PTD(i),Sigma2(i));
@@ -272,6 +311,7 @@ void JetAnalysis::PhysicsFlavor(size_t i)
             }
         }
     }
+    mIsHadron = -1;
 }
     
 void JetAnalysis::FlavorLoop(size_t i)
@@ -287,8 +327,8 @@ void JetAnalysis::FlavorLoop(size_t i)
     for ( size_t k = 0; k != jetParts.size(); ++k ){
         if (jetParts[k].user_index() > 0) continue; /* Not ghosts */
         int idx = -jetParts[k].user_index();
-        int id = abs(fPrtcls_fPDGCode[idx]);
-        int stat = fPrtcls_fAnalysisStatus[idx];
+        int id = abs(fPDGCode[idx]);
+        int stat = fAnalysisStatus[idx];
     
         // Hadrons, set the id's to correspond to the hadron flavour
         if (stat == 7) {
@@ -312,8 +352,10 @@ void JetAnalysis::FlavorLoop(size_t i)
         * is used separately, partonFlav tells the complete parton flavour. */
     if (hadronFlav != 0) {
         mFlavour = hadronFlav;
+        mIsHadron = 1;
     } else {
         mFlavour = hardestLightParton;
+        mIsHadron = 0;
     }
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
@@ -347,26 +389,25 @@ void JetAnalysis::ParticleLoop(size_t i){
     mLambda0 = zero; mSigma = zero; mElec = zero, mMuon = zero;
     mOthers = zero; mEtSum = zero;
     
-    mPartSum=0; mChargSum=0; mChargWSum=0; mChargW2Sum=0; mW2=0;
+    mChargSum=0; mChargWSum=0; mChargW2Sum=0; mW2=0;
     for (unsigned int j = 0; j != jetParts.size(); ++j) { 
-        mPartSum++;
         TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
             jetParts[j].e() );
 
-        mChargSum +=  fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0;
-        mChargWSum += (fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0)
+        mChargSum +=  fChargeTimes3[ jetParts[j].user_index() ]/3.0;
+        mChargWSum += (fChargeTimes3[ jetParts[j].user_index() ]/3.0)
             *jetParts[j].perp()/sortedJets[i].perp();
-        mChargW2Sum += (fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0)
+        mChargW2Sum += (fChargeTimes3[ jetParts[j].user_index() ]/3.0)
             *pow(jetParts[j].perp()/sortedJets[i].perp(),2);
         mW2 += pow(jetParts[j].perp()/sortedJets[i].perp(),2);
         mEtSum += tmpP;
-        int id = fPrtcls_fPDGCode[ jetParts[j].user_index() ];
+        int id = fPDGCode[ jetParts[j].user_index() ];
         if ( id == 211 ) { 
             mPiPlus += tmpP;
         } else if ( id == -211 ) { 
             mPiMinus+= tmpP;
         } else if ( id == 22 ) {
-            if ( fPrtcls_fAnalysisStatus[ jetParts[j].user_index() ] == 10 ) {
+            if ( fAnalysisStatus[ jetParts[j].user_index() ] == 2 ) {
                 mPi0Gamma += tmpP;
             } else {
                 mGamma += tmpP;
@@ -443,14 +484,67 @@ void JetAnalysis::TypeSort()
     mMum = mMuon.M();
 }
 
+void JetAnalysis::HistFill(int i){
+    FillerHandle( fractionProfilesAll, sortedJets[i].pt(), mEtSum.Et() );
+    if (mFlavour==21) {
+        gluonQuark->Fill( sortedJets[i].pt(), 1);
+        FillerHandle( fractionProfilesGluon, sortedJets[i].pt(), mEtSum.Et() );
+    } else if (mFlavour==4 || mFlavour==5) {
+        gluonQuark->Fill( sortedJets[i].pt(), 0);
+        FillerHandle( fractionProfilesHQuark, sortedJets[i].pt(), mEtSum.Et() );
+        FillerHandle( fractionProfilesQuark, sortedJets[i].pt(), mEtSum.Et() );
+    } else if (mFlavour==1 || mFlavour==2 || mFlavour==3 ) {
+        gluonQuark->Fill( sortedJets[i].pt(), 0);
+        FillerHandle( fractionProfilesLQuark, sortedJets[i].pt(), mEtSum.Et() );
+        FillerHandle( fractionProfilesQuark, sortedJets[i].pt(), mEtSum.Et() );
+    }
+    
+    if ( mIsHadron != -1 && abs(sortedJets[i].eta()) < 1.3 
+        && ( sortedJets[i].pt() > 80 && sortedJets[i].pt() < 120 ) )
+    {
+        if ( mFlavour==21 ){
+            chargeIndicator[0]->Fill(jetParts.size());
+            chargeIndicator[2]->Fill(mChargSum);
+            chargeIndicator[4]->Fill(mChargWSum);
+            chargeIndicator[6]->Fill(mChargW2Sum);
+            chargeIndicator[8]->Fill(mW2);
+        } else if ( mFlavour < 9 ){
+            chargeIndicator[1]->Fill(jetParts.size());
+            chargeIndicator[3]->Fill(mIsHadron ? mChargSum : mQuarkJetCharge*mChargSum);
+            chargeIndicator[5]->Fill(mIsHadron ? mChargWSum : mQuarkJetCharge*mChargWSum);
+            chargeIndicator[7]->Fill(mIsHadron ? mChargW2Sum : mQuarkJetCharge*mChargW2Sum);
+            chargeIndicator[9]->Fill(mW2);
+        }
+    }
+}
 
-void JetAnalysis::Cuts(int i)
+void JetAnalysis::FillerHandle( vector<TProfile*> &hists, double pt, double scale)
+{
+    hists[0]->Fill( pt, mPiPlus.Et()   /scale ); 
+    hists[1]->Fill( pt, mPiMinus.Et()  /scale );
+    hists[2]->Fill( pt, mPi0Gamma.Et() /scale ); 
+    hists[3]->Fill( pt, mKaPlus.Et()   /scale );
+    hists[4]->Fill( pt, mKaMinus.Et()  /scale ); 
+    hists[5]->Fill( pt, mKSZero.Et()   /scale );
+    hists[6]->Fill( pt, mKLZero.Et()   /scale ); 
+    hists[7]->Fill( pt, mProton.Et()   /scale );
+    hists[8]->Fill( pt, mAproton.Et()  /scale ); 
+    hists[9]->Fill( pt, mNeutron.Et()  /scale );
+    hists[10]->Fill( pt, mAneutron.Et()/scale ); 
+    hists[11]->Fill( pt, mGamma.Et()   /scale );
+    hists[12]->Fill( pt, mLambda0.Et() /scale ); 
+    hists[13]->Fill( pt, mSigma.Et()   /scale );
+    hists[14]->Fill( pt, (mElec.Et()+mMuon.Et())/scale ); 
+    hists[15]->Fill( pt, mOthers.Et()  /scale );
+}
+
+void JetAnalysis::Cuts()
 {
     cutJetParts.clear();
     vector<fastjet::PseudoJet> tmpParts;
     /* Implicit cuts */
     for (size_t q = 0; q != jetParts.size(); ++q) {
-        int id = abs(fPrtcls_fPDGCode[ abs(jetParts[q].user_index()) ]);
+        int id = abs(fPDGCode[ abs(jetParts[q].user_index()) ]);
         if ( !IsHadron(id) || ( (IsCharged(id) && jetParts[q].pt()>0.3) || 
             (!IsCharged(id) && jetParts[q].pt()>3) ) )
         {
@@ -460,7 +554,7 @@ void JetAnalysis::Cuts(int i)
     
     /* Explicit cuts */
     for (size_t q = 0; q != tmpParts.size(); ++q) {
-        int id = abs(fPrtcls_fPDGCode[ abs(tmpParts[q].user_index()) ]);
+        int id = abs(fPDGCode[ abs(tmpParts[q].user_index()) ]);
         if (!(tmpParts[q].pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) { 
             cutJetParts.push_back(tmpParts[q]);
         }
@@ -537,4 +631,27 @@ double JetAnalysis::Sigma2(int i)
     TVectorD eigenval = me.GetEigenValues();
 
     return sqrt(fabs(eigenval[1])/pT2);
+}
+
+void JetAnalysis::WriteResults()
+{
+    fOutFile2 = new TFile(fOutFileName.c_str(),"RECREATE");
+    fOutFile2->cd();
+
+    TH1D *gq = gluonQuark->ProjectionX("gluonvsquark","");
+    gq->Write();   
+    
+    for (unsigned int i = 0; i != fractionProfilesGluon.size(); ++i){
+        fractionProfilesGluon[i]->Write();
+        fractionProfilesQuark[i]->Write();
+        fractionProfilesLQuark[i]->Write();
+        fractionProfilesHQuark[i]->Write();
+        fractionProfilesAll[i]->Write();
+    }
+
+    for (int i = 0; i != 10; ++i){
+        chargeIndicator[i]->Write();
+    }
+    
+    fOutFile2->Close();
 }

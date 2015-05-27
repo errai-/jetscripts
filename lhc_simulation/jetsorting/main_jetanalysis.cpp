@@ -23,7 +23,7 @@ using std::vector;
 int main(int argc, char* argv[]) 
 {
     if (argc != 3) {
-        cout << "Usage: ./jetanalysis [Standard form input file name] [Flavour def.]" << endl;
+        cout << "Usage: ./jetanalysis.exe [Standard form input file name] [Flavour def.]" << endl;
         cout << "Flavour options:" << endl << "1: Physics definition" << endl;
         cout << "2: Hadronic definition" << endl;
         return 1;
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     
     int generator = -1, mode = -1;
     bool beginning = false;
-    string input = argv[1], tmpStr = "", output = "jets_";
+    string input = argv[1], tmpStr = "", output = "jets_", output2 = "hists_";
     for (auto i : input) {
         if (i=='_') {
             if (!beginning && tmpStr=="particles") {
@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
                     generator = 1;
                 }
                 output += i;
+                output2 += i;
             } else {
                 if (tmpStr=="generic") {
                     mode = 0;
@@ -58,10 +59,13 @@ int main(int argc, char* argv[])
                     mode = 3;
                 }
                 output += i;
+                output2 += i;
                 if (definition==1) {
                     output += "physics_";
+                    output2 += "physics_";
                 } else {
                     output += "hadronic_";
+                    output2 += "hadronic_";
                 }
             }
             tmpStr = "";
@@ -69,6 +73,7 @@ int main(int argc, char* argv[])
             tmpStr += i;
             if (beginning) {
                 output += i;
+                output2 += i;
             }
         }
     }
@@ -98,7 +103,7 @@ int main(int argc, char* argv[])
 
     cout << mode << endl;
     /* Analysis process */
-    JetAnalysis treeHandle(forest, output.c_str(), mode, definition);
+    JetAnalysis treeHandle(forest, output.c_str(), output2.c_str(), mode, definition);
     treeHandle.EventLoop();
     
     delete forest;

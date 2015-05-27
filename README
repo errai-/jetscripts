@@ -5,6 +5,7 @@ README updated 16.5.2015
 #2) FOLDER DESCRIPTIONS
 #3) INSTALLATION INSTRUCTIONS
 
+
 #1) INTRODUCTION
 This is a collection of data analysis and simulation tools used with the CMS
 project. Developed under Helsinki Institute of Physics, which contributes to
@@ -34,6 +35,7 @@ A collection of useful small scripts and old code versions, which may come in
 handy in certain circumstances.
 Updated occasionally, files remain mostly static after they are added here.
 
+
 #3) INSTALLATION
 
 Installation instructions for various softwares that are needed for the simulations.
@@ -41,12 +43,12 @@ Some of the installations need to be done in the correct order, so that dependen
 
  #Zero] Other operations
 
-- These are done after the installations but are generally important for working code.
+ -These are done after the installations but are generally important for working code.
 
 In .bashrc (or similar), add:
  export LD_LIBRARY_PATH = $LD_LIBRARY_PATH:/usr/local/lib:"pythia6Dir":"jetscriptsDir"/jet_simulations/lib
 
-- Here "pythia6Dir" is the installation location of pythia 6 and"jetscriptsDir" is the location of this folder.
+ -Here "pythia6Dir" is the installation location of pythia 6 and"jetscriptsDir" is the location of this folder.
 
 In /usr/local/ and /usr/ subdirectories, remove the files related to previous installations (if there is one) of these
 programs. Found easily for instance by running:
@@ -56,29 +58,29 @@ programs. Found easily for instance by running:
 
 Run:
  ./configure
-- If errors or problems occur, some additional software installations or other fixes might be needed.
+ -If errors or problems occur, some additional software installations or other fixes might be needed.
 
 Run:
  make -j
-- Uses as many threads as possible for the build, a number after -j can be used to specify a smaller amount.
+ -Uses as many threads as possible for the build, a number after -j can be used to specify a smaller amount.
 
 Run:
  make check
 
 Run:
  sudo make install
-- Copies the installation below /usr/local
+ -Copies the installation below /usr/local
 
  #II] Pythia8[.2.05] (dependency: Fastjet3)
 
 Run:
  ./configure --with-fastjet3=/usr/local --enable-64bit --enable-shared --prefix=/usr/local
-- Depending on the machine additional flags might be needed.
+ -Depending on the machine additional flags might be needed.
   Check that the output of configurations seems to be sensible.
 
 Run:
  sudo make install
-- Copies the installation below /usr/local
+ -Copies the installation below /usr/local
 
 In .bashrc, write:
  export PYTHIA8=/usr/local
@@ -94,12 +96,12 @@ Run a makePythia6 binary corresponding to the used computer architechture.
 
 Run:
  ./configure --with-pythia6-libdir="Location chosen in #III)"
-- Links root with pythia6 and other necessary components.
+ -Links root with pythia6 and other necessary components.
   Note that pythia8 is not linked with root, since this will lead to inconveniences.
 
 Run:
  make -j
-- A fast local installation. This will freeze the computer so with 8 available threads 'make -j4' can be a good choice.
+ -A fast local installation. This will freeze the computer so with 8 available threads 'make -j4' can be a good choice.
 
 In .bashrc, add:
  source "rootDir"/bin/thisroot.sh
