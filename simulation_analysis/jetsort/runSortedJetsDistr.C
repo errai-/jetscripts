@@ -28,12 +28,12 @@
 // tdrStyle
 #include "tdrstyle_mod14_pythia8.C"
 
-int runSortedJetsDistr() {
+int runSortedJetsDistr(std::string fileName) {
 
   int choose = 8;
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("sortedjets.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   
   // Read histograms.
   vector<TH1D*> fractionHists;
@@ -120,7 +120,7 @@ int runSortedJetsDistr() {
   ps2->SetTextColor(kRed);  
   canv->cd();
   pad2->Modified();
-  pythiaFinal();
+  //pythiaFinal();
   std::cout << "\nDouble click on the histogram window to quit.\n";
   gPad->WaitPrimitive();
   

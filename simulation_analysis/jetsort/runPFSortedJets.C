@@ -44,10 +44,10 @@ void stackModify(TH1D *setter){
   setter->GetYaxis()->SetTitleSize(0.045);
 }
 
-int runPFSortedJets() {
+int runPFSortedJets(std::string fileName) {
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("sortedjets.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   THStack* partFracs = new THStack("particlestacks", "");
   THStack* errorFracs = new THStack("errorstacks", "" );
 

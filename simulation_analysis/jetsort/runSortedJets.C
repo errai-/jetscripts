@@ -27,10 +27,10 @@
 // tdrStyle
 #include "tdrstyle_mod1.C"
 
-int runSortedJets() {
+int runSortedJets(std::string fileName) {
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("sortedjets.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   THStack* partFracs = new THStack("particlestacks", "");
   THStack* errorFracs = new THStack("errorstacks", "" );
   

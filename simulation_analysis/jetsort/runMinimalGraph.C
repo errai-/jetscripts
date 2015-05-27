@@ -1,11 +1,12 @@
 #include "TROOT.h"
 #include "TChain.h"
+#include "JetProcessor.C"
+#include <string>
 
-runMinimalGraph(){
+void runMinimalGraph(std::string fileName){
   TChain *forest = new TChain("JetTree");
-  forest->AddFile("jet_storage.root");
+  forest->AddFile(fileName.c_str());
 
-  gROOT->ProcessLine(".L JetProcessor.C+");
   JetProcessor handle(forest);
 
   handle.Loop();

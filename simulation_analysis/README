@@ -17,6 +17,16 @@ Compare("jetfile1.root","jetfile2.root","jetfile3.root","jetfile4.root",
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Ptcut and jetsorter are somewhat deprecated but they might still be useful.
+Jetsort: basic analysis for studying jet data.
 
+Usage (within root command line):
+.L run(PF)SortedJets.C
+run(PF)SortedJets("hists_****.root")
+
+.L runMinimalGraph.C
+runMinimalGraph("jets_****.root")
+
+////////////////////////////////////////////////////////////////////////////////
+
+PTCut: analysis for detector simulations.
 
