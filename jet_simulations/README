@@ -32,7 +32,34 @@ SETUP:
 See installation instructions from the parent folder. ROOT is needed always, and
 pythia8 is good to be installed. Pythia6 and Herwig++ are more optional. As of now,
 the installation used ROOT 6. This should be compatible with the latest ROOT 5
-versions, but there can emerge problems.
+versions, but there can emerge problems. After the basic simulation sofware
+packages are installed, some local configurations have to be made. The compiler
+options on a local machine should be defined in 'config.mk'. Choices to be made:
+
+Compiler: 
+gcc (g++) should be fine and useful, since also the fortran-based
+pythia6 is in use. In principle it is possible to use clang.
+
+CFLAGS, CXXFLAGS: 
+Change these if necessary. CXXFLAGS is used with the distinction that it has
+c++11 included.
+
+PYTHIA6:
+The path of the pythia6 libraries is hardcoded here. It should be changed.
+
+PYTHIA8:
+If installed correctly, this command should work out-of-the-box.
+
+FASTJET:
+Same as with pythia8, this command should work directly in the command line.
+
+ROOT:
+Also this command should work directly regardless of the ROOT version in use.
+
+CINTERPRET:
+Fine-tuning between root 6 and root 5. If root 5.xx is used, the current line
+should be commented and the commented line should be uncommented. The difference
+is that root 5 uses rootcint and root 6 rootcling.
 
 ////////////////////////////////////////////////////////////////////////////////
 

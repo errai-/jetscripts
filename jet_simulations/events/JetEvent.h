@@ -1,10 +1,10 @@
-#ifndef SIMEVENT_H
-#define SIMEVENT_H
-
 ///////////////////////////////////////////////////////////////////////
 // A generic event class for storing jet data from simulations.      //
 // Hannu Siikonen 19.5.2015                                          //
 ///////////////////////////////////////////////////////////////////////
+
+#ifndef JETEVENT_H
+#define JETEVENT_H
 
 #include <iostream>
 #include <cmath>
@@ -68,26 +68,26 @@ public:
 // An event class for the jet data that is stored
 class JetEvent : public TObject {
 public:
-   JetEvent(size_t = 1000);
-   virtual ~JetEvent();
+    JetEvent(size_t = 1000);
+    virtual ~JetEvent();
 
-   void AddJet(double,double,double,double,double,double,double,double,double,
-      double,double,double,double,double,double,int,int,double,double);
-   JetData *InitJet();
-   
-   void Clear(Option_t *option ="");
-   void Reset(Option_t *option ="");
+    void AddJet(double,double,double,double,double,double,double,double,double,
+        double,double,double,double,double,double,int,int,double,double);
+    JetData *InitJet();
+    
+    void Clear(Option_t *option ="");
+    void Reset(Option_t *option ="");
 
 private:
-   size_t fN_Jet; //! 
-   size_t fSizeLim; //! Maximal amount of particles within an event
+    size_t fN_Jet; //! 
+    size_t fSizeLim; //! Maximal amount of particles within an event
 
-   TClonesArray *fJets;
-   static TClonesArray *fgJets;
-   double fWeight;
- 
+    TClonesArray *fJets;
+    static TClonesArray *fgJets;
+    double fWeight;
+    
 public:
-   ClassDef(JetEvent,1)
+    ClassDef(JetEvent,1)
 };
 
 

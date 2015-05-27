@@ -73,21 +73,21 @@ void JetEvent::AddJet( double Px, double Py, double Pz, double E, double Chf,
 
 JetData* JetEvent::InitJet()
 {
-   assert(fSizeLim>fN_Jet);
-   JetData *jet = (JetData*) fJets->ConstructedAt(fN_Jet++);
-   return jet;
+    assert(fSizeLim>fN_Jet);
+    JetData *jet = (JetData*) fJets->ConstructedAt(fN_Jet++);
+    return jet;
 }
 
 
 void JetEvent::Clear(Option_t* /* option */)
 {
-   fJets->Clear("C");
-   fN_Jet = 0;
+    fJets->Clear("C");
+    fN_Jet = 0;
 }
 
 
 void JetEvent::Reset(Option_t* option)
 {
-   delete fgJets; fgJets = 0;
-   fN_Jet = 0;
+    delete fgJets; fgJets = 0;
+    fN_Jet = 0;
 }

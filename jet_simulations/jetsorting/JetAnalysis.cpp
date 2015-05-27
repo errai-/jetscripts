@@ -157,7 +157,8 @@ void JetAnalysis::ParticlesToJetsorterInput()
             particleTemp *= pow( 10, -18 );
             particleTemp.set_user_index( -i );
         } else if ((/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)
-                   && mDefinition==2) {
+                   && mDefinition==2) 
+        {
             particleTemp *= pow( 10, -18 );
             particleTemp.set_user_index( -i );
         } else if (stat==1) {
@@ -338,108 +339,108 @@ int JetAnalysis::ChargeSign( int id )
 
 void JetAnalysis::ParticleLoop(size_t i){
   
-   TLorentzVector zero(0,0,0,0);
+    TLorentzVector zero(0,0,0,0);
 
-   mPiPlus = zero; mPiMinus = zero;  mPi0Gamma = zero; mGamma = zero; 
-   mKaPlus = zero; mKaMinus = zero; mKSZero = zero; mKLZero = zero; 
-   mProton = zero; mAproton = zero; mNeutron = zero; mAneutron = zero;
-   mLambda0 = zero; mSigma = zero; mElec = zero, mMuon = zero;
-   mOthers = zero; mEtSum = zero;
-  
-   mPartSum=0; mChargSum=0; mChargWSum=0; mChargW2Sum=0; mW2=0;
-   for (unsigned int j = 0; j != jetParts.size(); ++j) { 
-      mPartSum++;
-      TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
-         jetParts[j].e() );
+    mPiPlus = zero; mPiMinus = zero;  mPi0Gamma = zero; mGamma = zero; 
+    mKaPlus = zero; mKaMinus = zero; mKSZero = zero; mKLZero = zero; 
+    mProton = zero; mAproton = zero; mNeutron = zero; mAneutron = zero;
+    mLambda0 = zero; mSigma = zero; mElec = zero, mMuon = zero;
+    mOthers = zero; mEtSum = zero;
+    
+    mPartSum=0; mChargSum=0; mChargWSum=0; mChargW2Sum=0; mW2=0;
+    for (unsigned int j = 0; j != jetParts.size(); ++j) { 
+        mPartSum++;
+        TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
+            jetParts[j].e() );
 
-      mChargSum +=  fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0;
-      mChargWSum += (fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0)
-         *jetParts[j].perp()/sortedJets[i].perp();
-      mChargW2Sum += (fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0)
-         *pow(jetParts[j].perp()/sortedJets[i].perp(),2);
-      mW2 += pow(jetParts[j].perp()/sortedJets[i].perp(),2);
-      mEtSum += tmpP;
-      int id = fPrtcls_fPDGCode[ jetParts[j].user_index() ];
-      if ( id == 211 ) { 
-         mPiPlus += tmpP;
-      } else if ( id == -211 ) { 
-         mPiMinus+= tmpP;
-      } else if ( id == 22 ) {
-         if ( fPrtcls_fAnalysisStatus[ jetParts[j].user_index() ] == 10 ) {
+        mChargSum +=  fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0;
+        mChargWSum += (fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0)
+            *jetParts[j].perp()/sortedJets[i].perp();
+        mChargW2Sum += (fPrtcls_fChargeTimes3[ jetParts[j].user_index() ]/3.0)
+            *pow(jetParts[j].perp()/sortedJets[i].perp(),2);
+        mW2 += pow(jetParts[j].perp()/sortedJets[i].perp(),2);
+        mEtSum += tmpP;
+        int id = fPrtcls_fPDGCode[ jetParts[j].user_index() ];
+        if ( id == 211 ) { 
+            mPiPlus += tmpP;
+        } else if ( id == -211 ) { 
+            mPiMinus+= tmpP;
+        } else if ( id == 22 ) {
+            if ( fPrtcls_fAnalysisStatus[ jetParts[j].user_index() ] == 10 ) {
+                mPi0Gamma += tmpP;
+            } else {
+                mGamma += tmpP;
+            }
+        } else if ( id == 20 ) { // pi0 gamma
             mPi0Gamma += tmpP;
-         } else {
-            mGamma += tmpP;
-         }
-      } else if ( id == 20 ) { // pi0 gamma
-         mPi0Gamma += tmpP;
-      } else if ( id == 321 ) { 
-         mKaPlus += tmpP;
-      } else if ( id == -321 ) { 
-         mKaMinus += tmpP;
-      } else if ( abs( id ) == 310 ) { 
-         mKSZero += tmpP;
-      } else if ( abs( id ) == 130 ) { 
-         mKLZero += tmpP;
-      } else if ( id == 2212 ) { 
-         mProton += tmpP;
-      } else if ( id == -2212 ) { 
-         mAproton += tmpP;
-      } else if ( id == 2112 ) { 
-         mNeutron += tmpP;
-      } else if ( id == -2112 ) { 
-         mAneutron += tmpP;
-      } else if ( abs( id ) == 3122 ) {
-         mLambda0 += tmpP;
-      } else if ( abs( id ) == 3112 ||
-         abs( id ) == 3222 ) {
-         mSigma += tmpP;
-      } else if ( abs( id ) == 11 ) {
-         mElec += tmpP;
-      } else if ( abs( id ) == 13 ) {
-         mMuon += tmpP;
-      } else { 
-         mOthers += tmpP;        
-      }
-   }
+        } else if ( id == 321 ) { 
+            mKaPlus += tmpP;
+        } else if ( id == -321 ) { 
+            mKaMinus += tmpP;
+        } else if ( abs( id ) == 310 ) { 
+            mKSZero += tmpP;
+        } else if ( abs( id ) == 130 ) { 
+            mKLZero += tmpP;
+        } else if ( id == 2212 ) { 
+            mProton += tmpP;
+        } else if ( id == -2212 ) { 
+            mAproton += tmpP;
+        } else if ( id == 2112 ) { 
+            mNeutron += tmpP;
+        } else if ( id == -2112 ) { 
+            mAneutron += tmpP;
+        } else if ( abs( id ) == 3122 ) {
+            mLambda0 += tmpP;
+        } else if ( abs( id ) == 3112 ||
+            abs( id ) == 3222 ) {
+            mSigma += tmpP;
+        } else if ( abs( id ) == 11 ) {
+            mElec += tmpP;
+        } else if ( abs( id ) == 13 ) {
+            mMuon += tmpP;
+        } else { 
+            mOthers += tmpP;        
+        }
+    }
 }
 
 
 /* Throw the obtained values in temporary containers */
 void JetAnalysis::TypeSort()
 {
-   TLorentzVector zero(0,0,0,0);
-   TLorentzVector tmpLorentz = zero;
-  
-   tmpLorentz += mPiPlus;
-   tmpLorentz += mPiMinus;
-   tmpLorentz += mKaPlus;
-   tmpLorentz += mKaMinus;
-   tmpLorentz += mProton;
-   tmpLorentz += mAproton;
-   tmpLorentz += mSigma;
-   mChf = tmpLorentz.Et()/mEtSum.Et();
-   mChm = tmpLorentz.M();
-   tmpLorentz = zero;
-  
-   tmpLorentz += mKSZero;
-   tmpLorentz += mKLZero;
-   tmpLorentz += mNeutron;
-   tmpLorentz += mAneutron;
-   tmpLorentz += mLambda0;
-   mNhf = tmpLorentz.Et()/mEtSum.Et();
-   mNhm = tmpLorentz.M();
-   tmpLorentz = zero;
-  
-   tmpLorentz += mPi0Gamma;
-   tmpLorentz += mGamma;
-   mPhf = tmpLorentz.Et()/mEtSum.Et();
-   mPhm = tmpLorentz.M();
-  
-   mElf = mElec.Et()/mEtSum.Et();
-   mElm = mElec.M();
-  
-   mMuf = mMuon.Et()/mEtSum.Et();
-   mMum = mMuon.M();
+    TLorentzVector zero(0,0,0,0);
+    TLorentzVector tmpLorentz = zero;
+    
+    tmpLorentz += mPiPlus;
+    tmpLorentz += mPiMinus;
+    tmpLorentz += mKaPlus;
+    tmpLorentz += mKaMinus;
+    tmpLorentz += mProton;
+    tmpLorentz += mAproton;
+    tmpLorentz += mSigma;
+    mChf = tmpLorentz.Et()/mEtSum.Et();
+    mChm = tmpLorentz.M();
+    tmpLorentz = zero;
+    
+    tmpLorentz += mKSZero;
+    tmpLorentz += mKLZero;
+    tmpLorentz += mNeutron;
+    tmpLorentz += mAneutron;
+    tmpLorentz += mLambda0;
+    mNhf = tmpLorentz.Et()/mEtSum.Et();
+    mNhm = tmpLorentz.M();
+    tmpLorentz = zero;
+    
+    tmpLorentz += mPi0Gamma;
+    tmpLorentz += mGamma;
+    mPhf = tmpLorentz.Et()/mEtSum.Et();
+    mPhm = tmpLorentz.M();
+    
+    mElf = mElec.Et()/mEtSum.Et();
+    mElm = mElec.M();
+    
+    mMuf = mMuon.Et()/mEtSum.Et();
+    mMum = mMuon.M();
 }
 
 
