@@ -31,6 +31,7 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
     InitFP();  
     
     jetsPerEvent = 2;
+    if (mode==2||mode==3) jetsPerEvent = 1;
 }
 
 JetAnalysis::~JetAnalysis() 
@@ -237,7 +238,8 @@ bool JetAnalysis::GoodEvent()
         return fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))>2.8;
     } else if (mMode == 2) { 
         /* gamma-jet events */
-        if ( sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() || 
+        if ( sortedJets.size() == 0 ) return false;
+        if ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() || 
              hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R ) {
             return false;
         } 
@@ -245,6 +247,8 @@ bool JetAnalysis::GoodEvent()
     } else if (mMode == 3) {
         /* Z-jet events */
         /* Checking sufficient resolution */
+        if (mLeptonList.size()<2) return false;
+        if (sortedJets.size()==0) return false;
         if( hiddenInputs[mLeptonList[0]].delta_R(sortedJets[0])<R ||
             hiddenInputs[mLeptonList[1]].delta_R(sortedJets[0])<R ) return false;
 
@@ -256,7 +260,7 @@ bool JetAnalysis::GoodEvent()
          * than 30% of that of the dimuon system. */
         fastjet::PseudoJet tmpVec = hiddenInputs[mLeptonList[0]];
         tmpVec += hiddenInputs[mLeptonList[1]];
-        if ( sortedJets[1].pt() > 0.3*tmpVec.pt()) return false;
+        if ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*tmpVec.pt()) return false;
 
         //the dimuon invariant mass is required to fall in the 70-110 GeV range
         if (fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110) return false;
@@ -268,7 +272,6 @@ bool JetAnalysis::GoodEvent()
 
 void JetAnalysis::JetLoop()
 {
-    int counter = 0;
     for (size_t i = 0; i < sortedJets.size(); i++) {
         /* Sanity checks/cuts: */
         if ( sortedJets[i].constituents().size() < 2 ) continue;

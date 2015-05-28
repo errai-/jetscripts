@@ -167,7 +167,6 @@ static void ghostParticleAdd(PrtclEvent* pEvent, Event& event, size_t prt)
 bool pythia8ParticleLoop(Pythia& pythia, Event& event,PrtclEvent* pEvent,const int mode)
 {
     int gammaIdx = -1;
-    
     pEvent->fWeight = pythia.info.weight();
     /* Particle loop may save the same particle twice if it is in multiple categories */
     for (size_t prt = 0; prt!=event.size(); ++prt){
@@ -178,6 +177,7 @@ bool pythia8ParticleLoop(Pythia& pythia, Event& event,PrtclEvent* pEvent,const i
         /* Check for generic ghost particles */
         ghostParticleAdd(pEvent,event,prt);
         
+        /* For gammajets, find gamma from the hardest subprocess */
         if (gammaCase && gammaIdx==-1 && hardSubProc) {
             gammaIdx = prt;
             while (!event[gammaIdx].isFinal()) {

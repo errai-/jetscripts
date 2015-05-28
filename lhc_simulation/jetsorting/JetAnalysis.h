@@ -101,7 +101,7 @@ private:
     fastjet::JetDefinition* jetDef;
 
     /* PseudoJet storages */
-    vector<fastjet::PseudoJet> sortedJets, sortedGhosts, jetParts, cutJetParts, 
+    vector<fastjet::PseudoJet> sortedJets, jetParts, cutJetParts, 
                                fjInputs, hiddenInputs;
 ////////
 // Root:
