@@ -35,10 +35,10 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-void drawEfracsPtcut() {
+void drawEfracsPtcut(std::string fileName) {
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("ptcut_hists_full.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   THStack* partFracs = new THStack("particlestacks", "");
   THStack* errorFracs = new THStack("errorstacks", "" );
   

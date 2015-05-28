@@ -205,6 +205,8 @@ void JetAnalysis::ParticlesToJetsorterInput()
                 mGammaId = hiddenCount++;
             } else if (mMode==3) {
                 mLeptonList.push_back(hiddenCount++);
+            } else if (mMode==0) {
+                particleTemp.set_user_index( -i );
             }
             hiddenInputs.push_back(particleTemp);
         } else if (stat==3 && mDefinition==1) {
@@ -214,7 +216,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
         }
         
         if ((stat!=2&&stat!=3&&mDefinition==2) || (stat==1&&(mDefinition==1||
-            mDefinition==3) )) 
+            mDefinition==3) ) || (stat==2&&mMode==0)) 
         {
             fjInputs.push_back( particleTemp );
         }
@@ -390,7 +392,8 @@ void JetAnalysis::ParticleLoop(size_t i){
     mOthers = zero; mEtSum = zero;
     
     mChargSum=0; mChargWSum=0; mChargW2Sum=0; mW2=0;
-    for (unsigned int j = 0; j != jetParts.size(); ++j) { 
+    for (unsigned int j = 0; j != jetParts.size(); ++j) {
+        if ( jetParts[j].user_index() < 0 ) continue;
         TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
             jetParts[j].e() );
 
@@ -439,7 +442,7 @@ void JetAnalysis::ParticleLoop(size_t i){
             mElec += tmpP;
         } else if ( abs( id ) == 13 ) {
             mMuon += tmpP;
-        } else { 
+        } else {
             mOthers += tmpP;        
         }
     }

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "TF1.h"
+#include <string>
 
 // ROOT, for histogramming.
 #include "TROOT.h"
@@ -27,10 +28,10 @@
 #include "tdrstyle_mod3.C"
 
 
-int drawHistsPtCut() {
+int drawHistsPtCut(std::string fileName) {
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("ptcut_hists_full.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   TH1D* ptProfile = ((TProfile*) inFile->Get( "hist bins" ))->ProjectionX(""); 
 
   TCanvas *canv = new TCanvas("c1","c1",1200,1200);

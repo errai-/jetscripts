@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "TF1.h"
+#include <string>
 
 // ROOT, for histogramming.
 #include "TROOT.h"
@@ -27,22 +28,15 @@
 #include "tdrstyle_mod3.C"
 
 
-int drawSamePtCut() {
-  int oldFlag = 0;
+int drawSamePtCut(std::string fileName) {
   char oldName[] = "ptcut_olds.root";
   char newName[] = "ptcut_news.root";
   double minH = 0.94; double maxH = 1.01;
-  if (oldFlag){
-    maxH = 1.01; minH = 0.94;
-  } else {
-    maxH= 1.005; minH = 0.95;
-  }  
+  maxH= 1.005; minH = 0.95;
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile(oldFlag ? oldName : newName, "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   TH1D* ptProfile = ((TProfile*) inFile->Get( "pT bins" ))->ProjectionX(""); 
   TH1D* ecalProfile; 
-  if (oldFlag)
-    ecalProfile = ((TProfile*) inFile->Get( "ecal bins" ))->ProjectionX("");
   TH1D* hcalProfile = ((TProfile*) inFile->Get( "hcal bins" ))->ProjectionX("");
   TH1D* gev3Profile = ((TProfile*) inFile->Get( "3gev bins" ))->ProjectionX("");
   TCanvas *canv = new TCanvas("c1","c1",1200,1200);
@@ -54,12 +48,8 @@ int drawSamePtCut() {
   // Show histogram  
   TPad *pad1 = new TPad("pad1","",0,0,1,1);
   TPad *pad2;
-  if (oldFlag)
-    pad2 = new TPad("pad2","",0,0,1,1);
   TPad *pad3 = new TPad("pad3","",0,0,1,1);
   TPad *pad4 = new TPad("pad4","",0,0,1,1);
-  if (oldFlag)
-    pad2->SetFillStyle(4000);
   pad3->SetFillStyle(4000);
   pad4->SetFillStyle(4000);
   pad1->Draw();
@@ -73,8 +63,6 @@ int drawSamePtCut() {
   ptProfile->Draw();
   TLegend *leg = tdrLeg(0.2,0.7,0.4,0.9);
   leg->AddEntry( ptProfile, "total" );
-  if (oldFlag)
-    leg->AddEntry( ecalProfile, "ecal" );
   leg->AddEntry( hcalProfile, "hcal" );
   leg->AddEntry( gev3Profile, "3GeV" );
   leg->Draw();
@@ -87,21 +75,6 @@ int drawSamePtCut() {
   ptProfile->SetMinimum(minH);
   ptProfile->SetMarkerColor(kBlack);
   pad1->Update();
-  
-  if (oldFlag){
-    canv->cd();
-    pad2->Draw();
-    pad2->cd();
-    ecalProfile->SetStats(0);
-    ecalProfile->GetXaxis()->SetMoreLogLabels();
-    ecalProfile->GetXaxis()->SetNoExponent();
-    ecalProfile->Draw();
-    pad2->UseCurrentStyle();
-    ecalProfile->SetMaximum(maxH);
-    ecalProfile->SetMinimum(minH);
-    ecalProfile->SetMarkerColor(kMagenta);
-    pad2->Update();
-  }
 
   canv->cd();
   pad3->Draw();

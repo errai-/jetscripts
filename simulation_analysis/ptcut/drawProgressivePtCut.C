@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "TF1.h"
+#include <string>
 
 // ROOT, for histogramming.
 #include "TROOT.h"
@@ -27,10 +28,10 @@
 #include "tdrstyle_mod3.C"
 
 
-int drawProgressivePtCut() {
+int drawProgressivePtCut(std::string fileName) {
 
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("ptcut_hists_full.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   TH1D* ptProfile = ((TProfile*) inFile->Get( "pT bins" ))->ProjectionX(""); 
   TH1D* hcalProfile = ((TProfile*) inFile->Get( "hcal bins" ))->ProjectionX("");
   TH1D* gev3Profile = ((TProfile*) inFile->Get( "3gev bins" ))->ProjectionX("");

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "TF1.h"
+#include <string>
 
 // ROOT, for histogramming.
 #include "TROOT.h"
@@ -27,7 +28,7 @@
 #include "tdrstyle_mod3.C"
 
 
-int drawCaloPtCut() {
+int drawCaloPtCut(std::string fileName) {
   double minH = 0.94; double maxH = 1.01;
   int caseFlag = 0;
   if (caseFlag == 0){
@@ -38,7 +39,7 @@ int drawCaloPtCut() {
     minH = 0.91; maxH = 1.01;
   }
   // Create file on which histogram(s) can be saved.
-  TFile *inFile = new TFile("ptcut_hists_full.root", "READ");
+  TFile *inFile = new TFile(fileName.c_str(), "READ");
   TH1D* normalDummy; TH1D* caloDummy;
   if (caseFlag == 0){
     normalDummy = ((TProfile*) inFile->Get( "pT bins" ))->ProjectionX("");  
