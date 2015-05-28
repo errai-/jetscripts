@@ -73,20 +73,13 @@ jetanalysis.o: jetsorting/JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
 
-rootjetsort: main_$$@.cpp rootjetsort.o libPrtclEvent.so
-	cd jetsorting && $(CXX) main_$@.cpp rootjetsort.o -L../lib -lPrtclEvent \
-	-w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../$@.exe
-
-rootjetsort.o: RootJetSort.cpp
-	cd jetsorting && $(CXX) -c RootJetSort.cpp $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
-
-
-ptcut: main_$$@.cpp ptcut.o libPrtclEvent.so
-	cd jetsorting && $(CXX) main_$@.cpp ptcut.o -L../lib -lPrtclEvent -w 
+ptcut: jetsorting/main_$$@.cpp ptcut.o libPrtclEvent.so
+	cd jetsorting && $(CXX) main_$@.cpp ptcut.o -L../lib -lPrtclEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../$@.exe
 
-ptcut.o: PTCut.cpp
-	cd jetsorting && $(CXX) -c PTCut.cpp $(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
+ptcut.o: jetsorting/PTCut.cpp libPrtclEvent.so
+	cd jetsorting && $(CXX) -c PTCut.cpp -L../lib -lPrtclEvent $(INCLUDE) \
+	$(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
 # Pythia8
 

@@ -2,39 +2,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-// Nice libraries from C
-#include <cmath>
-#include <ctime>
-#include <cstdlib>
-#include <cstdio>
 
-// ROOT, for histogramming.
-#include "TROOT.h"
-#include "TH1.h"
-#include "TF1.h"
-#include "TProfile.h"
-#include "THStack.h"
-#include "TStyle.h"
-// ROOT, for interactive graphics.
-#include "TVirtualPad.h"
-#include "TApplication.h"
-// ROOT, for saving a file.
-#include "TFile.h"
-#include "TCanvas.h"
-#include "TLegend.h"
-// ROOT, Trees
-#include "TTree.h"
-#include "TChain.h"
-#include "TBranch.h"
-#include "TLeaf.h"
-#include "TKey.h"
-#include "TList.h"
-#include "TIterator.h"
-#include "TString.h"
-
-// tdrStyle
-//#include "tdrstyle_mod1.C"
-// scripts
 #include "PTCut.h"
 
 using std::cout;
@@ -44,26 +12,67 @@ using std::string;
 
 int main(int argc, char* argv[]) {
 
-  // Create a chain that includes the necessary tree
-  // There are a couple of different data options available.
-  string treePath = "Pythia8Tree";
-  string name ="pythia8_particles.root";
-  if (argc > 1) {
-    if ( argv[1] == "1" ){
-      treePath = "HerwigTree";
-      name = "herwig_particles.root";
+    if (argc != 2) {
+        cout << "Usage: ./jetanalysis.exe [Standard form input file name]" << endl;
+        return 1;
     }
-  }
+    
+    int generator = -1;
+    bool beginning = false;
+    string input = argv[1], tmpStr = "", output = "detector";
+    for (auto i : input) {
+        if (i=='_') {
+            if (!beginning && tmpStr=="particles") {
+                beginning = true;
+            } else if (generator == -1) {
+                if (tmpStr=="pythia8") {
+                    generator = 1;
+                }
+            } else {
+                if (tmpStr!="generic") {
+                    cout << "Only generic input should be used for detector simulation" << endl;
+                    return 0;
+                }
+            }
+            output += i;
+            tmpStr = "";
+        } else {
+            tmpStr += i;
+            if (beginning) {
+                output += i;
+            }
+        }
+    }
+    if (!beginning || generator==-1) {
+        cout << "Input file not of the correct type" << endl;
+        return 1;
+    }
+    
+    string treePath;
+    
+    /* Generator */
+    if (generator==1) {
+        treePath = "Pythia8Tree";
+    } else if (generator == 2) {
+        treePath = "HerwigTree";
+    } else if (generator == 3) {
+        treePath = "Pythia6Tree";
+    }
+    
+    /* Try to open tree */
+    TChain *forest = new TChain(treePath.c_str());
+    forest->AddFile(input.c_str()); /* Opens tree with the highest key */
+    if (!(forest->GetEntries())) {
+        cout << "Incorrect file name " << input << " or tree with zero events" << endl;
+        return 1;
+    }
+
+    /* Analysis process */
+    PTCut treeHandle(forest, output.c_str());
   
-  TChain *forest = new TChain(treePath.c_str());
-  // This opens the tree with the highest key value with the given treePath
-  forest->AddFile(name.c_str());
-  
-  PTCut treeHandle(forest);
-  
-  treeHandle.EventLoop();
-  
-  treeHandle.WriteResults();
-  
-  delete forest;
+    treeHandle.EventLoop();
+    
+    treeHandle.WriteResults();
+    
+    delete forest;
 }

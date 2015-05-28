@@ -1,5 +1,5 @@
 Author: Hannu Siikonen
-Last update: 21.5.2015
+Last update: 28.5.2015
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -97,17 +97,34 @@ Note:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// jetsorting: The programs used for jet sorting and storaging.
-
-Notes:
- rootjetsort and ptcut are in principle functional, but these are to be 
- combined and updated into a similar file as jetanalysis.
+JETANALYSIS: General jetsorting and analysis
 
 Usage:
  make jetanalysis
- ./jetanalysis.exe (mode of operation) (read file name) (save file name)
+Run:
+ ./jetanalysis.exe (particle file name) (flavour definition)
+Note:
+ Flavour definition can be 1 - physics definition or 2 - hadronic definition
 
-// events: Event classes used for storaging data.
+////////////////////////////////////////////////////////////////////////////////
+
+PTCUT: Detector simulation based on jet sorting
+
+Usage:
+ make ptcut
+Run:
+ ./ptcut.exe (generic particle file name)
+Note:
+ Other particle data modes than generic are not meaningful for detector simulation
+
+////////////////////////////////////////////////////////////////////////////////
+
+EVENTS: Event classes used for storaging data.
+
+Usage:
+ The events-folder is portable and can be easily shared. Thus, running
+ '.L events/***Event.cpp+' allows to easily load the libraries needed for
+ showing different functions present in the event.
 
 Notes:
  These are used automatically by the different programs.
@@ -118,11 +135,3 @@ Notes:
  variables should be created. Also care should be taken with the programs that
  use the results.
 
-Usage:
- The events-folder is portable and can be easily shared. Thus, running
- '.L events/***Event.cpp+' allows to easily load the libraries needed for
- showing different functions present in the event.
-
-// obj, lib: Objects, libraries etc. needed while building the programs.
-
-// generic: Some generic files and programs that don't fit elsewhere.
