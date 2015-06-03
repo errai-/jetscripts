@@ -7,13 +7,6 @@ using std::endl;
 using std::vector;
 using std::cout;
 using std::endl;
-//       To read only selected branches, Insert statements like:
-// METHOD1:
-//    fChain->SetBranchStatus("*",0);  // disable all branches
-//    fChain->SetBranchStatus("branchname",1);  // activate branchname
-// METHOD2: replace line
-//    fChain->GetEntry(jentry);       //read all branches
-//by  b_branchname->GetEntry(ientry); //read only this branch
 
 void AnalyzeData::Loop(string writeFile)
 {
@@ -37,7 +30,7 @@ void AnalyzeData::Loop(string writeFile)
         timer.Start();
     }
 
-    /* A listing to avoiding duplicate events */
+    /* A listing for avoiding duplicate events */
     set<EventID> usedEvents;
 
     /* Luminosities for each trigger for DT */
@@ -86,7 +79,7 @@ void AnalyzeData::Loop(string writeFile)
     FactorizedJetCorrector *jetECor = EnergyCorrSetup( &corParams, isMC );
 
     /* Event loop, until reaching the limit or tree size */
-    for (Long64_t jentry=0; jentry<loopLimit; jentry++){
+    for (Long64_t jentry=0; jentry<loopLimit; jentry++) {
 
         if ( jentry%100000 == 0 ) cout << jentry << " events analyzed\n";
 
@@ -102,6 +95,8 @@ void AnalyzeData::Loop(string writeFile)
             duplicEvents++;
             continue;
         }
+        
+        assert( PFJets__ < kMaxPFJets_ );
         
         /* Jet loop */
         for (Long64_t kentry=0; kentry<PFJets__; kentry++){
