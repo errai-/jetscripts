@@ -7,6 +7,10 @@ needed by the code.
 runAnalyzeData.C works only with certain initial root files. New file names can be specified
 manually.
 
-root -l runAnalyzeData.C
+Usage (e.g.):
+root -l
+.L runAnalyzeData.C
+runAnalyzeData( [Events to analyze], [First file index], [Last file index] )
 
+File indices can be found from runAnalyzeData.C
 

@@ -18,7 +18,7 @@ Tools for analyzing CMS jet data. Aim is to conveniently and quickly make plots
 of different aspects.
 Last updates in autumn 2014
 
-jet_simulations:
+lhc_simulation:
 Simulation tools for generating particle data with pythia6, pythia8 and
 Herwig++. A common jet sorting algorithm to turn the particle data into jet
 data.
