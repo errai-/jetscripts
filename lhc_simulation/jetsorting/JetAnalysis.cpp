@@ -613,7 +613,7 @@ double JetAnalysis::PTD(int i)
 
 double JetAnalysis::Sigma2(int i)
 {
-    double e[4] = {0,0,0,0};
+    double weightedDiffs[4] = {0,0,0,0};
     double phi = 0, eta = 0, pT2 = 0;
     
     for(size_t q = 0; q != cutJetParts.size(); ++q) {
@@ -625,18 +625,19 @@ double JetAnalysis::Sigma2(int i)
 
     for(unsigned int q = 0; q != cutJetParts.size(); ++q) 
     {
-        e[0] += pow(cutJetParts[q].pt()*(cutJetParts[q].eta()-eta),2);
-        e[3] += pow(cutJetParts[q].pt()*TVector2::Phi_mpi_pi( cutJetParts[q].phi()-phi ),2);
-        /* TODO: is it ok that eta has no absolute around it? */
-        e[1] -= pow(cutJetParts[q].pt(),2)*(cutJetParts[q].eta()-eta)*
-                    fabs(TVector2::Phi_mpi_pi(cutJetParts[q].phi()-phi) );    
+        double deltaEta = eta-cutJetParts[q].eta();
+        double deltaPhi = TVector2::Phi_mpi_pi( phi-cutJetParts[q].phi() );
+        double pT2Tmp = pow(cutJetParts[q].pt(),2);
+        weightedDiffs[0] += pT2Tmp*deltaEta*deltaEta;
+        weightedDiffs[3] += pT2Tmp*deltaPhi*deltaPhi;
+        weightedDiffs[1] -= pT2Tmp*deltaEta*deltaPhi;    
     }
-    e[2] = e[1];
+    weightedDiffs[2] = weightedDiffs[1];
 
-    TMatrixDSymEigen me( TMatrixDSym(2,e) );
-    TVectorD eigenval = me.GetEigenValues();
+    TMatrixDSymEigen me( TMatrixDSym(2,weightedDiffs) );
+    TVectorD eigenvals = me.GetEigenValues();
 
-    return sqrt(fabs(eigenval[1])/pT2);
+    return sqrt(eigenvals[1]/pT2);
 }
 
 void JetAnalysis::WriteResults()
