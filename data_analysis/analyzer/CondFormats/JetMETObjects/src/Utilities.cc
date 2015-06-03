@@ -15,8 +15,6 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #endif
 
-namespace 
-{
   void handleError(const std::string& fClass, const std::string& fMessage);
   //----------------------------------------------------------------------
   float getFloat(const std::string& token) 
@@ -121,5 +119,5 @@ namespace
     float r = a[0]+fZ*(a[1]+fZ*a[2]);
     return r;
   }
-}
+
 #endif

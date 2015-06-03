@@ -6,30 +6,17 @@
 #include "QCDModules/QCDPFJet.h"
 #include "QCDModules/QCDEventHdr.h"
 #include <vector>
-#include "QCDModules/LorentzVector.h"
+#include "Math/Vector3D.h"
+#include "Math/Vector4D.h"
+#include "Math/LorentzVector.h"
+#include "Math/PxPyPzE4D.h"
 
-LorentzVector operator*( double multiplier, const LorentzVector& vector ){
-  LorentzVector result = vector;
-  result.scaleX( multiplier );
-  result.scaleY( multiplier );
-  result.scaleZ( multiplier );
-  result.scaleT( multiplier );
-  return result;
-}
-
-LorentzVector operator+(const LorentzVector& left, const LorentzVector& right){
-  LorentzVector result = left;
-  result.addX( right.getX() );
-  result.addY( right.getY() );
-  result.addZ( right.getZ() );
-  result.addT( right.getT() );
-  return result;
-}
-
+using namespace ROOT::Math;
 
 class QCDEvent 
 {
     public:
+     typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > LorentzVector;
       //------------ Constructor ------------------------------
       QCDEvent();
       //------------ Destructor -------------------------------

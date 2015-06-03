@@ -9,7 +9,7 @@
 //--- Default SimpleJetCorrector constructor -----------------------------
 //------------------------------------------------------------------------
 SimpleJetCorrector::SimpleJetCorrector() 
-{ 
+{
   mFunc            = new TFormula(); 
   mParameters      = new JetCorrectorParameters();
   mDoInterpolation = false;

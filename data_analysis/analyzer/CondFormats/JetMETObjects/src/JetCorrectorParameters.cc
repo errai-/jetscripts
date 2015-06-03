@@ -111,7 +111,6 @@ JetCorrectorParameters::Record::Record(const std::string& fLine,unsigned fNvar) 
 JetCorrectorParameters::JetCorrectorParameters(const std::string& fFile, const std::string& fSection) 
 {
   std::ifstream input(fFile.c_str());
-  cout << fFile.c_str() << endl;
   std::string currentSection = "";
   std::string line;
   std::string currentDefinitions = "";
