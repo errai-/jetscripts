@@ -7,7 +7,7 @@ include config.mk
 
 .SECONDEXPANSION:
 .DELETE_ON_ERROR:
-.PHONY: all clean herwig_read herwig_run pythia6 pythia8 jetanalysis ptcut rootjetsort
+.PHONY: all clean herwig_read herwig_run pythia6 pythia8 jetanalysis ptcut
 VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
 
 INCLUDE := $(INCLUDE) -I.
@@ -37,7 +37,7 @@ PrtclEvent.o: PrtclEvent.cpp PrtclEvent.h
 	$(CXXFLAGS) $(ROOT) -c -w -ldl -o $@
 
 PrtclEventDict.o: PrtclDct.cc
-	cd events && $(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread \
+	cd events && $(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOT_INCLUDE) -fPIC -pthread \
 	-c ../events/PrtclDct.cc -o $@
 
 PrtclDct.cc: PrtclEvent.h PrtclLinkDef.h
@@ -55,7 +55,7 @@ JetEvent.o: JetEvent.cpp JetEvent.h
 	$(ROOT) -c -w -ldl -o $@
 
 JetEventDict.o: JetDct.cc
-	cd events && $(CXX) $(INCLUDE) $(ROOT) $(CXXFLAGS) -fPIC -pthread \
+	cd events && $(CXX) $(INCLUDE) $(ROOT_INCLUDE) $(CXXFLAGS) -fPIC -pthread \
 	-c ../events/JetDct.cc -o $@
 
 JetDct.cc: JetEvent.h JetLinkDef.h
