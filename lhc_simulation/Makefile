@@ -7,7 +7,7 @@ include config.mk
 
 .SECONDEXPANSION:
 .DELETE_ON_ERROR:
-.PHONY: all clean herwig_read herwig_run pythia6 pythia8 jetanalysis ptcut
+.PHONY: all clean herwig run_herwig pythia6 run_pythia6 pythia8 run_pythia8 jetanalysis ptcut
 VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
 
 INCLUDE := $(INCLUDE) -I.
@@ -101,7 +101,7 @@ run_pythia6:
 
 # Herwig
 
-herwig_read: libStoreParticles.so
+herwig: libStoreParticles.so
 	cd herwig && Herwig++ read $(HFILE).in
 
 run_herwig:

@@ -4,11 +4,11 @@ SHELL = /bin/sh
 
 #######################################
 # Using g++, the usual case:
-# CXX := g++
-# CFLAGS :=
+#CXX := g++
+#CFLAGS :=
 # Using clang, more hardcore debugging:
 CXX := clang++
-CFLAGS := -fsanitize=undefined
+CFLAGS :=
 #######################################
 
 CFLAGS := $(CFLAGS) -g -Wall -Wextra -Werror -Wshadow -Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unknown-pragmas -march=native -O3 -pedantic -m64
