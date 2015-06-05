@@ -41,7 +41,7 @@ Updated occasionally, files remain mostly static after they are added here.
 Installation instructions for various softwares that are needed for the simulations.
 Some of the installations need to be done in the correct order, so that dependencies work correctly.
 
- #Zero] Other operations
+ #0] Other operations
 
  -These are done after the installations but are generally important for working code.
 
@@ -54,7 +54,7 @@ In /usr/local/ and /usr/ subdirectories, remove the files related to previous in
 programs. Found easily for instance by running:
  locate pythia8 | grep /usr/
 
- #I] Fastjet3[.1.2] (recommended to be installed first)
+ #I] Fastjet3[.1.2]
 
 Run:
  ./configure
@@ -79,6 +79,10 @@ Run:
   Check that the output of configurations seems to be sensible.
 
 Run:
+ make -j
+ -Uses as many threads as possible for the build, a number after -j can be used to specify a smaller amount.
+
+Run:
  sudo make install
  -Copies the installation below /usr/local
 
@@ -92,7 +96,7 @@ Download https://root.cern.ch/download/pythia6.tar.gz and extract it to a good l
 Remove the pythia*.f file and replace it with the newest pythia6 version available.
 Run a makePythia6 binary corresponding to the used computer architechture.
 
- #IV] ROOT 6[.03/05] (dependency: Pythia6, Pythia8 [optional])
+ #IV] ROOT 6[.03/05] (optional dependencies: Pythia6, Pythia8)
 
 Run:
  ./configure --with-pythia6-libdir="Location chosen in #III)"
@@ -110,7 +114,55 @@ Remarks:
  Having or not having pythia8 explicitly linked for root should not be an issue. TPythia8 can be a convenient and
  fast way to access pythia8 features, but it also removes some of the agility of the plain pythia8.
 
- #V] ThePEG
+ #V] LHAPDF 6[.1.5]
 
- #VI] HERWIG++
+Run:
+ ./configure
+ -Basic configuration with no dependencies. Check for errors.
 
+Run:
+ make -j
+ -Basic installation.
+
+Run:
+ sudo make install
+ -Copies the installation under /usr/local
+
+Remarks:
+ This installation is optional and its function is bringing custom PDF's to Herwig++
+
+ #VI] ThePEG 1[.9.2] (dependency: fastjet, optional dependency: LHAPDF)
+
+Run:
+ ./configure --with-lhapdf=/usr/local --with-fastjet=/usr/local
+ -Basic configuration. Check for errors.
+
+Run:
+ make -j
+ -Basic installation.
+
+Run:
+ sudo make install
+ -Copies the installation under /usr/local
+
+Remarks:
+ A majority of the functionality of Herwig++ is based on ThePEG (Toolkit for High Energy Physics Event Generation).
+ ThePEG offers generic structures for particles, events etc. and its documentation is essential in daily life.
+ Herwig++ is just some sugar on the top to make the simulator software complete.
+
+ #VII] HERWIG++2[.7.1] (dependencies: fastjet, thepeg)
+
+Run:
+ ./configure --with-fastjet=/usr/local --with-thepeg=/usr/local
+ -Basic configuration, check for errors.
+
+Run:
+ make -j
+ -Basic installation.
+
+Run:
+ sudo make install
+ -Copies the installation under /usr/local
+
+Remarks:
+ Herwig is used with commands like 'Herwig++ run'.
