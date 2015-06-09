@@ -1,13 +1,14 @@
-! This file contains commands to be read in for a Pythia8 run for the file eventTTree.cc
-! Lines not beginning with a letter or digit are comments.
-! Names are case-insensitive  -  but spellings-sensitive!
+! Input settings for dijet events; only qcd '2to2' events are turned on
 
-HardQCD:all = on
-PhaseSpace:pTHatMin = 30.
+! Generic settings
 Next:numberShowInfo = 0
 Next:numberShowProcess = 0
 Next:numberShowEvent = 0
 PhaseSpace:bias2Selection = on
 PhaseSpace:bias2SelectionPow = 4.5
+ParticleDecays:limitTau0=on
+
+! Variable settings
 Beams:eCM = 8000.
-Next:numberCount = 100
+HardQCD:all = on
+PhaseSpace:pTHatMin = 30.
