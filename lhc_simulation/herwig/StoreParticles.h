@@ -57,21 +57,24 @@ public:
     static void Init() { static ClassDocumentation<StoreParticles> documentation("No documentation"); }
 
 protected:
+   
+    /** @name Generic dummy-methods. */
+    //@{
+    IBPtr clone() const { return new_ptr(*this); }
+    IBPtr fullclone() const { return new_ptr(*this); }
+    //@}
 
     /** @name Setup and finalization of the run */
     //@{
-    
     /** Initialize this object. Called in the run phase just before a run begins. */
     virtual void doinitrun();
 
     /** Finalize this object. Called in the run phase just after a run has ended. */
     virtual void dofinish();
-    
     //@}
     
     /** @name Help methods for the analysis */
     //@{
-    
     /** ThePEG does not provide useful status codes and the status has to be studied manually.
       * This method is a mock-up of the CMSSW-way to calculate the status code. However, these
       * codes are not at the moment in use and the method is here only for reference */
@@ -82,15 +85,12 @@ protected:
     int isExcitedHadronState(const tPPtr&, int);
     
     void particleAdd(const tPPtr&, int);
-    
     //@}
     
     /** @name Variables for the analysis */
     //@{
-    
     /* The hardest event */
     tcEventBasePtr eh;
-    
     int mode;
 
     /* Data handle for ROOT */
@@ -99,7 +99,6 @@ protected:
     /* ROOT, saving data */
     TTree * herwigTree;
     TFile * herwigFile;
-    
     //@}
 private:
     /* The assignment operator is private and must never be called nor implemented. */
