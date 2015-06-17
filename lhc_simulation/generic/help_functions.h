@@ -93,7 +93,7 @@ static string rootFileName(char *inputName) {
  * (these are basically implementations from CMSSW) */
 namespace HadrFuncs
 {
-    static int hasTop(int id) 
+    static int HasTop(int id) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
@@ -101,7 +101,7 @@ namespace HadrFuncs
         return false;
     }
 
-    static int hasBottom(int id) 
+    static int HasBottom(int id) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
@@ -109,7 +109,7 @@ namespace HadrFuncs
         return false;
     }
 
-    static int hasCharm(int id) 
+    static int HasCharm(int id) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
@@ -117,7 +117,7 @@ namespace HadrFuncs
         return false;
     }
 
-    static int hasStrange( int id ) 
+    static int HasStrange( int id ) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
@@ -125,7 +125,7 @@ namespace HadrFuncs
         return false;
     }
 
-    static int hasDown( int id ) 
+    static int HasDown( int id ) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
@@ -133,7 +133,7 @@ namespace HadrFuncs
         return false;
     }
 
-    static int hasUp( int id ) 
+    static int HasUp( int id ) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
@@ -143,15 +143,15 @@ namespace HadrFuncs
 
 
     /* Checks whether a hadron has the given quark */
-    static int statusCheck( int quarkId, int hadronId )
+    static int StatusCheck( int quarkId, int hadronId )
     {
         switch (quarkId) {
-            case 6: return hasTop(hadronId); break;
-            case 5: return hasBottom(hadronId); break;
-            case 4: return hasCharm(hadronId); break;
-            case 3: return hasStrange(hadronId); break;
-            case 2: return hasDown(hadronId); break;
-            case 1: return hasUp(hadronId); break;
+            case 6: return HasTop(hadronId); break;
+            case 5: return HasBottom(hadronId); break;
+            case 4: return HasCharm(hadronId); break;
+            case 3: return HasStrange(hadronId); break;
+            case 2: return HasDown(hadronId); break;
+            case 1: return HasUp(hadronId); break;
             default: return 0; break;
         }
     }

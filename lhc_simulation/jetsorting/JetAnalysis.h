@@ -82,8 +82,8 @@ public :
     virtual void     HistFill(int);    
     
     virtual void     Cuts();
-    virtual Double_t PTD(Int_t);
-    virtual Double_t Sigma2(Int_t);
+    virtual Double_t PTD();
+    virtual Double_t Sigma2();
     
     virtual void WriteResults();
 
@@ -191,7 +191,7 @@ private:
     Int_t           mMode;       /* Event type */
     Int_t           mDefinition; /* Flavour definition */
     
-    vector<Int_t>   mLeptonList; /* Z-jets */
+    vector<Int_t>   mMuonList; /* Z-jets */
     Int_t           mGammaId;    /* gamma-jets */
     vector<Int_t>   mPartonList; /* Physics definition */
  

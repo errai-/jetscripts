@@ -28,6 +28,9 @@ set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.2*GeV
 # Make some particles stable, according to their nominal lifetimes
 set /Herwig/Decays/DecayHandler:MaxLifeTime 10*mm
 
+# Set ptHat min
+set /Herwig/Cuts/JetKtCut:MinKT 30.0*GeV
+
 ###################################################
 # Matrix Elements for hadron-hadron collisions 
 ###################################################

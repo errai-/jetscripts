@@ -31,6 +31,7 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
     InitFP();  
     
     jetsPerEvent = 2;
+    if (mode==1) jetsPerEvent = 2;
     if (mode==2||mode==3) jetsPerEvent = 1;
 }
 
@@ -156,8 +157,7 @@ void JetAnalysis::EventLoop()
         
         /* Fastjet algorithm */
         fastjet::ClusterSequence clustSeq(fjInputs, *jetDef);
-        vector<fastjet::PseudoJet> inclusiveJets = clustSeq.inclusive_jets( pTMin );    
-        sortedJets = sorted_by_pt(inclusiveJets);
+        sortedJets = sorted_by_pt( clustSeq.inclusive_jets( pTMin ) );
         
         if (!GoodEvent()) continue;
         
@@ -183,7 +183,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
     fjInputs.clear();
     hiddenInputs.clear();
     mPartonList.clear();
-    mLeptonList.clear();
+    mMuonList.clear();
     int hiddenCount = 0;
     
     for (size_t i = 0; i != fPrtcls_; ++i) {
@@ -191,35 +191,33 @@ void JetAnalysis::ParticlesToJetsorterInput()
         int stat = fAnalysisStatus[i];
         
         /* Ghost partons, hadrons and normal particles */
-        if (stat==4 && mDefinition==2) {
-            particleTemp *= pow( 10, -18 );
-            particleTemp.set_user_index( -i );
-        } else if ((/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)
-                   && mDefinition==2) 
-        {
-            particleTemp *= pow( 10, -18 );
-            particleTemp.set_user_index( -i );
-        } else if (stat==1) {
+        if (stat==1) {
             particleTemp.set_user_index( i ); /* Save particle index */
+            fjInputs.push_back( particleTemp );
         } else if (stat==2) {
+            /* Gammajet gammas and Zjet muons are excluded from jet clustering */
             if (mMode==2) {
                 mGammaId = hiddenCount++;
+                hiddenInputs.push_back( particleTemp );
             } else if (mMode==3) {
-                mLeptonList.push_back(hiddenCount++);
+                mMuonList.push_back(hiddenCount++);
+                hiddenInputs.push_back( particleTemp );
             } else if (mMode==0) {
-                particleTemp.set_user_index( -i );
+                particleTemp.set_user_index( i );
+                fjInputs.push_back( particleTemp );
             }
-            hiddenInputs.push_back(particleTemp);
         } else if (stat==3 && mDefinition==1) {
             mPartonList.push_back(hiddenCount++);
             particleTemp.set_user_index( fPDGCode[i] );
             hiddenInputs.push_back(particleTemp);
-        }
-        
-        if ((stat!=2&&stat!=3&&mDefinition==2) || (stat==1&&(mDefinition==1||
-            mDefinition==3) ) || (stat==2&&mMode==0)) 
-        {
+        } else if (mDefinition==2 && (stat==4 ||/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)) {
+            /* Ghost partons==4, hadrons: (strange==5), charm==6, bottom==7, (top==8) */
+            particleTemp *= pow( 10, -18 );
+            particleTemp.set_user_index( -i );
             fjInputs.push_back( particleTemp );
+        } else {
+            /* Discard unknown status codes */
+            continue;
         }
     }
     assert( fjInputs.size() ); /* The input should not be empty */
@@ -227,44 +225,70 @@ void JetAnalysis::ParticlesToJetsorterInput()
 
 bool JetAnalysis::GoodEvent()
 {
-    if (mMode == 1) { 
-        /* dijet events */ 
-        if( sortedJets.size()<2 ) { 
+    if ( sortedJets.size() == 0 ) return false;
+    if (mMode == 1) {
+        /** dijet events: for the 2 leading jets: 
+          *  -Back-to-back angle of min 2.8 rad (2.5 rad)
+          *  -Minimum pT of 30 GeV.
+          *  -Max eta of 2.5
+          *  -A third jet has at most 30% of the average pt of the leading jets */ 
+        if (   ( sortedJets.size()<2 ) 
+            || ( sortedJets.size()>2 
+            &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
+            || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
+            || ( sortedJets[1].pt()<30 )
+            || ( fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))<2.8 ))
+        {
             return false;
-        } else if( sortedJets.size()>2 ) {
-            return fabs(sortedJets[0].delta_phi_to(sortedJets[1]))>2.8 && 0.15
-                *fabs(sortedJets[0].pt()+sortedJets[1].pt())>sortedJets[2].pt();
         }
-        return fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))>2.8;
-    } else if (mMode == 2) { 
-        /* gamma-jet events */
-        if ( sortedJets.size() == 0 ) return false;
-        if ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() || 
-             hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R ) {
+        return true;
+    } else if (mMode == 2) {
+        /** gamma-jet events:
+          *  -Check for a sufficient resolution.
+          *  -Back-to-back angle of min 2.8 rad
+          *  -Minimum pT of 30 GeV
+          *  -A cut for the subleading jet pT with respect to gamma pT 
+          *  -Max eta of 2.5 */
+        if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R )
+            || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
+            || ( fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0])) < 2.8 )
+            || ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() )
+            || ( sortedJets[0].eta() > 2.5 || hiddenInputs[mGammaId].eta() > 2.5 ) )
+        { 
             return false;
-        } 
+        }
         return true;
     } else if (mMode == 3) {
-        /* Z-jet events */
-        /* Checking sufficient resolution */
-        if (mLeptonList.size()<2) return false;
-        if (sortedJets.size()==0) return false;
-        if( hiddenInputs[mLeptonList[0]].delta_R(sortedJets[0])<R ||
-            hiddenInputs[mLeptonList[1]].delta_R(sortedJets[0])<R ) return false;
+        /** Z-jet events:
+          *  -Require sufficient resolution between the leading jet and the muon system.
+          *  -Back-to-back angle of min 2.8 rad
+          *  -The subleading jet has to have a small-enough pT compared to the muons.
+          *  -Min. muon pT 20GeV and 10GeV 
+          *  -Min. leading jet pT of 30GeV
+          *  -Subleading jet with a pT smaller than 30% of the dimuon system 
+          *  -The dimuon invariant mass is required to fall in the 70-110 GeV range 
+          *  -Max eta of 2.5 */
+        if (   ( mMuonList.size()!=2 )
+            || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R 
+            ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R ) 
+            || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10) 
+            && ( hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
+            || ( sortedJets[0].pt()<30 ) )
+        {
+            return false;
+        }
 
-        /* The pT of the muons are required to be greater than 20 and 10 GeV, respectively */
-        if( !(( hiddenInputs[mLeptonList[0]].pt()>20 && hiddenInputs[mLeptonList[1]].pt()>10) || 
-              ( hiddenInputs[mLeptonList[1]].pt()>20 && hiddenInputs[mLeptonList[0]].pt()>10))) return false;
+        /* Dimuon system */
+        fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
+        tmpVec += hiddenInputs[mMuonList[1]];
+        if (   ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*tmpVec.pt() ) 
+            || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
+            || ( fabs(tmpVec.delta_phi_to( sortedJets[0] )) < 2.5 )
+            || ( fabs(sortedJets[0].eta())>2.5 || fabs(tmpVec.eta())>2.5 ) )
+        {
+            return false;
+        }
 
-        /* The subleading jet in the event is required to have a pT smaller 
-         * than 30% of that of the dimuon system. */
-        fastjet::PseudoJet tmpVec = hiddenInputs[mLeptonList[0]];
-        tmpVec += hiddenInputs[mLeptonList[1]];
-        if ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*tmpVec.pt()) return false;
-
-        //the dimuon invariant mass is required to fall in the 70-110 GeV range
-        if (fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110) return false;
-        
         return true;
     }
     return false;
@@ -298,7 +322,7 @@ void JetAnalysis::JetLoop()
        
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
-            fWeight,mFlavour,multiplicity,PTD(i),Sigma2(i));
+            fWeight,mFlavour,multiplicity,PTD(),Sigma2());
     }
 }
 
@@ -316,7 +340,8 @@ void JetAnalysis::PhysicsFlavor(size_t i)
             }
         }
     }
-    mIsHadron = -1;
+    mIsHadron = 0;
+    mQuarkJetCharge = ChargeSign(mFlavour);
 }
     
 void JetAnalysis::FlavorLoop(size_t i)
@@ -505,7 +530,7 @@ void JetAnalysis::HistFill(int i){
         FillerHandle( fractionProfilesQuark, sortedJets[i].pt(), mEtSum.Et() );
     }
     
-    if ( mIsHadron != -1 && abs(sortedJets[i].eta()) < 1.3 
+    if ( abs(sortedJets[i].eta()) < 1.3 
         && ( sortedJets[i].pt() > 80 && sortedJets[i].pt() < 120 ) )
     {
         if ( mFlavour==21 ){
@@ -548,23 +573,25 @@ void JetAnalysis::Cuts()
 {
     cutJetParts.clear();
     vector<fastjet::PseudoJet> tmpParts;
-    /* Implicit cuts */
-    for (size_t q = 0; q != jetParts.size(); ++q) {
-        int id = abs(fPDGCode[ abs(jetParts[q].user_index()) ]);
-        if ( !IsHadron(id) || ( (IsCharged(id) && jetParts[q].pt()>0.3) || 
-            (!IsCharged(id) && jetParts[q].pt()>3) ) )
-        {
-            tmpParts.push_back(jetParts[q]);
-        } 
-    }
     
     /* Explicit cuts */
+    for (size_t q = 0; q != jetParts.size(); ++q) {
+        if (jetParts[q].user_index() < 0) continue;
+        int id = abs(fPDGCode[ jetParts[q].user_index() ]);
+        if (!(jetParts[q].pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) { 
+            tmpParts.push_back(jetParts[q]);
+        }
+    }
+    
+    /* Implicit cuts */
     for (size_t q = 0; q != tmpParts.size(); ++q) {
         int id = abs(fPDGCode[ abs(tmpParts[q].user_index()) ]);
-        if (!(tmpParts[q].pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) { 
+        if ( !IsHadron(id) || ( (IsCharged(id) && tmpParts[q].pt()>0.3) || 
+            (!IsCharged(id) && tmpParts[q].pt()>3) ) )
+        {
             cutJetParts.push_back(tmpParts[q]);
         }
-    }  
+    }
 }
 
 bool JetAnalysis::IsHadron(int pdg)
@@ -601,7 +628,7 @@ bool JetAnalysis::IsCharged(int pdg)
     else return true; 
 }
 
-double JetAnalysis::PTD(int i)
+double JetAnalysis::PTD()
 {  
     double square = 0, linear = 0;
     for(size_t q = 0; q != cutJetParts.size(); ++q) {
@@ -611,7 +638,7 @@ double JetAnalysis::PTD(int i)
     return sqrt(square)/linear;
 }
 
-double JetAnalysis::Sigma2(int i)
+double JetAnalysis::Sigma2()
 {
     double weightedDiffs[4] = {0,0,0,0};
     double phi = 0, eta = 0, pT2 = 0;

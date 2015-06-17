@@ -45,6 +45,10 @@ int main(int argc, char* argv[])
             } else if (generator == -1) {
                 if (tmpStr=="pythia8") {
                     generator = 1;
+                } else if (tmpStr=="herwig") {
+                    generator = 2;
+                } else if (tmpStr=="pythia6") {
+                    generator = 3;
                 }
                 output += i;
                 output2 += i;

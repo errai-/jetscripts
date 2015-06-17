@@ -46,8 +46,8 @@ int StoreParticles::isExcitedHadronState(const tPPtr& part, int quarkId) {
 
     ParticleVector children = part->children();
     for (ParticleVector::const_iterator child = children.begin();
-            child != children.end(); ++child ) 
-        {
+         child != children.end(); ++child ) 
+    {
         if ( HadrFuncs::StatusCheck( quarkId, (*child)->id() ) ) return 1;
     }
     return 0;
@@ -55,8 +55,9 @@ int StoreParticles::isExcitedHadronState(const tPPtr& part, int quarkId) {
 
 void StoreParticles::particleAdd(const tPPtr& part, int saveStatus) 
 {
-    pEvent->AddPrtcl(part->momentum().x(),part->momentum().y(),part->momentum().z(),
-                     part->momentum().t(),part->id(),part->data().charge(), saveStatus);
+    pEvent->AddPrtcl(part->momentum().x()*unitConversion,part->momentum().y()*unitConversion,
+                     part->momentum().z()*unitConversion,part->momentum().t()*unitConversion,
+                     part->id(),part->data().charge(), saveStatus);
 }
 
 /* Implemented similarly as in cmssw. Not in active use, kept for reference. */
@@ -80,41 +81,66 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
 {
     /* Rotate to CMS, extract final state particles and call analyze(particles). */
     AnalysisHandler::analyze(event, ieve, loop, status);
+    if (ieve%timerStep==0&&ieve>0) timer->printTime();
     
     if ( loop > 0 || status != 0 || !event ) return;
     
     pEvent->fWeight = event->weight();
+    eh = event->primaryCollision()->handler();
+    //event->printGraphviz();
     
     /* The hardest subprocess */
-    eh = event->primaryCollision()->handler();
+    int gammaIdx = -1, mu1Idx = -1, mu2Idx = -1;
     const ParticleVector hardProc = event->primarySubProcess()->outgoing();
-    vector<int> outgoingHard;
-    for (std::size_t i = 0; i < hardProc.size(); ++i) {
-        outgoingHard.push_back( hardProc[i]->number() );
-        particleAdd(hardProc[i],3);
+    if (hardProc.size() != 2 && hardProc.size() != 3) { 
+        cout << "Unexpected behaviour for the hardest subprocess" << endl; 
     }
+    for (ParticleVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
+        bool gammaCase = (mode==2 && abs((*part)->id())==ParticleID::gamma);
+        bool ZCase = (mode==3 && abs((*part)->id())==ParticleID::muminus);
+        if (gammaCase) {
+            PPtr gamma = *part;
+            while (gamma->decayed()) {
+                const ParticleVector children = gamma->children();
+                /* No pair production */
+                if (children.size()!=1) return;
+                gamma = children[0];
+            }
+            gammaIdx = gamma->number();
+            particleAdd(gamma,2);
+        } else if (ZCase) {
+            tPPtr muon = (*part);
+            while (muon->decayed() > 0) {
+                const ParticleVector children = muon->children();
+                for (ParticleVector::const_iterator child = children.begin(); child != children.end(); ++child) {
+                    if ( abs((*child)->id())==ParticleID::muminus ) { muon = *child; break; }
+                }
+            }
+            
+            if (mu1Idx==-1) { mu1Idx = muon->number(); } 
+            else { mu2Idx = muon->number(); }
+            
+            particleAdd(muon,2);
+        } else {
+            particleAdd(*part,3);
+        }
+    }
+    if (mode==2&&gammaIdx==-1) { cout << "Missing gamma" << endl; return; }
+    if (mode==3&&mu2Idx==-1) { cout << "Missing muon" << endl; return; }
     
     /* Final state particles */
     tPVector finals = event->getFinalState();
-    for (tPVector::const_iterator pit = finals.begin(); pit != finals.end(); ++pit) {
-        int absId = abs( (*pit)->id() );
-        int saveStatus = 1;
-        if ( (mode==0) && absId==ParticleID::gamma && gammaChecker(*pit) ) {
-            saveStatus = 2;
-        }
+    for (tPVector::const_iterator part = finals.begin(); part != finals.end(); ++part) {
+        int finalIdx = (*part)->number();
+        if ( finalIdx==gammaIdx || finalIdx==mu1Idx || finalIdx==mu2Idx ) continue;
         
-        particleAdd( *pit, saveStatus );
+        int absId = abs( (*part)->id() );
+        
+        int saveStatus = 1;
+        /* pi0 photons in a generic event have the status 2 */
+        if ( (mode==0) && absId==ParticleID::gamma && gammaChecker(*part) ) saveStatus = 2;
+        particleAdd( *part, saveStatus );
     }
-
-//     tPVector parts;
-//     event->select(std::back_inserter(parts),SelectAll());
-//     /* Loop over all particles. */ 
-//     for (tPVector::const_iterator pit = parts.begin(); pit != parts.end(); ++pit) {
-//         int absId = abs( (*pit)->id() );
-//         if ( absId==2101 || absId ==2203 || absId==82 ) continue; // uu, ud, p+rem
-//         
-//         int pStatus = getStatusCode( *pit );
-//     }
     
     herwigTree->Fill();
     pEvent->Clear();
@@ -127,6 +153,8 @@ void StoreParticles::dofinish()
     herwigTree->GetCurrentFile();
     herwigTree->AutoSave("Overwrite");
     herwigFile->Close();
+    
+    delete timer;
     cout << "StoreParticles: a root tree has been written to a file" << endl;  
 }
 
@@ -135,7 +163,6 @@ void StoreParticles::doinitrun()
     AnalysisHandler::doinitrun();
     string fileName = "particles_herwig";
     mode = 0;
-    cout << "halp" << endl;
     
     /* In a general multithread-case, generate a thread-unique root file name */
     string runInfo = generator()->runName();
@@ -205,6 +232,11 @@ void StoreParticles::doinitrun()
     TBranch *branch = herwigTree->Branch("event", &pEvent, 32000,4);
     branch->SetAutoDelete(kFALSE);
     herwigTree->BranchRef();
+    
+    unitConversion = Units::MeV/Units::GeV;
+    
+    timer = new Timer();
+    timer->setParams(generator()->N(),timerStep); timer->startTiming();
 }
 
 /* *** Attention *** This class-description must be correct. */

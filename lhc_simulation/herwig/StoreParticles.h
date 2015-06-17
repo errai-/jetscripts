@@ -17,6 +17,7 @@
 #include "ThePEG/Repository/EventGenerator.h"
 #include "ThePEG/Utilities/DescribeClass.h"
 #include "ThePEG/PDT/StandardMatchers.h"
+#include "ThePEG/Config/Unitsystem.h"
 
 #include "../generic/help_functions.h"
 
@@ -99,6 +100,11 @@ protected:
     /* ROOT, saving data */
     TTree * herwigTree;
     TFile * herwigFile;
+    
+    Timer *timer;
+    int timerStep = 1000;
+    
+    double unitConversion;
     //@}
 private:
     /* The assignment operator is private and must never be called nor implemented. */

@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     }
     switch (choiceId) {
         case 0:
-            settings += "pythiaSettings.cmnd";
+            settings += "pythia_generic.cmnd";
             fileName += "generic_";
             break;
         case 1:
@@ -82,5 +82,5 @@ int main(int argc, char **argv)
     cout << "Using settings " << settings << endl;
     cout << "Saving to file " << fileName << endl;
     
-    return pythia8EventLoop(nEvent, settings, fileName, choiceId, stoi(nameId));
+    return Pythia8EventLoop(nEvent, settings, fileName, choiceId, stoi(nameId));
 }

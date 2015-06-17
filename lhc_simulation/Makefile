@@ -7,16 +7,12 @@ include config.mk
 
 .SECONDEXPANSION:
 .DELETE_ON_ERROR:
-.PHONY: all clean herwig run_herwig pythia6 run_pythia6 pythia8 run_pythia8 jetanalysis ptcut
+.PHONY: all clean run_herwig pythia6 run_pythia6 pythia8 run_pythia8 jetanalysis ptcut
 VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
 
 INCLUDE := $(INCLUDE) -I.
 
 # Parameter vals:
-
-# The LHC-UE7-2 setting file, used by ATLAS
-HFILE := LHC-UE7
-
 NUM_EVT := 1000
 MODE := 0
 NUM_PROC := 1
@@ -101,15 +97,12 @@ run_pythia6:
 
 # Herwig
 
-herwig: libStoreParticles.so
-	cd herwig && Herwig++ read $(HFILE).in
-
-run_herwig:
-	bash herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC) $(HFILE)
-
 libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
 	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \
 	-L../lib -lPrtclEvent $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
+
+run_herwig:
+	bash herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
 
 # Clean.
