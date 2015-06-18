@@ -297,9 +297,7 @@ bool JetAnalysis::GoodEvent()
 void JetAnalysis::JetLoop()
 {
     for (size_t i = 0; i < sortedJets.size(); i++) {
-        /* Sanity checks/cuts: */
-        if ( sortedJets[i].constituents().size() < 2 ) continue;
-        //if (fabs(sortedJets[i].pseudorapidity()) > etaMax) continue;
+        if ( sortedJets[i].pt() < 10 ) continue;
         if ( i == jetsPerEvent ) break;
         
         jetParts = sorted_by_pt(sortedJets[i].constituents());
@@ -310,15 +308,14 @@ void JetAnalysis::JetLoop()
             FlavorLoop(i);
         }
         
-        ParticleLoop(i); /* Operations on jet particles */
-        
         Cuts();
+        int multiplicity = cutJetParts.size();
+        
+        ParticleLoop(i); /* Operations on jet particles */
         
         TypeSort(); /* Get ready for adding the jet */
 
-        HistFill(i);
-        
-        int multiplicity = cutJetParts.size();
+        HistFill(i);        
        
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
@@ -578,7 +575,7 @@ void JetAnalysis::Cuts()
     for (size_t q = 0; q != jetParts.size(); ++q) {
         if (jetParts[q].user_index() < 0) continue;
         int id = abs(fPDGCode[ jetParts[q].user_index() ]);
-        if (!(jetParts[q].pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) { 
+        if (!(jetParts[q].pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) {
             tmpParts.push_back(jetParts[q]);
         }
     }
