@@ -10,6 +10,7 @@
 #include "TLine.h"
 #include "TBox.h"
 #include "TASImage.h"
+#include "TString.h"
 
 #include "TFrame.h"
 
@@ -208,7 +209,7 @@ void setTDRStyle() {
   tdrStyle->SetPadTickY(1);
 
 // Change for log plots:
-  tdrStyle->SetOptLogx(0);
+  tdrStyle->SetOptLogx(1);
   tdrStyle->SetOptLogy(0);
   tdrStyle->SetOptLogz(0);
 
@@ -230,7 +231,6 @@ void setTDRStyle() {
   tdrStyle->SetHatchesSpacing(0.05);
 
   tdrStyle->cd();
-
 }
 
 ////////////////
@@ -450,6 +450,11 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
 		   int iPeriod = 2, int iPos = 11,
 		   bool square = kRectangular) {
 
+  int W = (square ? 600 : 800);
+  int H = (square ? 600 : 600);
+
+  TCanvas *canv = new TCanvas(canvName,canvName,50,50,W,H);
+  canv->cd();
   setTDRStyle();
 
   //writeExtraText = true;       // if extra text
@@ -470,9 +475,6 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
 
   //  if( iPos==0 ) relPosX = 0.12;
 
-  int W = (square ? 600 : 800);
-  int H = (square ? 600 : 600);
-
   // 
   // Simple example of macro: plot with CMS name and lumi text
   //  (this script does not pretend to work in all configurations)
@@ -491,7 +493,6 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
   float L = (square ? 0.15*W_ref : 0.12*W_ref);
   float R = (square ? 0.05*W_ref : 0.04*W_ref);
 
-  TCanvas *canv = new TCanvas(canvName,canvName,50,50,W,H);
   canv->SetFillColor(0);
   canv->SetBorderMode(0);
   canv->SetFrameFillStyle(0);
@@ -510,7 +511,7 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
   h->Draw("AXIS");
 
   // writing the lumi information and the CMS "logo"
-  CMS_lumi( canv, iPeriod, iPos );
+  //CMS_lumi( canv, iPeriod, iPos );
   
   canv->Update();
   canv->RedrawAxis();
@@ -590,7 +591,7 @@ TCanvas* tdrDiCanvas(const char* canvName, TH1D *hup, TH1D *hdw,
   hup->Draw("AXIS");
 
   // writing the lumi information and the CMS "logo"
-  CMS_lumi( (TCanvas*)gPad, iPeriod, iPos );
+  //CMS_lumi( (TCanvas*)gPad, iPeriod, iPos );
 
   canv->cd(2);
   gPad->SetPad(0, 0, 1, Hdw / H);
