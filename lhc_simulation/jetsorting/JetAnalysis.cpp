@@ -297,7 +297,6 @@ bool JetAnalysis::GoodEvent()
 void JetAnalysis::JetLoop()
 {
     for (size_t i = 0; i < sortedJets.size(); i++) {
-        if ( sortedJets[i].pt() < 10 ) continue;
         if ( i == jetsPerEvent ) break;
         
         jetParts = sorted_by_pt(sortedJets[i].constituents());
