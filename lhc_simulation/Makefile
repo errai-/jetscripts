@@ -83,6 +83,10 @@ pythia8: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
 	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o pythia8.exe
 
+pythia8_lxplus: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
+	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o pythia8.exe
+
 run_pythia8:
 	bash pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
