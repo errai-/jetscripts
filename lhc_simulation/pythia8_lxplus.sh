@@ -15,7 +15,7 @@ export PATH=/afs/cern.ch/user/h/hsiikone/Cern/pythia8/bin:/afs/cern.ch/user/h/hs
 
 NUM_EVT=$1
 JOB_TYPE=$2
-NUM_PROC=1
+NUM_PROC=$3
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
 
