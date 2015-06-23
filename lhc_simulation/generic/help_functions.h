@@ -78,15 +78,15 @@ public:
 
 
 /* Turn a given string into a suitable root file name */
-static string rootFileName(char *inputName) {
-    string editString = inputName;
-    assert(editString.size());
-    if (editString.find(".root",editString.size()-5) != string::npos) {
-        return editString;
-    }
-    editString += ".root";
-    return editString;
-}
+//static string rootFileName(char *inputName) {
+//    string editString = inputName;
+//    assert(editString.size());
+//    if (editString.find(".root",editString.size()-5) != string::npos) {
+//        return editString;
+//    }
+//    editString += ".root";
+//    return editString;
+//}
 
 
 /* Some functions for PDG particle code recognition for hadrons: 

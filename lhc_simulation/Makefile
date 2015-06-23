@@ -103,7 +103,7 @@ run_pythia6:
 
 libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
 	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \
-	-L../lib -lPrtclEvent $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
+	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
 
 run_herwig:
 	bash herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
