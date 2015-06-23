@@ -98,6 +98,7 @@ void Plot(string fileName)
         for (int i = 0; i < fJets_; ++i) {
             TLorentzVector tmpVec(fX[i],fY[i],fZ[i],fT[i]);
             
+            if (fabs(tmpVec.Eta())>1.3) continue;
             gluonFrac.Fill(tmpVec.Pt(), (fFlav[i] == 21)? 1:0, fWeight);
             lightquarkFrac.Fill(tmpVec.Pt(), (fFlav[i] == 1 || fFlav[i] == 2)? 1:0, fWeight);
             strangeFrac.Fill(tmpVec.Pt(), (fFlav[i] == 3)? 1:0, fWeight);

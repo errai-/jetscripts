@@ -71,7 +71,7 @@ public:
 
     void printTime() {
         countTime();
-        cout << mCurr << " events created, ETA : " << mHours << "h" <<
+        cout << mCurr << " events processed, ETA : " << mHours << "h" <<
             mMinutes << "m" << mSeconds << "s." << endl;
     }
 };

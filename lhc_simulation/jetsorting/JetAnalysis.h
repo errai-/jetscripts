@@ -69,7 +69,7 @@ public :
     
     virtual void     EventLoop();
     virtual void     ParticlesToJetsorterInput();
-    virtual void     JetLoop();
+    virtual void     JetLoop(Int_t);
     virtual Bool_t   GoodEvent();
     virtual Bool_t   IsHadron(Int_t);
     virtual Bool_t   IsCharged(Int_t);
@@ -93,7 +93,7 @@ private:
 ///////////
     int power     = -1;     /* -1 = ant-kT; 0 = C/A; 1 = kT */
     double R      = 0.5;    /* Jet size. */
-    double pTMin  = 20.0;   /* Min jet pT */
+    double pTMin  = 10.0;   /* Min jet pT */
     double etaMax = 1.3;    /* Pseudorapidity range */
     int jetsPerEvent = 2;   /* How many leading jets are stored in a run /
 

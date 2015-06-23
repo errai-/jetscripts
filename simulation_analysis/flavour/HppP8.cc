@@ -25,6 +25,9 @@ const double ptRange[]=
     97, 114, 133, 153, 174, 196, 220, 245, 272, 300, 330, 362, 395, 430, 468,
     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000};
+const double ptUpper = 2000;
+const double ptLower = 100;
+const double etaMax = 1.3;
 
 void HppP8(string herwFile, string pythFile) {
 /* Init branches */
@@ -118,6 +121,8 @@ void HppP8(string herwFile, string pythFile) {
     for (TH1D* sigma2 : hppS2Hist) { sigma2->Sumw2(); }
     hppS2Hist[0]->SetLineColor(kRed); hppS2Hist[2]->SetLineColor(kGreen);
     
+    TH1D* hppPt = new TH1D("hpp Pt","",ptBins,ptRange);
+    
 /* Pythia8 plot initialization */
     TProfile p8GluonFrac("p8 g","p8 g",ptBins,ptRange);
     TProfile p8LightquarkFrac("p8 lq","p8 lq",ptBins,ptRange);
@@ -146,8 +151,11 @@ void HppP8(string herwFile, string pythFile) {
     p8S2Hist.push_back(new TH1D("p8 sigma2 u","p8 sigma2 u",100,0,0.2));
     for (TH1D* sigma2 : p8S2Hist) { sigma2->Sumw2(); }
     p8S2Hist[0]->SetLineColor(kRed); p8S2Hist[2]->SetLineColor(kGreen);
+    
+    TH1D* p8Pt = new TH1D("p8 Pt","",ptBins,ptRange);
 
 /* Herwig++ event loop */
+    std::size_t hppCount = 0;
     std::size_t hppN = hppTree->GetEntries();
     for(size_t x=0; x != hppN; ++x) {
         hppTree->GetEntry(x);
@@ -155,15 +163,19 @@ void HppP8(string herwFile, string pythFile) {
         
         for (int i = 0; i < hppJets_; ++i) {
             TLorentzVector tmpVec(hppX[i],hppY[i],hppZ[i],hppT[i]);
-            
+            if (fabs(tmpVec.Eta())>etaMax) continue;
+            ++hppCount;
+
             hppGluonFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 21)? 1:0);
             hppLightquarkFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 1 || hppFlav[i] == 2)? 1:0);
             hppStrangeFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 3)? 1:0);
             hppCharmFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 4)? 1:0);
             hppBottomFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 5)? 1:0);
             hppUnmatchedFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 0)? 1:0);
+            
+            hppPt->Fill(tmpVec.Pt(),hppWeight);
                                 
-            if(tmpVec.Pt()>100 || tmpVec.Pt()<80) continue;
+            if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
             if(hppFlav[i] == 21) {
                 hppMultHist[0]->Fill(hppConstituents[i],hppWeight);
                 hppPTDHist [0]->Fill(hppPTD[i],hppWeight);
@@ -179,8 +191,10 @@ void HppP8(string herwFile, string pythFile) {
             }
         }
     }
+    cout << hppCount << " herwig jets" << endl;
     
 /* Pythia8 event loop */
+    std:size_t p8Count = 0;
     std::size_t p8N  = p8Tree->GetEntries();
     for(size_t x=0; x != p8N; ++x) {
         p8Tree->GetEntry(x);
@@ -188,7 +202,9 @@ void HppP8(string herwFile, string pythFile) {
         
         for (int i = 0; i < p8Jets_; ++i) {
             TLorentzVector tmpVec(p8X[i],p8Y[i],p8Z[i],p8T[i]);
-            
+            if (fabs(tmpVec.Eta())>etaMax) continue;
+            ++p8Count;
+
             p8GluonFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 21)? 1:0);
             p8LightquarkFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 1 || p8Flav[i] == 2)? 1:0);
             p8StrangeFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 3)? 1:0);
@@ -196,7 +212,9 @@ void HppP8(string herwFile, string pythFile) {
             p8BottomFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 5)? 1:0);
             p8UnmatchedFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 0)? 1:0);
                                 
-            if(tmpVec.Pt()>100 || tmpVec.Pt()<80) continue;
+            p8Pt->Fill(tmpVec.Pt(),p8Weight);
+            
+            if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
             if(p8Flav[i] == 21) {
                 p8MultHist[0]->Fill(p8Constituents[i],p8Weight);
                 p8PTDHist [0]->Fill(p8PTD[i],p8Weight);
@@ -212,24 +230,30 @@ void HppP8(string herwFile, string pythFile) {
             }
         }
     }
-    
+    cout << p8Count << " pythia8 jets" << endl;
+
 /* Herwig++ fraction histograms */
     TH1D *hppLightquarks = hppLightquarkFrac.ProjectionX("hpp light quarks","");
     TH1D *hppGluons = hppGluonFrac.ProjectionX("hpp gluons","");
     TH1D *hppStrange = hppStrangeFrac.ProjectionX("hpp strange","");
     TH1D *hppCharm = hppCharmFrac.ProjectionX("hpp charm","");
     TH1D *hppBottom = hppBottomFrac.ProjectionX("hpp bottom","");
-    TH1D *hppUnmatched = hppUnmatchedFrac.ProjectionX("hpp unmatched","");
+    TH1D *hppUnmatched = hppUnmatchedFrac.ProjectionX("hpp unmatch","");
     
     TH1D *h1 = new TH1D("h",";p_{T} (GeV);Fraction",ptBins,ptRange);
+    setTDRStyle();
     gROOT->ForceStyle();
     gStyle->SetOptStat(kFALSE); //removes old legend
+    gStyle->SetAxisColor(1, "XYZ");
+    gStyle->SetStripDecimals(kTRUE);
+    gStyle->SetTickLength(0.03, "XYZ");
+    gStyle->SetNdivisions(510, "XYZ");
+    gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+    gStyle->SetPadTickY(1);
 
     THStack *hppHs  = new THStack("hpp hs","");
     TCanvas *canv = tdrCanvas("c1",h1,12,0,1);
     hppHs->SetHistogram(h1);
-    setTDRStyle();
-    gStyle->SetOptLogx(1);
     h1->GetYaxis()->SetTitleOffset(1.25);
     h1->GetXaxis()->SetTitleOffset(1.0);
     h1->GetXaxis()->SetLabelSize(0.045);
@@ -259,7 +283,7 @@ void HppP8(string herwFile, string pythFile) {
     TH1D *p8Strange = p8StrangeFrac.ProjectionX("p8 strange","");
     TH1D *p8Charm = p8CharmFrac.ProjectionX("p8 charm","");
     TH1D *p8Bottom = p8BottomFrac.ProjectionX("p8 bottom","");
-    TH1D *p8Unmatched = p8UnmatchedFrac.ProjectionX("p8 unmatched","");
+    TH1D *p8Unmatched = p8UnmatchedFrac.ProjectionX("p8 unmatch","");
     
     gStyle->SetOptStat(kFALSE); //removes old legend
     tdrDraw(p8Unmatched,"",kFullStar,kGray+2,kSolid,-1,1001,kGray);
@@ -283,13 +307,13 @@ void HppP8(string herwFile, string pythFile) {
 /* Fraction plotting */
     p8Hs->Draw("same");
     hppHs->Draw("sameP");
-    fixOverlay();
-    hppHs->GetXaxis()->SetRange(9,47);
-    hppHs->GetYaxis()->SetRangeUser(-0.001,1.001);
+    h1->GetXaxis()->SetRange(9,47);
+    h1->GetYaxis()->SetRangeUser(-0.001,1.001);
 
 /* Fraction legends */
     //heading->AddEntry()
-    TLegend *leg = tdrLeg(0.15,0.41,0.7,0.91);
+//     TLegend *leg = tdrLeg(0.15,0.41,0.7,0.91);
+    TLegend *leg = tdrLeg(0.25,0.25,0.75,0.75);
     //TLegend *heading = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
     TLegend *sample = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
     //TLegend *alphacut = tdrLeg(0.77,0.50,0.87,0.505);
@@ -322,18 +346,21 @@ void HppP8(string herwFile, string pythFile) {
     leg->AddEntry(hppCharm,"Charm","p");
     leg->AddEntry(hppBottom," ","f");
     leg->AddEntry(hppBottom,"Bottom","p");
-
+    gPad->RedrawAxis();
+    h1->GetYaxis()->SetTickLength(0.025);
+    canv->Print("fracs.pdf");
+    
 /* Multiplicity */
     TH1D *h2 = new TH1D("h2",";Number of constituents;Events",60,0,60);
     gStyle->SetOptLogx(0);
-    TCanvas *c2 = tdrCanvas("c2",h2,0,33);
+    gStyle->SetOptLogy(0);
+    TCanvas *c2 = tdrCanvas("c2",h2,0,33,1);
 
     h2->SetMinimum(0);
-    h2->SetMaximum(0.1);
+    h2->SetMaximum(0.115);
     h2->GetYaxis()->SetNoExponent();
     h2->GetXaxis()->SetNoExponent();
     h2->GetXaxis()->SetRangeUser(0,60);
-
     tdrDraw(p8MultHist[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,3003,kRed-3);
     tdrDraw(hppMultHist[0],"HIST P",kFullTriangleDown,kRed-3,kSolid,-1,3003,kRed-3);
     tdrDraw(p8MultHist[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,3005,kBlue);
@@ -344,7 +371,7 @@ void HppP8(string herwFile, string pythFile) {
     for (TH1D* mult : p8MultHist) { mult->Scale(1/mult->Integral()); }
     for (TH1D* mult : hppMultHist) { mult->Scale(1/mult->Integral()); }
     
-    TLegend *multLeg = tdrLeg(0.6,0.6,0.9,0.9);
+    TLegend *multLeg = tdrLeg(0.5,0.6,0.8,0.9);
     multLeg->SetNColumns(2);
     
     multLeg->AddEntry(p8MultHist[0],"         ","f");
@@ -356,7 +383,8 @@ void HppP8(string herwFile, string pythFile) {
 /* PTD */
     TH1D *h3 = new TH1D("h3",";p_{T}D;Events",100,0,1);
     gStyle->SetOptLogx(0);
-    TCanvas *c3 = tdrCanvas("c3",h3,0,33);
+    gStyle->SetOptLogy(0);
+    TCanvas *c3 = tdrCanvas("c3",h3,0,33,1);
 
     h3->SetMaximum(0.075);
     h3->GetYaxis()->SetNoExponent();
@@ -373,7 +401,7 @@ void HppP8(string herwFile, string pythFile) {
     for (TH1D* ptd : p8PTDHist) { ptd->Scale(1/ptd->Integral()); }
     for (TH1D* ptd : hppPTDHist) { ptd->Scale(1/ptd->Integral()); }
     
-    TLegend *ptdLeg = tdrLeg(0.6,0.6,0.9,0.9);
+    TLegend *ptdLeg = tdrLeg(0.5,0.6,0.8,0.9);
     ptdLeg->SetNColumns(2);
     
     ptdLeg->AddEntry(p8PTDHist[0],"         ","f");
@@ -385,29 +413,46 @@ void HppP8(string herwFile, string pythFile) {
 /* Sigma2 */
     TH1D *h4 = new TH1D("h4",";#sigma_{2};Events",100,0,0.2);
     gStyle->SetOptLogx(0);
-    TCanvas *c4 = tdrCanvas("c4",h4,0,33);
+    gStyle->SetOptLogy(0);
+    TCanvas *c4 = tdrCanvas("c4",h4,0,33,1);
     h4->SetMinimum(0);
-    h4->SetMaximum(0.075);
+    h4->SetMaximum(0.085);
     h4->GetYaxis()->SetNoExponent();
     h4->GetXaxis()->SetNoExponent();
     h4->GetXaxis()->SetRangeUser(0,0.2);
 
-    tdrDraw(p8S2Hist[0],"HIST",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
-    tdrDraw(hppS2Hist[0],"HIST P",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
-    tdrDraw(p8S2Hist[1],"HIST",kFullTriangleUp,kRed-3,kSolid,-1,3004,kRed-3);
-    tdrDraw(hppS2Hist[1],"HIST P",kFullTriangleUp,kRed-3,kSolid,-1,3004,kRed-3);
+    tdrDraw(p8S2Hist[0],"HIST",kFullTriangleUp,kRed-3,kSolid,-1,3004,kRed-3);
+    tdrDraw(hppS2Hist[0],"HIST P",kFullTriangleUp,kRed-3,kSolid,-1,3004,kRed-3);
+    tdrDraw(p8S2Hist[1],"HIST",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
+    tdrDraw(hppS2Hist[1],"HIST P",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
 //     tdrDraw(sigma2_u,"HIST",kDot,kGreen-1,kSolid,-1,3005,kGreen-1);
 //     tdrDraw(sigma2_u,"HIST",kDot,kGreen-1,kSolid,-1,3005,kGreen-1);
 
     for (TH1D* sigma2 : p8S2Hist) { sigma2->Scale(1/sigma2->Integral()); }
     for (TH1D* sigma2 : hppS2Hist) { sigma2->Scale(1/sigma2->Integral()); }
     
-    TLegend *s2Leg = tdrLeg(0.6,0.6,0.9,0.9);
+    TLegend *s2Leg = tdrLeg(0.5,0.6,0.8,0.9);
     s2Leg->SetNColumns(2);
     
-    s2Leg->AddEntry(p8PTDHist[0],"         ","f");
-    s2Leg->AddEntry(hppPTDHist[0],"       Gluon","p");
-    s2Leg->AddEntry(p8PTDHist[1],"         ","f");
-    s2Leg->AddEntry(hppPTDHist[1],"       Quark","p");
+    s2Leg->AddEntry(p8S2Hist[0],"         ","f");
+    s2Leg->AddEntry(hppS2Hist[0],"       Gluon","p");
+    s2Leg->AddEntry(p8S2Hist[1],"         ","f");
+    s2Leg->AddEntry(hppS2Hist[1],"       Quark","p");
     s2Leg->SetHeader("Pythia8/Herwig++");
+    
+/* Pt */
+    TH1D *h5 = new TH1D("h5","pT",ptBins,ptRange);
+    gStyle->SetOptLogy(1);
+    TCanvas *c5 = tdrCanvas("c5",h5,0,33,1);
+    h5->SetMinimum(0.00000001);
+    h5->SetMaximum(1000);
+    h5->GetYaxis()->SetNoExponent();
+    h5->GetXaxis()->SetNoExponent();
+//     h5->GetYaxis()->SetMoreLogLabels();
+    h5->GetXaxis()->SetMoreLogLabels();
+    
+    p8Pt->Scale(1/p8Pt->Integral());
+    hppPt->Scale(1/hppPt->Integral());
+    tdrDraw(p8Pt,"HIST",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
+    tdrDraw(hppPt,"HIST P",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
 }

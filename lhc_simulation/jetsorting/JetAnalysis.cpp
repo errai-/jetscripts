@@ -1,4 +1,6 @@
 #include "JetAnalysis.h"
+#include "Pythia8Plugins/FastJet3.h"
+#include "fastjet/tools/GridMedianBackgroundEstimator.hh"
 
 /////////
 // Setup:
@@ -11,7 +13,8 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
     assert(tree);
     Init(tree);
     
-    jetDef = new fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
+    jetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+    //fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
     
     /* Tree: autosave every 1 Gb, 10 Mb cache */ 
     fOutFile = new TFile(outFile1, "RECREATE");
@@ -66,7 +69,6 @@ void JetAnalysis::Init(TTree *tree)
     fChain->SetBranchAddress("fPrtcls.fChargeTimes3", fChargeTimes3, &b_fChargeTimes3);
     fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus, &b_fAnalysisStatus);
 }
-
 
 void JetAnalysis::InitCI(){
   // Create file on which histogram(s) can be saved.
@@ -131,6 +133,30 @@ void JetAnalysis::Show(Long64_t entry)
     if (!fChain) return;
     fChain->Show(entry);
 }
+double deltaPhi(double phi1, double phi2){
+  double pi = 3.141592;
+  while ( phi1 < 0 ) phi1 += 2.*pi;
+  while ( phi1 > 2*pi ) phi1 -= 2.*pi;
+  while ( phi2 < 0 ) phi2 += 2.*pi;
+  while ( phi2 > 2*pi ) phi2 -= 2.*pi;
+
+  double dPhi = abs(phi1 - phi2);
+  if(dPhi>pi) dPhi = 2*pi - dPhi;
+  return dPhi;
+}
+
+double deltaEta(double eta1, double eta2){
+  return eta1-eta2;
+}
+
+double deltaR( double phi1, double phi2, double eta1, double eta2 ){
+  double dEta = deltaEta(eta1,eta2);
+  double dPhi = deltaPhi(phi1,phi2);
+
+  double dR = pow( pow( dPhi, 2 ) + pow( dEta, 2 ) , 0.5 );
+
+  return dR; 
+}
 
 
 //////////////////////////////////
@@ -144,24 +170,29 @@ void JetAnalysis::EventLoop()
     Long64_t nentries = fChain->GetEntries();
     mTimer.setParams(nentries,2000); mTimer.startTiming();  
     
+    cout << mMode << endl;
     int good=0,bad=0;
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
         mFlavorIndices.clear();
         if (jentry!=0&&jentry%2000==0) mTimer.printTime();
         
         Long64_t ientry = LoadTree(jentry);
-        if (ientry < 0) break; fChain->GetEntry(jentry);
+        if (ientry < 0) break;
+        fChain->GetEntry(jentry);
         assert( fPrtcls_ < kMaxfPrtcls );
         
         ParticlesToJetsorterInput();
         
         /* Fastjet algorithm */
-        fastjet::ClusterSequence clustSeq(fjInputs, *jetDef);
-        sortedJets = sorted_by_pt( clustSeq.inclusive_jets( pTMin ) );
+        fastjet::JetDefinition jotDof(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+        fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
+        vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
+        sortedJets = sorted_by_pt( unsorteds );
+        if (sortedJets.size()==0) continue;
         
         if (!GoodEvent()) continue;
-        
-        JetLoop();
+
+        JetLoop(jentry);
         
         fOutTree->Fill();
         
@@ -176,7 +207,6 @@ void JetAnalysis::EventLoop()
     
     fOutFile->Close();
 }    
-
 
 void JetAnalysis::ParticlesToJetsorterInput()
 {
@@ -253,7 +283,7 @@ bool JetAnalysis::GoodEvent()
             || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
             || ( fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0])) < 2.8 )
             || ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() )
-            || ( sortedJets[0].eta() > 2.5 || hiddenInputs[mGammaId].eta() > 2.5 ) )
+            || ( fabs(sortedJets[0].eta()) > 2.5 || fabs(hiddenInputs[mGammaId].eta()) > 2.5 ) )
         { 
             return false;
         }
@@ -294,7 +324,7 @@ bool JetAnalysis::GoodEvent()
     return false;
 }
 
-void JetAnalysis::JetLoop()
+void JetAnalysis::JetLoop(int jentry)
 {
     for (size_t i = 0; i < sortedJets.size(); i++) {
         if ( i == jetsPerEvent ) break;
@@ -316,6 +346,7 @@ void JetAnalysis::JetLoop()
 
         HistFill(i);        
        
+        //cout << jentry << " " << i << " " << sortedJets[i].pt() << " " << mFlavour << endl;
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
             fWeight,mFlavour,multiplicity,PTD(),Sigma2());

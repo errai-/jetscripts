@@ -40,8 +40,9 @@ set reweightMinPT:Scale 15*GeV
 
 # Set matrix element settings
 cd /Herwig/MatrixElements/
+set MEZJet:ZDecay Muon
+set MEZJet:GammaZ Z
 insert SimpleQCD:MatrixElements[0] MEZJet
-set SimpleQCD:MatrixElements[0]:ZDecay Muon
 insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT
 
 # Custom analysis, save results in a root tuple

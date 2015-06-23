@@ -23,8 +23,7 @@ void Stack(string fileName)
     97, 114, 133, 153, 174, 196, 220, 245, 272, 300, 330, 362, 395, 430, 468,
     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000};
-
-    gROOT->ProcessLine(".L ../../jet_simulations/lib/libJetEvent.so");
+    gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
     TTree* tree;
 
     static const Int_t kMaxfJets = 100;
@@ -60,13 +59,16 @@ void Stack(string fileName)
   	TProfile unmatchedFrac("unmatched","unmatched",ptBins,ptRange);
 
     size_t N = tree->GetEntries();
-	for(size_t x=0; x != N; ++x)
+    std::size_t counter = 0;
+    for(size_t x=0; x != N; ++x)
 	{
 		tree->GetEntry(x);
         assert(kMaxfJets>fJets_);
 
         for (int i = 0; i < fJets_; ++i) {
             TLorentzVector tmpVec(fX[i],fY[i],fZ[i],fT[i]);
+            if (fabs(tmpVec.Eta())>1.3) continue;
+            ++counter;
 
 		    gluonFrac.Fill(tmpVec.Pt(), (fFlav[i] == 21)? 1:0, fWeight);
     	    lightquarkFrac.Fill(tmpVec.Pt(), (fFlav[i] == 1 || fFlav[i] == 2)? 1:0, fWeight);
@@ -76,6 +78,7 @@ void Stack(string fileName)
     	    unmatchedFrac.Fill(tmpVec.Pt(), (fFlav[i] == 0)? 1:0, fWeight);
         }
 	}
+    cout << counter << " events analyzed" << endl;
 
 	TH1D *light_quarks = lightquarkFrac.ProjectionX("light quarks","");
   	TH1D *gluons = gluonFrac.ProjectionX("gluons","");
@@ -85,7 +88,7 @@ void Stack(string fileName)
   	TH1D *bottom = bottomFrac.ProjectionX("bottom","");
   	TH1D *unmatched = unmatchedFrac.ProjectionX("unmatched","");
 	
-  	TH1D *h = new TH1D("h",";p_{T} (GeV);Fraction",1000,20,2000);
+  	TH1D *h = new TH1D("h",";p_{T} (GeV);Fraction",ptBins,ptRange);
 
 	tdrDraw(unmatched,"",kOpenCircle,kGray+2,kSolid,-1,1001,kGray);
 	gStyle->SetOptStat(kFALSE); //removes old legend
@@ -119,7 +122,7 @@ void Stack(string fileName)
 	hs->GetYaxis()->SetTitleOffset(1.2);
 	hs->GetXaxis()->SetTitleSize(0.05);
 	hs->GetXaxis()->SetTitleOffset(1);
-	hs->SetMaximum(0.95);
+	hs->SetMaximum(1);
 	// hs->SetLogx();
 
 	double x0, y0;
@@ -133,18 +136,16 @@ void Stack(string fileName)
 	// TLegend *etacut = tdrLeg(0.166107,0.334495 ,0.709732,0.407666);			
 
 	//QCDaware def
-	TLegend *leg = tdrLeg(0.5+0.5,0.82-0.2,0.175+0.5,0.50-0.2);			
-	TLegend *sample = tdrLeg(0.675-0.05-x0,0.50-y0,0.775-0.05-x0,0.505-y0);				//QCDaware
-	TLegend *alphacut = tdrLeg(0.77-x0,0.50-0.05-y0,0.87-x0,0.505-0.05-y0);				//goes
-	TLegend *etacut = tdrLeg(0.61-x0,0.50-0.05-y0,0.71-x0,0.505-0.05-y0);				//here
+	//TLegend *leg = tdrLeg(0.5+0.5,0.82-0.2,0.175+0.5,0.50-0.2);			
+	//TLegend *sample = tdrLeg(0.675-0.05-x0,0.50-y0,0.775-0.05-x0,0.505-y0);				//QCDaware
+	//TLegend *alphacut = tdrLeg(0.77-x0,0.50-0.05-y0,0.87-x0,0.505-0.05-y0);				//goes
+	//TLegend *etacut = tdrLeg(0.61-x0,0.50-0.05-y0,0.71-x0,0.505-0.05-y0);				//here
 
 	////physics def	
-	// TLegend *leg = tdrLeg(0.5,0.82-0.1,0.175,0.50-0.1); 				
-	// TLegend *sample = tdrLeg(0.675-0.05,0.50,0.775-0.05,0.505);			//
-	// TLegend *alphacut = tdrLeg(0.77,0.50-0.05,0.87,0.505-0.05);			//physics
-	// TLegend *etacut = tdrLeg(0.61,0.50-0.05,0.71,0.505-0.05);			//
-
-
+	TLegend *leg = tdrLeg(0.5,0.82-0.1,0.175,0.50-0.1); 				
+	TLegend *sample = tdrLeg(0.675-0.05,0.50,0.775-0.05,0.505);			//
+	TLegend *alphacut = tdrLeg(0.77,0.50-0.05,0.87,0.505-0.05);			//physics
+	TLegend *etacut = tdrLeg(0.61,0.50-0.05,0.71,0.505-0.05);			//
 
 	sample->SetHeader("#gamma+jet sample");
 	//TLegend *heading = tdrLeg(0.675-0.4,0.50+0.5,0.775-0.4,0.505+0.5); 	
@@ -166,7 +167,7 @@ void Stack(string fileName)
 	etacut->Draw();
 	
 	
-	gPad->SetLogx();       
-	c1->SaveAs("qcd_g.pdf");
+	gPad->SetLogx();
+    gPad->RedrawAxis();
 }
 

@@ -178,6 +178,11 @@ namespace
             /* Check for generic ghost particles */
             GhostParticleAdd(pEvent,event,prt);
             
+            if (abs(event[prt].id())==24) {
+                cout << "Halp!!" << endl;
+                cout << event[event[prt].mother1()].id() << endl;
+                cout << event[event[prt].daughter1()].id() << endl;
+            }
             /* Interesting info from the hardest subprocess */
             if (hardSubProc) {
                 ++hardCount;
@@ -230,15 +235,15 @@ namespace
                         }
                     }
                     ParticleAdd(pEvent,event[mu2Idx],2);
-                } else if (abs(event[prt].isParton())) {
+                } else if (event[prt].isParton()) {
                     /* Gluon or quark from the hard process */
                     ParticleAdd(pEvent,event[prt],3);
                 }
                 
                 /* Check for the presence of the expected hard-proc particles */
                 if (hardCount==2) {
-                    if (mode==2 && gammaIdx==-1) return false;
-                    if (mode==3 && mu2Idx==-1) return false;
+                    if (mode==2 && gammaIdx==-1) { return false; }
+                    if (mode==3 && mu2Idx==-1) { return false; }
                 }
             }
             /* Special final-state particles have already been added */
