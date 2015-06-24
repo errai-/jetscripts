@@ -14,3 +14,7 @@ ParticleDecays:tau0Max=10.
 Beams:eCM = 8000.
 HardQCD:all = on
 PhaseSpace:pTHatMin = 30.
+
+! Tune (4C)
+Tune:ee = 3
+Tune:pp = 5

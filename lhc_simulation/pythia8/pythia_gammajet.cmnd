@@ -16,3 +16,7 @@ PromptPhoton:qg2qgamma = on
 PromptPhoton:qqbar2ggamma = on
 PromptPhoton:gg2ggamma = on
 PhaseSpace:pTHatMin = 10.
+
+! Tune (4C)
+Tune:ee = 3
+Tune:pp = 5

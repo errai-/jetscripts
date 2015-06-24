@@ -85,6 +85,7 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
     
     if ( loop > 0 || status != 0 || !event ) return;
     
+    //cout << "juu" << event->weight() << endl;
     pEvent->fWeight = event->weight();
     eh = event->primaryCollision()->handler();
     //event->printGraphviz();
@@ -95,6 +96,8 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
     if (hardProc.size() != 2 && hardProc.size() != 3) { 
         cout << "Unexpected behaviour for the hardest subprocess" << endl; 
     }
+    const ParticleVector hordProc = event->primarySubProcess()->intermediates();
+    const PPair hortProk = event->primarySubProcess()->incoming();
     for (ParticleVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
         bool gammaCase = (mode==2 && abs((*part)->id())==ParticleID::gamma);
         bool ZCase = (mode==3 && abs((*part)->id())==ParticleID::muminus);

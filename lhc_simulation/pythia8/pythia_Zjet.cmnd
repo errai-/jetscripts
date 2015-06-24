@@ -17,3 +17,7 @@ WeakBosonAndParton:qg2gmZq  = on
 23:onMode = off
 23:7:onMode = on
 PhaseSpace:pTHatMin = 0.
+
+! Tune (4C)
+Tune:ee = 3
+Tune:pp = 5

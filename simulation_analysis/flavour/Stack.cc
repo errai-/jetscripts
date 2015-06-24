@@ -23,7 +23,8 @@ void Stack(string fileName)
     97, 114, 133, 153, 174, 196, 220, 245, 272, 300, 330, 362, 395, 430, 468,
     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000};
-    gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
+
+    gROOT->ProcessLine(".L ../../jet_simulations/lib/libJetEvent.so");
     TTree* tree;
 
     static const Int_t kMaxfJets = 100;
@@ -70,12 +71,12 @@ void Stack(string fileName)
             if (fabs(tmpVec.Eta())>1.3) continue;
             ++counter;
 
-		    gluonFrac.Fill(tmpVec.Pt(), (fFlav[i] == 21)? 1:0, fWeight);
-    	    lightquarkFrac.Fill(tmpVec.Pt(), (fFlav[i] == 1 || fFlav[i] == 2)? 1:0, fWeight);
-    	    strangeFrac.Fill(tmpVec.Pt(), (fFlav[i] == 3)? 1:0, fWeight);
-    	    charmFrac.Fill(tmpVec.Pt(), (fFlav[i] == 4)? 1:0, fWeight);
-    	    bottomFrac.Fill(tmpVec.Pt(), (fFlav[i] == 5)? 1:0, fWeight);
-    	    unmatchedFrac.Fill(tmpVec.Pt(), (fFlav[i] == 0)? 1:0, fWeight);
+		    gluonFrac.Fill(tmpVec.Pt(), (fFlav[i] == 21)? 1:0);
+    	    lightquarkFrac.Fill(tmpVec.Pt(), (fFlav[i] == 1 || fFlav[i] == 2)? 1:0);
+    	    strangeFrac.Fill(tmpVec.Pt(), (fFlav[i] == 3)? 1:0);
+    	    charmFrac.Fill(tmpVec.Pt(), (fFlav[i] == 4)? 1:0);
+    	    bottomFrac.Fill(tmpVec.Pt(), (fFlav[i] == 5)? 1:0);
+    	    unmatchedFrac.Fill(tmpVec.Pt(), (fFlav[i] == 0)? 1:0);
         }
 	}
     cout << counter << " events analyzed" << endl;
@@ -88,7 +89,7 @@ void Stack(string fileName)
   	TH1D *bottom = bottomFrac.ProjectionX("bottom","");
   	TH1D *unmatched = unmatchedFrac.ProjectionX("unmatched","");
 	
-  	TH1D *h = new TH1D("h",";p_{T} (GeV);Fraction",ptBins,ptRange);
+  	TH1D *h = new TH1D("h",";p_{T} (GeV);Fraction",1000,20,2000);
 
 	tdrDraw(unmatched,"",kOpenCircle,kGray+2,kSolid,-1,1001,kGray);
 	gStyle->SetOptStat(kFALSE); //removes old legend

@@ -26,7 +26,7 @@ const double ptRange[]=
     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000};
 const double ptUpper = 2000;
-const double ptLower = 100;
+const double ptLower = 30;
 const double etaMax = 1.3;
 
 void HppP8(string herwFile, string pythFile) {
@@ -121,7 +121,7 @@ void HppP8(string herwFile, string pythFile) {
     for (TH1D* sigma2 : hppS2Hist) { sigma2->Sumw2(); }
     hppS2Hist[0]->SetLineColor(kRed); hppS2Hist[2]->SetLineColor(kGreen);
     
-    TH1D* hppPt = new TH1D("hpp Pt","",ptBins,ptRange);
+    TH1D* hppPt = new TH1D("hpp Pt",";pT;Events",ptBins,ptRange);
     
 /* Pythia8 plot initialization */
     TProfile p8GluonFrac("p8 g","p8 g",ptBins,ptRange);
@@ -152,11 +152,12 @@ void HppP8(string herwFile, string pythFile) {
     for (TH1D* sigma2 : p8S2Hist) { sigma2->Sumw2(); }
     p8S2Hist[0]->SetLineColor(kRed); p8S2Hist[2]->SetLineColor(kGreen);
     
-    TH1D* p8Pt = new TH1D("p8 Pt","",ptBins,ptRange);
+    TH1D* p8Pt = new TH1D("p8 Pt",";pT;Events",ptBins,ptRange);
 
 /* Herwig++ event loop */
     std::size_t hppCount = 0;
     std::size_t hppN = hppTree->GetEntries();
+    TProfile* hppWeighting = new TProfile("hppw","",ptBins,ptRange);
     for(size_t x=0; x != hppN; ++x) {
         hppTree->GetEntry(x);
         assert(kMaxfJets>hppJets_);
@@ -166,14 +167,15 @@ void HppP8(string herwFile, string pythFile) {
             if (fabs(tmpVec.Eta())>etaMax) continue;
             ++hppCount;
 
-            hppGluonFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 21)? 1:0);
-            hppLightquarkFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 1 || hppFlav[i] == 2)? 1:0);
-            hppStrangeFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 3)? 1:0);
-            hppCharmFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 4)? 1:0);
-            hppBottomFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 5)? 1:0);
-            hppUnmatchedFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 0)? 1:0);
+            hppGluonFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 21)? 1:0, hppWeight);
+            hppLightquarkFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 1 || hppFlav[i] == 2)? 1:0, hppWeight);
+            hppStrangeFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 3)? 1:0, hppWeight);
+            hppCharmFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 4)? 1:0, hppWeight);
+            hppBottomFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 5)? 1:0, hppWeight);
+            hppUnmatchedFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 0)? 1:0, hppWeight);
             
             hppPt->Fill(tmpVec.Pt(),hppWeight);
+            hppWeighting->Fill(tmpVec.Pt(),hppWeight);
                                 
             if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
             if(hppFlav[i] == 21) {
@@ -196,6 +198,7 @@ void HppP8(string herwFile, string pythFile) {
 /* Pythia8 event loop */
     std:size_t p8Count = 0;
     std::size_t p8N  = p8Tree->GetEntries();
+    TProfile* p8Weighting = new TProfile("p8w","",ptBins,ptRange);
     for(size_t x=0; x != p8N; ++x) {
         p8Tree->GetEntry(x);
         assert(kMaxfJets>p8Jets_);
@@ -205,14 +208,15 @@ void HppP8(string herwFile, string pythFile) {
             if (fabs(tmpVec.Eta())>etaMax) continue;
             ++p8Count;
 
-            p8GluonFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 21)? 1:0);
-            p8LightquarkFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 1 || p8Flav[i] == 2)? 1:0);
-            p8StrangeFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 3)? 1:0);
-            p8CharmFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 4)? 1:0);
-            p8BottomFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 5)? 1:0);
-            p8UnmatchedFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 0)? 1:0);
+            p8GluonFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 21)? 1:0, p8Weight);
+            p8LightquarkFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 1 || p8Flav[i] == 2)? 1:0, p8Weight);
+            p8StrangeFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 3)? 1:0, p8Weight);
+            p8CharmFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 4)? 1:0, p8Weight);
+            p8BottomFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 5)? 1:0, p8Weight);
+            p8UnmatchedFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 0)? 1:0, p8Weight);
                                 
             p8Pt->Fill(tmpVec.Pt(),p8Weight);
+            p8Weighting->Fill(tmpVec.Pt(),p8Weight);
             
             if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
             if(p8Flav[i] == 21) {
@@ -312,9 +316,9 @@ void HppP8(string herwFile, string pythFile) {
 
 /* Fraction legends */
     //heading->AddEntry()
-//     TLegend *leg = tdrLeg(0.15,0.41,0.7,0.91);
-    TLegend *leg = tdrLeg(0.25,0.25,0.75,0.75);
-    //TLegend *heading = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
+    TLegend *leg = tdrLeg(0.15,0.41,0.7,0.91);
+    //TLegend *leg = tdrLeg(0.25,0.25,0.75,0.75);
+    TLegend *heading = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
     TLegend *sample = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
     //TLegend *alphacut = tdrLeg(0.77,0.50,0.87,0.505);
     TLegend *etacut = tdrLeg(0.675,0.50,0.775,0.505);
@@ -441,7 +445,7 @@ void HppP8(string herwFile, string pythFile) {
     s2Leg->SetHeader("Pythia8/Herwig++");
     
 /* Pt */
-    TH1D *h5 = new TH1D("h5","pT",ptBins,ptRange);
+    TH1D *h5 = new TH1D("h5","pT;pT;Events",ptBins,ptRange);
     gStyle->SetOptLogy(1);
     TCanvas *c5 = tdrCanvas("c5",h5,0,33,1);
     h5->SetMinimum(0.00000001);
@@ -455,4 +459,18 @@ void HppP8(string herwFile, string pythFile) {
     hppPt->Scale(1/hppPt->Integral());
     tdrDraw(p8Pt,"HIST",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
     tdrDraw(hppPt,"HIST P",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
+    TLegend *ptLeg = tdrLeg(0.5,0.6,0.8,0.9);
+    
+    ptLeg->AddEntry(p8Pt,"Pythia8","f");
+    ptLeg->AddEntry(hppPt,"Herwig","p");
+
+/* Weights */
+    TH1D *h6 = new TH1D("h6","weights;pT;weight",ptBins,ptRange);
+    TCanvas *c6 = tdrCanvas("c6",h6,0,33,1);
+    h6->SetMaximum(0.03);
+
+    tdrDraw(hppWeighting->ProjectionX(),"E",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
+    tdrDraw(p8Weighting->ProjectionX(),"E",kFullTriangleUp,kRed,kSolid,-1,3003,kRed);
+    gPad->SetLogx();
+    gPad->SetLogy();
 }
