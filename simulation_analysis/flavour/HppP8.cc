@@ -308,15 +308,18 @@ void HppP8(string herwFile, string pythFile) {
     p8Hs->Add(p8Gluons);
     p8Hs->Add(p8Unmatched);
     
+    p8Hs->SetMaximum(0.95);
+    hppHs->SetMaximum(0.95);
+
 /* Fraction plotting */
-    p8Hs->Draw("same");
-    hppHs->Draw("sameP");
     h1->GetXaxis()->SetRange(9,47);
-    h1->GetYaxis()->SetRangeUser(-0.001,1.001);
+    //h1->GetYaxis()->SetRangeUser(-0.001,1.001);
+    p8Hs->Draw("");
+    hppHs->Draw("sameP");
 
 /* Fraction legends */
     //heading->AddEntry()
-    TLegend *leg = tdrLeg(0.15,0.41,0.7,0.91);
+    TLegend *leg = tdrLeg(0.2,0.41,0.5,0.91);
     //TLegend *leg = tdrLeg(0.25,0.25,0.75,0.75);
     TLegend *heading = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
     TLegend *sample = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
@@ -350,8 +353,7 @@ void HppP8(string herwFile, string pythFile) {
     leg->AddEntry(hppCharm,"Charm","p");
     leg->AddEntry(hppBottom," ","f");
     leg->AddEntry(hppBottom,"Bottom","p");
-    gPad->RedrawAxis();
-    h1->GetYaxis()->SetTickLength(0.025);
+    //gPad->RedrawAxis();
     canv->Print("fracs.pdf");
     
 /* Multiplicity */

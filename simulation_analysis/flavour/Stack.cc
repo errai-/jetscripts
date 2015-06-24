@@ -24,7 +24,7 @@ void Stack(string fileName)
     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000};
 
-    gROOT->ProcessLine(".L ../../jet_simulations/lib/libJetEvent.so");
+    gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
     TTree* tree;
 
     static const Int_t kMaxfJets = 100;
@@ -123,8 +123,8 @@ void Stack(string fileName)
 	hs->GetYaxis()->SetTitleOffset(1.2);
 	hs->GetXaxis()->SetTitleSize(0.05);
 	hs->GetXaxis()->SetTitleOffset(1);
-	hs->SetMaximum(1);
 	// hs->SetLogx();
+	hs->SetMaximum(0.95);
 
 	double x0, y0;
 	x0 = 0.4;
@@ -161,14 +161,6 @@ void Stack(string fileName)
 	leg->AddEntry(charm,"Charm","f");
 	leg->AddEntry(bottom,"Bottom","f");
 	
-	leg->Draw();
-	// heading->Draw();
-	sample->Draw();
-	alphacut->Draw();
-	etacut->Draw();
-	
-	
 	gPad->SetLogx();
-    gPad->RedrawAxis();
 }
 
