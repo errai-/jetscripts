@@ -5,7 +5,7 @@ import os
 
 # Hard coded tune type
 # 0: 4C from Herwig++ defaults (CTEQ6L1)
-# 1: CUETHS1 from CMS             (CTEQ6L1)
+# 1: CUETP8S1 from CMS         (CTEQ6L1)
 tune = 0
 
 # Hard coded PDF choice
@@ -59,7 +59,8 @@ f.write("Next:numberShowProcess = 0\n")
 f.write("Next:numberShowEvent = 0\n")
 f.write("Next:numberCount = 0\n\n")
 
-f.write("! Set particles with long enough lifetimes to stable\n")
+f.write("! Set particles with long enough lifetimes to stable and photon radiation\n")
+f.write("ParticleDecays:allowPhotonRadiation = on\n");
 f.write("ParticleDecays:limitTau0=on\n")
 f.write("ParticleDecays:tau0Max=10.\n\n")
 
@@ -91,6 +92,9 @@ if tune==0:
     f.write("! Tune (4C)\n")
     f.write("Tune:ee = 3\n")
     f.write("Tune:pp = 5\n")
+elif tune==1:
+    f.write("! CMS UE Tune CUETP8S1-CTEQ6L1\n")
+    f.write("Tune:pp = 15\n\n")
 
 if pdf==0:
     f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")
