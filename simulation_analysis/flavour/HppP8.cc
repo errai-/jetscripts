@@ -26,8 +26,8 @@ const double ptRange[]=
     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000};
 const double ptUpper = 2000;
-const double ptLower = 30;
-const double etaMax = 1.3;
+const double ptLower = 0;
+const double etaMax = 2.5;//1.3;
 
 void HppP8(string herwFile, string pythFile) {
 /* Init branches */
@@ -166,7 +166,10 @@ void HppP8(string herwFile, string pythFile) {
             TLorentzVector tmpVec(hppX[i],hppY[i],hppZ[i],hppT[i]);
             if (fabs(tmpVec.Eta())>etaMax) continue;
             ++hppCount;
-
+            //if ( (tmpVec.Pt()<=1327)&&(tmpVec.Pt()>1248) ) {
+            //    if (hppFlav[i]==1 || hppFlav[i]==2) cout << "w" << hppWeight << endl;
+            //}
+            //hppWeight=1;
             hppGluonFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 21)? 1:0, hppWeight);
             hppLightquarkFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 1 || hppFlav[i] == 2)? 1:0, hppWeight);
             hppStrangeFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 3)? 1:0, hppWeight);
@@ -207,6 +210,7 @@ void HppP8(string herwFile, string pythFile) {
             TLorentzVector tmpVec(p8X[i],p8Y[i],p8Z[i],p8T[i]);
             if (fabs(tmpVec.Eta())>etaMax) continue;
             ++p8Count;
+            //p8Weight = 1;
 
             p8GluonFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 21)? 1:0, p8Weight);
             p8LightquarkFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 1 || p8Flav[i] == 2)? 1:0, p8Weight);
@@ -319,8 +323,8 @@ void HppP8(string herwFile, string pythFile) {
 
 /* Fraction legends */
     //heading->AddEntry()
-    TLegend *leg = tdrLeg(0.2,0.41,0.5,0.91);
-    //TLegend *leg = tdrLeg(0.25,0.25,0.75,0.75);
+    //TLegend *leg = tdrLeg(0.2,0.41,0.5,0.91);
+    TLegend *leg = tdrLeg(0.3,0.4,0.75,0.85);
     TLegend *heading = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
     TLegend *sample = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
     //TLegend *alphacut = tdrLeg(0.77,0.50,0.87,0.505);
@@ -332,7 +336,7 @@ void HppP8(string herwFile, string pythFile) {
     sample->SetHeader("dijet sample");
     //heading->SetHeader("Pythia8 Simulation (4C Tune)");
     //alphacut->SetHeader("#alpha<0.3");
-    etacut->SetHeader("#left|#eta#right|< 2.5");
+    etacut->SetHeader("#left|#eta#right|< 1.3");
 
     hppHs->GetXaxis()->SetNoExponent();
     hppHs->GetXaxis()->SetMoreLogLabels(kTRUE);
@@ -450,7 +454,7 @@ void HppP8(string herwFile, string pythFile) {
     TH1D *h5 = new TH1D("h5","pT;pT;Events",ptBins,ptRange);
     gStyle->SetOptLogy(1);
     TCanvas *c5 = tdrCanvas("c5",h5,0,33,1);
-    h5->SetMinimum(0.00000001);
+    h5->SetMinimum(0.0000000001);
     h5->SetMaximum(1000);
     h5->GetYaxis()->SetNoExponent();
     h5->GetXaxis()->SetNoExponent();
@@ -469,7 +473,8 @@ void HppP8(string herwFile, string pythFile) {
 /* Weights */
     TH1D *h6 = new TH1D("h6","weights;pT;weight",ptBins,ptRange);
     TCanvas *c6 = tdrCanvas("c6",h6,0,33,1);
-    h6->SetMaximum(0.03);
+    h6->SetMaximum(0.04);
+    h6->SetMinimum(0.0000000001);
 
     tdrDraw(hppWeighting->ProjectionX(),"E",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
     tdrDraw(p8Weighting->ProjectionX(),"E",kFullTriangleUp,kRed,kSolid,-1,3003,kRed);
