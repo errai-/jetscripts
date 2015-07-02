@@ -57,7 +57,7 @@ void StoreParticles::particleAdd(const tPPtr& part, int saveStatus)
 {
     pEvent->AddPrtcl(part->momentum().x()*unitConversion,part->momentum().y()*unitConversion,
                      part->momentum().z()*unitConversion,part->momentum().t()*unitConversion,
-                     part->id(),part->data().charge(), saveStatus);
+                     part->id(), saveStatus);
 }
 
 /* Implemented similarly as in cmssw. Not in active use, kept for reference. */
@@ -85,7 +85,6 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
     
     if ( loop > 0 || status != 0 || !event ) return;
     
-    //cout << "juu" << event->weight() << endl;
     pEvent->fWeight = event->weight();
     eh = event->primaryCollision()->handler();
     //event->printGraphviz();
@@ -96,11 +95,12 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
     if (hardProc.size() != 2 && hardProc.size() != 3) { 
         cout << "Unexpected behaviour for the hardest subprocess" << endl; 
     }
-    const ParticleVector hordProc = event->primarySubProcess()->intermediates();
-    const PPair hortProk = event->primarySubProcess()->incoming();
+    
+//     cout << "Tempo!" << endl;
     for (ParticleVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
         bool gammaCase = (mode==2 && abs((*part)->id())==ParticleID::gamma);
         bool ZCase = (mode==3 && abs((*part)->id())==ParticleID::muminus);
+//         cout << (*part)->id() << " " << (*part)->momentum().perp() << endl;
         if (gammaCase) {
             PPtr gamma = *part;
             while (gamma->decayed()) {
@@ -168,50 +168,25 @@ void StoreParticles::doinitrun()
     mode = 0;
     
     /* In a general multithread-case, generate a thread-unique root file name */
-    string runInfo = generator()->runName();
-    size_t pos = runInfo.find("++")+2;
-    if (runInfo.size() > 0) {
-        runInfo = runInfo.substr(pos);
-        pos = runInfo.find("_");
-        int multiplier = std::stoi(runInfo.substr(0,pos));
-        
-        runInfo = runInfo.substr(pos+1);
-        pos = runInfo.find("_");
-        int runIdx = std::stoi(runInfo.substr(0,pos));
-        
-        runInfo = runInfo.substr(pos+1);
-        pos = runInfo.find("_");
-        mode = std::stoi(runInfo.substr(0,pos));
-        
-        fileName += "_";
-        if (mode == 0) {
-            fileName += "generic_";
-        } else if (mode == 1) {
-            fileName += "dijet_";
-        } else if (mode == 2) {
-            fileName += "gammajet_";
-        } else if (mode == 3) {
-            fileName += "Zjet_";
-        } else {
-            cout << "Bad input file" << endl;
-            fileName += "dijet_";
-        }
-        
-        string fileNameFinal = fileName;
-        fileName += std::to_string( generator()->N() );
-        if (multiplier > 1) {
-            if (runIdx==1) {
-                fileNameFinal += std::to_string( multiplier*generator()->N() );
-                fileNameFinal += ".root";
-                
-                TFile *outFile = new TFile(fileNameFinal.c_str(), "RECREATE");
-                outFile->Close();
-            }
-            fileName += "_";
-            fileName += std::to_string( runIdx );
-        }
-    }
+    fileName += "_";
+    fileName += generator()->runName();
     fileName += ".root";
+    
+    try {
+        size_t pos = fileName.find("jet_");
+        string modeName = fileName.substr(17,pos-17);
+        if (modeName=="generic") {
+            mode = 0;
+        } else if (modeName=="di") {
+            mode = 1;
+        } else if (modeName=="gamma") {
+            mode = 2;
+        } else if (modeName=="Z") {
+            mode = 3;
+        }
+    } catch (int e) {
+        cout << "Invalid mode name: " << e << endl;
+    }
     
     /* Setup a root tree in the selected file */
     herwigFile = new TFile (fileName.c_str(),"RECREATE");

@@ -5,30 +5,18 @@ JOB_TYPE=$2
 NUM_PROC=$3
 DEBUG=0
 
-EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
-
-if [ $JOB_TYPE -eq 0 ]; then
-    HFILE=LHC-dijet
-elif [ $JOB_TYPE -eq 1 ]; then
-    HFILE=LHC-dijet
-elif [ $JOB_TYPE -eq 2 ]; then
-    HFILE=LHC-gammajet
-elif [ $JOB_TYPE -eq 3 ]; then
-    HFILE=LHC-Zjet
-else
-    HFILE=LHC-dijet
-fi
-
 cd herwig
-Herwig++ read ${HFILE}.in
-wait $!
 
 pidArr=()
+NAMES=""
 for (( i=1; i<=$NUM_PROC; i++ ))
 do
-    Herwig++ run -N$EVT_PER_RUN -s$((100*$i)) -t++${NUM_PROC}_${i}_${JOB_TYPE} ${HFILE}.run &
+    HFILE=$(python herwig_settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
+    Herwig++ read $HFILE &
     pidArr+=($!)
     pidArr+=" "
+    NAMES+="particles_herwig_"$(python -c "import sys; word = sys.argv[1]; print word[0:-3]" $HFILE)".root"
+    NAMES+=" "
 done
 
 for (( i=1; i<=$NUM_PROC; i++ ))
@@ -36,24 +24,25 @@ do
     wait ${pidArr[$i]}
 done
 
-MERGE=$(ls -rt | grep root | tail -n $(($NUM_PROC+1)) | head -n 1)
-TEMPORARY=$(ls -rt | grep root | tail -n $NUM_PROC)
+MERGE="particles_herwig_"$(python -c "import sys; word = sys.argv[1]; print word[0:-5]" $HFILE)".root"
 
 if [ $NUM_PROC -gt 1 ]; then
-    hadd -f $MERGE $TEMPORARY
+    hadd -f $MERGE $NAMES
 
-    for tmp in $TEMPORARY
+    for tmp in $NAMES
     do
         rm $tmp
     done
 else
-    MERGE=$TEMPORARY
+    mv $NAMES $MERGE
 fi
 
 if [ $DEBUG -eq 0 ]; then
-    rm *.out
-    rm *.log
-    rm *.tex
+    REMAIN=$(python -c "import sys; word = sys.argv[1]; print word[0:-5]" $HFILE)
+    rm $REMAIN*.in
+    rm $REMAIN*.out
+    rm $REMAIN*.log
+    rm $REMAIN*.tex
 fi
 
 mv $MERGE ..
