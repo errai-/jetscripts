@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     
     int generator = -1, mode = -1;
     bool beginning = false;
-    string input = argv[1], tmpStr = "", output = "jets_", output2 = "hists_";
+    string input = argv[1], tmpStr = "", output = "", output2 = "hists_";
     for (auto i : input) {
         if (i=='_') {
             if (!beginning && tmpStr=="particles") {

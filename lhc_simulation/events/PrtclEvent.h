@@ -29,7 +29,7 @@ public:
     virtual ~PrtclData() { }
 
     void SetPxPyPzE(double,double,double,double);
-    void SetParams(int,double,int);
+    void SetParams(int,int);
     
     Double_t P() const { return fP4.P(); }
     Double_t Pt() const { return fP4.Pt(); }
@@ -45,7 +45,6 @@ private:
     ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
     
     int fPDGCode;
-    int fChargeTimes3;
     int fAnalysisStatus;
    
 public:
@@ -60,7 +59,7 @@ public:
     PrtclEvent(size_t = 10000);
     virtual ~PrtclEvent() { Reset(); };
 
-    void AddPrtcl(double,double,double,double,int,double,int);
+    void AddPrtcl(double,double,double,double,int,int);
     PrtclData *InitPrtcl();
 
     void Clear(Option_t *option ="");

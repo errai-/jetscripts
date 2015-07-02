@@ -133,30 +133,6 @@ void JetAnalysis::Show(Long64_t entry)
     if (!fChain) return;
     fChain->Show(entry);
 }
-double deltaPhi(double phi1, double phi2){
-  double pi = 3.141592;
-  while ( phi1 < 0 ) phi1 += 2.*pi;
-  while ( phi1 > 2*pi ) phi1 -= 2.*pi;
-  while ( phi2 < 0 ) phi2 += 2.*pi;
-  while ( phi2 > 2*pi ) phi2 -= 2.*pi;
-
-  double dPhi = abs(phi1 - phi2);
-  if(dPhi>pi) dPhi = 2*pi - dPhi;
-  return dPhi;
-}
-
-double deltaEta(double eta1, double eta2){
-  return eta1-eta2;
-}
-
-double deltaR( double phi1, double phi2, double eta1, double eta2 ){
-  double dEta = deltaEta(eta1,eta2);
-  double dPhi = deltaPhi(phi1,phi2);
-
-  double dR = pow( pow( dPhi, 2 ) + pow( dEta, 2 ) , 0.5 );
-
-  return dR; 
-}
 
 
 //////////////////////////////////
@@ -182,17 +158,20 @@ void JetAnalysis::EventLoop()
         assert( fPrtcls_ < kMaxfPrtcls );
         
         ParticlesToJetsorterInput();
-        
+        for ( auto i : mPartonList ) {
+            if ( abs(hiddenInputs[i].user_index())==22 ) continue;
+            fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),hiddenInputs[i].e(),0,0,0,0,0,0,0,0,0,0,fWeight,abs(hiddenInputs[i].user_index()),0,0,0);
+        }
         /* Fastjet algorithm */
-        fastjet::JetDefinition jotDof(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
-        fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
-        vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
-        sortedJets = sorted_by_pt( unsorteds );
-        if (sortedJets.size()==0) continue;
+//         fastjet::JetDefinition jotDof(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+//         fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
+//         vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
+//         sortedJets = sorted_by_pt( unsorteds );
+//         if (sortedJets.size()==0) continue;
         
-        if (!GoodEvent()) continue;
+        //if (!GoodEvent()) continue;
 
-        JetLoop(jentry);
+        //JetLoop(jentry);
         
         fOutTree->Fill();
         

@@ -16,10 +16,9 @@ void PrtclData::SetPxPyPzE(double px, double py, double pz, double e)
 }
 
 
-void PrtclData::SetParams(int id, double charge, int status)
+void PrtclData::SetParams(int id, int status)
 {
     fPDGCode = id;
-    fChargeTimes3 = TMath::Nint(3*charge);
     fAnalysisStatus = status;
 }
 
@@ -35,15 +34,14 @@ PrtclEvent::PrtclEvent(size_t storageSize)
 }
 
 
-void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id, 
-                          double charge, int status)
+void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id, int status)
 {
     int ObjectNumber = TProcessID::GetObjectCount();
     
     PrtclData *part;
     part = InitPrtcl();
     part->SetPxPyPzE(px,py,pz,e);
-    part->SetParams(id,charge,status);
+    part->SetParams(id,status);
     
     TProcessID::SetObjectCount(ObjectNumber);
 }
