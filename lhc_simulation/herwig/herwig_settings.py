@@ -125,6 +125,10 @@ f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.0*GeV\n\n')
 f.write('# ptHat min\n')
 if mode==1:
     f.write('set /Herwig/Cuts/JetKtCut:MinKT 30.0*GeV\n\n')
+elif mode==2:
+    f.write('set /Herwig/Cuts/JetKtCut:MinKT 10.0*GeV\n\n')
+elif mode==3:
+    f.write('set /Herwig/Cuts/JetKtCut:MinKT 0.0*GeV\n\n')
 
 f.write('##############################################\n')
 f.write('# Matrix Elements for hadron-hadron collisions\n')
@@ -141,6 +145,12 @@ f.write('# Set matrix element settings\n')
 f.write('cd /Herwig/MatrixElements/\n')
 if mode==1:
     f.write('insert SimpleQCD:MatrixElements[0] MEQCD2to2\n')
+elif mode==2:
+    f.write('insert SimpleQCD:MatrixElements[0] MEGammaJet\n')
+elif mode==3:
+    f.write('set MEZJet:ZDecay Muon')
+    f.write('set MEZJet:GammaZ Z')
+    f.write('insert SimpleQCD:MatrixElements[0] MEZJet')
 f.write('insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
 
 f.write('# Save final particles and hardest subprocess particles\n')
