@@ -108,7 +108,6 @@ libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
 run_herwig:
 	bash herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
-
 # Clean.
 clean:
 	rm -f *.log *.exe *.d *.so events/*.o jetsorting/*.o events/*Dct.* lib/* \
