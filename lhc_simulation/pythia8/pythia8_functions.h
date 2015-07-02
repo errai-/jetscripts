@@ -22,6 +22,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
+#include "TLorentzVector.h"
 
 /* scripts */
 #include "../generic/help_functions.h"
@@ -80,27 +81,22 @@ namespace
     *  1 - standard dijet
     *  2 - gammajet
     *  3 - Zjet */
-    int Pythia8EventLoop(int nEvent, string settings, string fileName, 
-                                const int mode, const int threadId ) 
+    int Pythia8EventLoop(string settings, string fileName, const int mode )
     {
         /* Init pythia with a custom seed */
         Pythia pythia; Event& event = pythia.event;
-        
+
         pythia.readFile(settings.c_str()); 
-        pythia.settings.readString("Random:setSeed = on");
-        string seed = "Random:seed = ";
-        seed += std::to_string(threadId*10000);
-        pythia.settings.readString(seed);
-        pythia.settings.readString("Next:numberCount = 0");
         pythia.init();
         pythia.settings.listChanged();
+        int nEvent = pythia.mode("Main:numberOfEvents");
         
         /* Try to create a new file */
         TFile *outFile = new TFile(fileName.c_str(), "RECREATE");
         if (!outFile->IsOpen()) return 1;
         outFile->SetCompressionLevel(1); /* File is compressed */
         
-        /* Create a tree. Autosave every 100 Mb, cache of 10 Mb */ 
+        /* Create a tree. Autosave every 100 Mb, cache of 10 Mb */
         TTree *tree = new TTree("Pythia8Tree","Tree filled with pythia8 data.");
         tree->SetAutoSave(100000000);
         tree->SetCacheSize(10000000);    
@@ -134,8 +130,7 @@ namespace
 
     void ParticleAdd(PrtclEvent* pEvent, Particle& part, int saveStatus)
     {
-        pEvent->AddPrtcl(part.px(),part.py(),part.pz(),part.e(),part.id(), 
-                        part.charge(),saveStatus);
+        pEvent->AddPrtcl(part.px(),part.py(),part.pz(),part.e(),part.id(),saveStatus);
     }
 
     void GhostParticleAdd(PrtclEvent* pEvent, Event& event, size_t prt)
@@ -175,14 +170,9 @@ namespace
             bool gammaCase = (mode==2 && abs(event[prt].id())==22);
             bool ZCase = (mode==3 && abs(event[prt].id())==23);
             
-            /* Check for generic ghost particles */
-            GhostParticleAdd(pEvent,event,prt);
+            /* Check for generic ghost particles (consumes space, switched off) */
+            //GhostParticleAdd(pEvent,event,prt);
             
-            if (abs(event[prt].id())==24) {
-                cout << "Halp!!" << endl;
-                cout << event[event[prt].mother1()].id() << endl;
-                cout << event[event[prt].daughter1()].id() << endl;
-            }
             /* Interesting info from the hardest subprocess */
             if (hardSubProc) {
                 ++hardCount;
@@ -213,16 +203,17 @@ namespace
                         }
                     }
                     if (mu2Idx==-1) return false;
-                    
+                    shocker += TLorentzVector(event[mu1Idx].px(),event[mu1Idx].py(),0,0);
+                    shocker += TLorentzVector(event[mu2Idx].px(),event[mu2Idx].py(),0,0);
                     /* Find the descendant-muon of mu1 */
                     while (!event[mu1Idx].isFinal()) {
                         vector<int> mu1D = event[mu1Idx].daughterList();
                         for (int daughterI : mu1D) {
                             if (abs(event[daughterI].id())==13) {
                                 mu1Idx = daughterI; break;
-                            }   
-                        }   
-                    }   
+                            }
+                        }
+                    }
                     ParticleAdd(pEvent,event[mu1Idx],2);
                     
                     /* Find the descendant-muon of mu2 */
@@ -242,23 +233,22 @@ namespace
                 
                 /* Check for the presence of the expected hard-proc particles */
                 if (hardCount==2) {
-                    if (mode==2 && gammaIdx==-1) { return false; }
-                    if (mode==3 && mu2Idx==-1) { return false; }
+                    if (mode==2 && gammaIdx==-1) { cout << "Unexpected fail" << endl; return false; }
+                    if (mode==3 && mu2Idx==-1) { cout << "Unexpected fail" << endl; return false; }
                 }
             }
             /* Special final-state particles have already been added */
-            if (prt==gammaIdx || prt==mu1Idx || prt==mu2Idx) { 
+            if (prt==gammaIdx || prt==mu1Idx || prt==mu2Idx) {
                 continue;
             }
                 
             /* Final state particles, gamma/mu from gamma/Z-jets excluded */
             if ( event[prt].isFinal() ) {
-                int saveStatus = 1; 
+                int saveStatus = 1;
                 if ( (mode==0) && event[prt].id()==22 &&  GammaChecker(event, prt) ) saveStatus = 2;
                 ParticleAdd(pEvent,event[prt],saveStatus);
             }
         }
-            
         if (hardCount<2 || hardCount>4) {
             cout << "Unexpected behaviour for the hardest subprocess" << endl;
         }
