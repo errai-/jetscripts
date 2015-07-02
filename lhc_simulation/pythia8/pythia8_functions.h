@@ -203,8 +203,6 @@ namespace
                         }
                     }
                     if (mu2Idx==-1) return false;
-                    shocker += TLorentzVector(event[mu1Idx].px(),event[mu1Idx].py(),0,0);
-                    shocker += TLorentzVector(event[mu2Idx].px(),event[mu2Idx].py(),0,0);
                     /* Find the descendant-muon of mu1 */
                     while (!event[mu1Idx].isFinal()) {
                         vector<int> mu1D = event[mu1Idx].daughterList();

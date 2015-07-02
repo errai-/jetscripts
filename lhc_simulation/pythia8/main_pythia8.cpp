@@ -23,10 +23,10 @@ int main(int argc, char **argv)
         return 0;
     }
     if (argc >= 2) {
-        choiceId = stoi(argv[2]);
+        choiceId = stoi(argv[1]);
     }
     if (argc >= 3) {
-        name = argv[3];
+        name = argv[2];
     }
     string settings = name;
     settings += ".cmnd";
