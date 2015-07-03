@@ -135,7 +135,6 @@ private:
     Double_t        fT[kMaxfPrtcls];   //[fPrtcls_]
     
     Int_t           fPDGCode[kMaxfPrtcls];   //[fPrtcls_]
-    Int_t           fChargeTimes3[kMaxfPrtcls];   //[fPrtcls_]
     
     Int_t           fAnalysisStatus[kMaxfPrtcls];   //[fPrtcls_]
 
@@ -148,7 +147,6 @@ private:
     TBranch        *b_fT;   //!
 
     TBranch        *b_fPDGCode;   //!
-    TBranch        *b_fChargeTimes3;   //!
     
     TBranch        *b_fAnalysisStatus;   //!
 

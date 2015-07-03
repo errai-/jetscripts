@@ -148,9 +148,9 @@ if mode==1:
 elif mode==2:
     f.write('insert SimpleQCD:MatrixElements[0] MEGammaJet\n')
 elif mode==3:
-    f.write('set MEZJet:ZDecay Muon')
-    f.write('set MEZJet:GammaZ Z')
-    f.write('insert SimpleQCD:MatrixElements[0] MEZJet')
+    f.write('set MEZJet:ZDecay Muon\n')
+    f.write('set MEZJet:GammaZ Z\n')
+    f.write('insert SimpleQCD:MatrixElements[0] MEZJet\n')
 f.write('insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
 
 f.write('# Save final particles and hardest subprocess particles\n')

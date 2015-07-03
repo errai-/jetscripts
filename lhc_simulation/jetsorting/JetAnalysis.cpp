@@ -66,7 +66,6 @@ void JetAnalysis::Init(TTree *tree)
     fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fZ", fZ, &b_fZ);
     fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT, &b_fT);
     fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode, &b_fPDGCode);
-    fChain->SetBranchAddress("fPrtcls.fChargeTimes3", fChargeTimes3, &b_fChargeTimes3);
     fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus, &b_fAnalysisStatus);
 }
 
@@ -141,6 +140,7 @@ void JetAnalysis::Show(Long64_t entry)
 
 void JetAnalysis::EventLoop() 
 {
+    bool hardStudy = false;
     if (fChain == 0) return;
 
     Long64_t nentries = fChain->GetEntries();
@@ -158,20 +158,25 @@ void JetAnalysis::EventLoop()
         assert( fPrtcls_ < kMaxfPrtcls );
         
         ParticlesToJetsorterInput();
-        for ( auto i : mPartonList ) {
-            if ( abs(hiddenInputs[i].user_index())==22 ) continue;
-            fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),hiddenInputs[i].e(),0,0,0,0,0,0,0,0,0,0,fWeight,abs(hiddenInputs[i].user_index()),0,0,0);
-        }
-        /* Fastjet algorithm */
-//         fastjet::JetDefinition jotDof(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
-//         fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
-//         vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
-//         sortedJets = sorted_by_pt( unsorteds );
-//         if (sortedJets.size()==0) continue;
         
-        //if (!GoodEvent()) continue;
+        if ( hardStudy ) {
+            for ( auto i : mPartonList ) {
+                fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),
+                                hiddenInputs[i].e(),0,0,0,0,0,0,0,0,0,0,fWeight,
+                                abs(hiddenInputs[i].user_index()),0,0,0);
+            }
+        } else {
+            /* Fastjet algorithm */
+            fastjet::JetDefinition jotDof(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+            fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
+            vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
+            sortedJets = sorted_by_pt( unsorteds );
+            if (sortedJets.size()==0) continue;
+            
+            if (!GoodEvent()) continue;
 
-        //JetLoop(jentry);
+            JetLoop(jentry);
+        }
         
         fOutTree->Fill();
         
@@ -431,10 +436,10 @@ void JetAnalysis::ParticleLoop(size_t i){
         TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
             jetParts[j].e() );
 
-        mChargSum +=  fChargeTimes3[ jetParts[j].user_index() ]/3.0;
-        mChargWSum += (fChargeTimes3[ jetParts[j].user_index() ]/3.0)
+        mChargSum +=  1;
+        mChargWSum += (1)
             *jetParts[j].perp()/sortedJets[i].perp();
-        mChargW2Sum += (fChargeTimes3[ jetParts[j].user_index() ]/3.0)
+        mChargW2Sum += (1)
             *pow(jetParts[j].perp()/sortedJets[i].perp(),2);
         mW2 += pow(jetParts[j].perp()/sortedJets[i].perp(),2);
         mEtSum += tmpP;
