@@ -66,7 +66,7 @@ jetanalysis: jetsorting/main_$$@.cpp jetanalysis.o libPrtclEvent.so libJetEvent.
 
 jetanalysis.o: jetsorting/JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
 	cd jetsorting && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
-	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) -ldl -o $@
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
 
 ptcut: jetsorting/main_$$@.cpp ptcut.o libPrtclEvent.so

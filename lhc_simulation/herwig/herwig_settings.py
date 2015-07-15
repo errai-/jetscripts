@@ -155,7 +155,7 @@ f.write('insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
 
 f.write('# Save final particles and hardest subprocess particles\n')
 f.write('cd /Herwig/Analysis\n')
-f.write('create jetanalysis::StoreParticles jetAnalysis ../lib/libStoreParticles.so\n')
+f.write('create jetanalysis::StoreParticles jetAnalysis libStoreParticles.so\n')
 f.write('insert /Herwig/Generators/LHCGenerator:AnalysisHandlers 0 jetAnalysis\n\n')
 
 f.write('# For now saverun does not work with LHAPDF\n')

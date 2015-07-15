@@ -14,13 +14,12 @@ DEBUG=0
 
 WRKDIR=/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/herwig
 
-cd herwig
-
 pidArr=()
 NAMES=""
 for (( i=1; i<=$NUM_PROC; i++ ))
 do
-    HFILE=$(python $WRKDIR/herwig_settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
+    cp $WRKDIR/herwig_settings.py settings.py
+    HFILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
     Herwig++ read $HFILE &
     pidArr+=($!)
     pidArr+=" "
@@ -46,7 +45,7 @@ else
     mv $NAMES $MERGE
 fi
 
-f [ $DEBUG -eq 0 ]; then
+if [ $DEBUG -eq 0 ]; then
     REMAIN=$(python -c "import sys; word = sys.argv[1]; print word[0:-5]" $HFILE)
     rm $REMAIN*.in
     rm $REMAIN*.out
