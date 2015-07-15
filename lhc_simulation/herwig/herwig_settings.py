@@ -120,7 +120,7 @@ f.write('# CM energy\n')
 f.write('set /Herwig/Generators/LHCGenerator:EventHandler:LuminosityFunction:Energy 8000.0*GeV\n\n')
 
 f.write('# Intrinsic pT tune extrapolated to LHC energy\n')
-f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.6*GeV\n\n')
+f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.0*GeV\n\n')
 
 f.write('# ptHat min\n')
 if mode==1:
