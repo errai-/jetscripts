@@ -78,14 +78,17 @@ if mode==1:
 if mode==2:
     f.write("PromptPhoton:qg2qgamma = on\n");
     f.write("PromptPhoton:qqbar2ggamma = on\n");
-    f.write("!PromptPhoton:gg2ggamma = on\n");
+    f.write("PromptPhoton:gg2ggamma = on\n");
     f.write("PhaseSpace:pTHatMin = 10.\n\n");
 if mode==3:
+    f.write("! Produce both Z0's and gammas\n");
+    f.write("WeakZ0:gmZmode = 0\n");
     f.write("WeakBosonAndParton:qqbar2gmZg = on\n");
     f.write("WeakBosonAndParton:qg2gmZq  = on\n");
     f.write("23:onMode = off\n");
     f.write("23:7:onMode = on\n");
-    f.write("PhaseSpace:pTHatMin = 0.\n\n");
+    f.write("PhaseSpace:pTHatMin = 20.\n\n");
+    f.write("PhaseSpace:mHatMin = 75.\n");
 
 f.write("Tune:preferLHAPDF = 2\n")
 if tune==0:
@@ -94,7 +97,14 @@ if tune==0:
     f.write("Tune:pp = 5\n")
 elif tune==1:
     f.write("! CMS UE Tune CUETP8S1-CTEQ6L1\n")
-    f.write("Tune:pp = 15\n\n")
+    #f.write("Tune:pp = 15\n\n")
+    f.write('Tune:ee 3\n')
+    f.write('Tune:pp 5\n')
+    f.write('MultipartonInteractions:pT0Ref=2.1006\n')
+    f.write('MultipartonInteractions:ecmPow=0.21057\n')
+    f.write('MultipartonInteractions:expPow=1.6089\n')
+    f.write('MultipartonInteractions:a1=0.00\n')
+    f.write('ColourReconnection:range=3.31257\n\n')
 
 if pdf==0:
     f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")

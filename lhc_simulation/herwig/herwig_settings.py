@@ -120,7 +120,7 @@ f.write('# CM energy\n')
 f.write('set /Herwig/Generators/LHCGenerator:EventHandler:LuminosityFunction:Energy 8000.0*GeV\n\n')
 
 f.write('# Intrinsic pT tune extrapolated to LHC energy\n')
-f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.0*GeV\n\n')
+f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.6*GeV\n\n')
 
 f.write('# ptHat min\n')
 if mode==1:
@@ -128,7 +128,7 @@ if mode==1:
 elif mode==2:
     f.write('set /Herwig/Cuts/JetKtCut:MinKT 10.0*GeV\n\n')
 elif mode==3:
-    f.write('set /Herwig/Cuts/JetKtCut:MinKT 0.0*GeV\n\n')
+    f.write('set /Herwig/Cuts/JetKtCut:MinKT 20.0*GeV\n\n')
 
 f.write('##############################################\n')
 f.write('# Matrix Elements for hadron-hadron collisions\n')
@@ -149,7 +149,8 @@ elif mode==2:
     f.write('insert SimpleQCD:MatrixElements[0] MEGammaJet\n')
 elif mode==3:
     f.write('set MEZJet:ZDecay Muon\n')
-    f.write('set MEZJet:GammaZ Z\n')
+    f.write('set MEZJet:GammaZ All\n')
+    f.write('set /Herwig/Cuts/QCDCuts:MHatMin 75.0*GeV\n');
     f.write('insert SimpleQCD:MatrixElements[0] MEZJet\n')
 f.write('insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
 

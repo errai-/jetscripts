@@ -140,7 +140,7 @@ void JetAnalysis::Show(Long64_t entry)
 
 void JetAnalysis::EventLoop() 
 {
-    bool hardStudy = false;
+    bool hardStudy = true;
     if (fChain == 0) return;
 
     Long64_t nentries = fChain->GetEntries();
@@ -190,7 +190,7 @@ void JetAnalysis::EventLoop()
     WriteResults();
     
     fOutFile->Close();
-}    
+}
 
 void JetAnalysis::ParticlesToJetsorterInput()
 {

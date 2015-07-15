@@ -92,6 +92,7 @@ void HppP8(string herwFile, string pythFile) {
     p8Tree->SetBranchAddress("fJets.fPTD", p8PTD);
     p8Tree->SetBranchAddress("fJets.fSigma2", p8Sigma2);
     
+    const double etaLim = 2.5;
 /* Herwig plot initialization */
     TProfile hppGluonFrac("hpp g","hpp g",ptBins,ptRange);
     TProfile hppLightquarkFrac("hpp lq","hpp lq",ptBins,ptRange);
@@ -99,6 +100,13 @@ void HppP8(string herwFile, string pythFile) {
     TProfile hppCharmFrac("hpp c","hpp c",ptBins,ptRange);
     TProfile hppBottomFrac("hpp b","hpp b",ptBins,ptRange);
     TProfile hppUnmatchedFrac("hpp unmatched","hpp unmatched",ptBins,ptRange);
+    
+    TProfile hppEtaGluonFrac("hpp eta g","hpp eta g",40,-etaLim,etaLim);
+    TProfile hppEtaLightquarkFrac("hpp eta lq","hpp eta lq",40,-etaLim,etaLim);
+    TProfile hppEtaStrangeFrac("hpp eta s","hpp eta s",40,-etaLim,etaLim);
+    TProfile hppEtaCharmFrac("hpp eta c","hpp eta c",40,-etaLim,etaLim);
+    TProfile hppEtaBottomFrac("hpp eta b","hpp eta b",40,-etaLim,etaLim);
+    TProfile hppEtaUnmatchedFrac("hpp eta unmatched","hpp eta unmatched",40,-etaLim,etaLim);
     
     vector<TH1D*> hppMultHist;
     hppMultHist.push_back(new TH1D("hpp multiplicity g","hpp multiplicity g",60,0,60));
@@ -130,6 +138,13 @@ void HppP8(string herwFile, string pythFile) {
     TProfile p8CharmFrac("p8 c","p8 c",ptBins,ptRange);
     TProfile p8BottomFrac("p8 b","p8 b",ptBins,ptRange);
     TProfile p8UnmatchedFrac("p8 unmatched","p8 unmatched",ptBins,ptRange);
+    
+    TProfile p8EtaGluonFrac("p8 eta g","p8 eta g",40,-etaLim,etaLim);
+    TProfile p8EtaLightquarkFrac("p8 eta lq","p8 eta lq",40,-etaLim,etaLim);
+    TProfile p8EtaStrangeFrac("p8 eta s","p8 eta s",40,-etaLim,etaLim);
+    TProfile p8EtaCharmFrac("p8 eta c","p8 eta c",40,-etaLim,etaLim);
+    TProfile p8EtaBottomFrac("p8 eta b","p8 eta b",40,-etaLim,etaLim);
+    TProfile p8EtaUnmatchedFrac("p8 eta unmatched","p8 eta unmatched",40,-etaLim,etaLim);
     
     vector<TH1D*> p8MultHist;
     p8MultHist.push_back(new TH1D("p8 multiplicity g","p8 multiplicity g",60,0,60));
@@ -164,11 +179,9 @@ void HppP8(string herwFile, string pythFile) {
         
         for (int i = 0; i < hppJets_; ++i) {
             TLorentzVector tmpVec(hppX[i],hppY[i],hppZ[i],hppT[i]);
-            if (fabs(tmpVec.Eta())>etaMax) continue;
+            //if (fabs(tmpVec.Eta())>etaMax) continue;
             ++hppCount;
-            //if ( (tmpVec.Pt()<=1327)&&(tmpVec.Pt()>1248) ) {
-            //    if (hppFlav[i]==1 || hppFlav[i]==2) cout << "w" << hppWeight << endl;
-            //}
+            
             //hppWeight=1;
             hppGluonFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 21)? 1:0, hppWeight);
             hppLightquarkFrac.Fill(tmpVec.Pt(), (hppFlav[i] == 1 || hppFlav[i] == 2)? 1:0, hppWeight);
@@ -181,6 +194,13 @@ void HppP8(string herwFile, string pythFile) {
             hppWeighting->Fill(tmpVec.Pt(),hppWeight);
                                 
             if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
+            hppEtaGluonFrac.Fill(tmpVec.Eta(), (hppFlav[i] == 21)? 1:0, hppWeight);
+            hppEtaLightquarkFrac.Fill(tmpVec.Eta(), (hppFlav[i] == 1 || hppFlav[i] == 2)? 1:0, hppWeight);
+            hppEtaStrangeFrac.Fill(tmpVec.Eta(), (hppFlav[i] == 3)? 1:0, hppWeight);
+            hppEtaCharmFrac.Fill(tmpVec.Eta(), (hppFlav[i] == 4)? 1:0, hppWeight);
+            hppEtaBottomFrac.Fill(tmpVec.Eta(), (hppFlav[i] == 5)? 1:0, hppWeight);
+            hppEtaUnmatchedFrac.Fill(tmpVec.Eta(), (hppFlav[i] == 0)? 1:0, hppWeight);
+            
             if(hppFlav[i] == 21) {
                 hppMultHist[0]->Fill(hppConstituents[i],hppWeight);
                 hppPTDHist [0]->Fill(hppPTD[i],hppWeight);
@@ -208,7 +228,7 @@ void HppP8(string herwFile, string pythFile) {
         
         for (int i = 0; i < p8Jets_; ++i) {
             TLorentzVector tmpVec(p8X[i],p8Y[i],p8Z[i],p8T[i]);
-            if (fabs(tmpVec.Eta())>etaMax) continue;
+            //if (fabs(tmpVec.Eta())>etaMax) continue;
             ++p8Count;
             //p8Weight = 1;
 
@@ -223,6 +243,13 @@ void HppP8(string herwFile, string pythFile) {
             p8Weighting->Fill(tmpVec.Pt(),p8Weight);
             
             if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
+            p8EtaGluonFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 21)? 1:0, p8Weight);
+            p8EtaLightquarkFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 1 || p8Flav[i] == 2)? 1:0, p8Weight);
+            p8EtaStrangeFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 3)? 1:0, p8Weight);
+            p8EtaCharmFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 4)? 1:0, p8Weight);
+            p8EtaBottomFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 5)? 1:0, p8Weight);
+            p8EtaUnmatchedFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 0)? 1:0, p8Weight);
+                                
             if(p8Flav[i] == 21) {
                 p8MultHist[0]->Fill(p8Constituents[i],p8Weight);
                 p8PTDHist [0]->Fill(p8PTD[i],p8Weight);
@@ -336,7 +363,7 @@ void HppP8(string herwFile, string pythFile) {
     sample->SetHeader("dijet sample");
     //heading->SetHeader("Pythia8 Simulation (4C Tune)");
     //alphacut->SetHeader("#alpha<0.3");
-    etacut->SetHeader("#left|#eta#right|< 1.3");
+    etacut->SetHeader("#left|#eta#right|< 2.5");
 
     hppHs->GetXaxis()->SetNoExponent();
     hppHs->GetXaxis()->SetMoreLogLabels(kTRUE);
@@ -344,7 +371,7 @@ void HppP8(string herwFile, string pythFile) {
     hppHs->GetYaxis()->SetTitle("Flavor fraction");
     
     leg->SetNColumns(2);
-    leg->SetHeader("Pythia8/Herwig++");
+    leg->SetHeader("CTEQ6L1/MRST LO**");
     leg->AddEntry(p8Unmatched," ","f");
     leg->AddEntry(hppUnmatched,"None ","p");
     leg->AddEntry(p8Gluons," ","f");
@@ -358,7 +385,121 @@ void HppP8(string herwFile, string pythFile) {
     leg->AddEntry(hppBottom," ","f");
     leg->AddEntry(hppBottom,"Bottom","p");
     //gPad->RedrawAxis();
-    canv->Print("fracs.pdf");
+    //canv->Print("fracs.pdf");
+    
+    // Herwigpp fractions
+    TH1D *hppEtaLightquarks = hppEtaLightquarkFrac.ProjectionX("hpp eta light quarks","");
+    TH1D *hppEtaGluons = hppEtaGluonFrac.ProjectionX("hpp eta gluons","");
+    TH1D *hppEtaStrange = hppEtaStrangeFrac.ProjectionX("hpp eta strange","");
+    TH1D *hppEtaCharm = hppEtaCharmFrac.ProjectionX("hpp eta charm","");
+    TH1D *hppEtaBottom = hppEtaBottomFrac.ProjectionX("hpp eta bottom","");
+    TH1D *hppEtaUnmatched = hppEtaUnmatchedFrac.ProjectionX("hpp eta unmatch","");
+    
+    TH1D *h1eta = new TH1D("h eta",";p_{T} (GeV);Fraction",40,-etaLim,etaLim);
+    setTDRStyle();
+    gROOT->ForceStyle();
+    gStyle->SetOptStat(kFALSE); //removes old legend
+    gStyle->SetAxisColor(1, "XYZ");
+    gStyle->SetStripDecimals(kTRUE);
+    gStyle->SetTickLength(0.03, "XYZ");
+    gStyle->SetNdivisions(510, "XYZ");
+    gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+    gStyle->SetPadTickY(1);
+
+    THStack *hppEtaHs  = new THStack("hpp hs","");
+    TCanvas *canvEta = tdrCanvas("c1 eta",h1eta,12,0,1);
+    hppHs->SetHistogram(h1eta);
+    h1eta->GetYaxis()->SetTitleOffset(1.25);
+    h1eta->GetXaxis()->SetTitleOffset(1.0);
+    h1eta->GetXaxis()->SetLabelSize(0.045);
+    h1eta->GetYaxis()->SetLabelSize(0.045);
+    h1eta->GetXaxis()->SetTitleSize(0.045);
+    h1eta->GetYaxis()->SetTitleSize(0.045);
+
+    tdrDraw(hppEtaUnmatched,"",kFullStar,kGray+2,kSolid,-1,1001,kGray);
+    tdrDraw(hppEtaGluons,"",kFullDotLarge,kBlue+2,kSolid,-1,1001,kBlue-9);
+    tdrDraw(hppEtaLightquarks,"",kFullDiamond,kYellow-1,kSolid,-1,1001,kYellow-9);
+    tdrDraw(hppEtaStrange,"",kFullSquare,kAzure-6,kSolid,-1,1001,kAzure-8);
+    tdrDraw(hppEtaCharm,"",kFullTriangleUp,kGreen-1,kSolid,-1,1001,kGreen-9);
+    tdrDraw(hppEtaBottom,"",kFullTriangleDown,kRed-2,kSolid,-1,1001,kRed-9);
+    
+    //light_quarks->Add(strange);
+    hppEtaHs->Add(hppEtaBottom);
+    hppEtaHs->Add(hppEtaCharm);
+    hppEtaHs->Add(hppEtaStrange);
+    hppEtaHs->Add(hppEtaLightquarks);
+    hppEtaHs->Add(hppEtaGluons);
+    hppEtaHs->Add(hppEtaUnmatched);
+
+/* Pythia8 fraction histograms */    
+    TH1D *p8EtaLightquarks = p8EtaLightquarkFrac.ProjectionX("p8 eta light quarks","");
+    TH1D *p8EtaGluons = p8EtaGluonFrac.ProjectionX("p8 eta gluons","");
+    TH1D *p8EtaStrange = p8EtaStrangeFrac.ProjectionX("p8 eta strange","");
+    TH1D *p8EtaCharm = p8EtaCharmFrac.ProjectionX("p8 eta charm","");
+    TH1D *p8EtaBottom = p8EtaBottomFrac.ProjectionX("p8 eta bottom","");
+    TH1D *p8EtaUnmatched = p8EtaUnmatchedFrac.ProjectionX("p8 eta unmatch","");
+    
+    gStyle->SetOptStat(kFALSE); //removes old legend
+    tdrDraw(p8EtaUnmatched,"",kFullStar,kGray+2,kSolid,-1,1001,kGray);
+    tdrDraw(p8EtaGluons,"",kFullDotLarge,kBlue+2,kSolid,-1,1001,kBlue-9);
+    tdrDraw(p8EtaLightquarks,"",kFullDiamond,kYellow-1,kSolid,-1,1001,kYellow-9);
+    tdrDraw(p8EtaStrange,"",kFullSquare,kAzure-6,kSolid,-1,1001,kAzure-8);
+    tdrDraw(p8EtaCharm,"",kFullTriangleUp,kGreen-1,kSolid,-1,1001,kGreen-9);
+    tdrDraw(p8EtaBottom,"",kFullTriangleDown,kRed-2,kSolid,-1,1001,kRed-9);
+
+    THStack *p8EtaHs  = new THStack("p8 hs","");
+    p8EtaHs->SetHistogram(h1eta);
+    
+    //light_quarks->Add(strange);
+    p8EtaHs->Add(p8EtaBottom);
+    p8EtaHs->Add(p8EtaCharm);
+    p8EtaHs->Add(p8EtaStrange);
+    p8EtaHs->Add(p8EtaLightquarks);
+    p8EtaHs->Add(p8EtaGluons);
+    p8EtaHs->Add(p8EtaUnmatched);
+    
+    p8EtaHs->SetMaximum(0.95);
+    hppEtaHs->SetMaximum(0.95);
+
+/* Fraction plotting */
+    //h1eta->GetXaxis()->SetRange(9,47);
+    //h1->GetYaxis()->SetRangeUser(-0.001,1.001);
+    p8EtaHs->Draw("");
+    hppEtaHs->Draw("sameP");
+
+/* Fraction legends */
+    //heading->AddEntry()
+    //TLegend *leg = tdrLeg(0.2,0.41,0.5,0.91);
+    TLegend *legEta = tdrLeg(0.3,0.4,0.75,0.85);
+    TLegend *headingEta = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
+    TLegend *sampleEta = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
+    //TLegend *alphacut = tdrLeg(0.77,0.50,0.87,0.505);
+
+//     gPad->Update();
+//     gPad->GetCanvas()->Modified();
+  
+    sample->SetHeader("dijet sample");
+    //heading->SetHeader("Pythia8 Simulation (4C Tune)");
+    //alphacut->SetHeader("#alpha<0.3");
+
+    hppHs->GetXaxis()->SetNoExponent();
+    hppHs->GetXaxis()->SetTitle("Eta");
+    hppHs->GetYaxis()->SetTitle("Flavor fraction");
+    
+    legEta->SetNColumns(2);
+    legEta->SetHeader("CTEQ6L1/MRST LO**");
+    legEta->AddEntry(p8EtaUnmatched," ","f");
+    legEta->AddEntry(hppEtaUnmatched,"None ","p");
+    legEta->AddEntry(p8EtaGluons," ","f");
+    legEta->AddEntry(hppEtaGluons,"Gluon","p");
+    legEta->AddEntry(p8EtaLightquarks," ","f");
+    legEta->AddEntry(hppEtaLightquarks,"Light","p");
+    legEta->AddEntry(p8EtaStrange," ","f");
+    legEta->AddEntry(hppEtaStrange,"Strange","p");
+    legEta->AddEntry(p8EtaCharm," ","f");
+    legEta->AddEntry(hppEtaCharm,"Charm","p");
+    legEta->AddEntry(hppEtaBottom," ","f");
+    legEta->AddEntry(hppEtaBottom,"Bottom","p");
     
 /* Multiplicity */
     TH1D *h2 = new TH1D("h2",";Number of constituents;Events",60,0,60);
@@ -454,7 +595,7 @@ void HppP8(string herwFile, string pythFile) {
     TH1D *h5 = new TH1D("h5","pT;pT;Events",ptBins,ptRange);
     gStyle->SetOptLogy(1);
     TCanvas *c5 = tdrCanvas("c5",h5,0,33,1);
-    h5->SetMinimum(0.0000000001);
+    h5->SetMinimum(0.0000000000001);
     h5->SetMaximum(1000);
     h5->GetYaxis()->SetNoExponent();
     h5->GetXaxis()->SetNoExponent();

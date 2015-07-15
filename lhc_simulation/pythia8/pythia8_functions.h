@@ -111,12 +111,17 @@ namespace
         int timerStep = 1000;
         Timer timer; timer.setParams(nEvent,timerStep); timer.startTiming();
         /* Simulation loop: */
-        for (size_t ev = 0; ev != nEvent; ++ev) {
+        std::size_t ev = 0;
+        while (ev != nEvent) {
             if (!pythia.next()) continue;
             //event.list();
-            if (ev%timerStep==0&&ev>0) timer.printTime();
             
-            if (Pythia8ParticleLoop(pythia,event,pEvent,mode)) tree->Fill();
+            if (Pythia8ParticleLoop(pythia,event,pEvent,mode)) {
+                tree->Fill();
+                ++ev;
+            }
+            if (ev%timerStep==0) timer.printTime();
+            
             pEvent->Clear();
         }
 
