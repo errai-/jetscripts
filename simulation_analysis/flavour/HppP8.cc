@@ -371,7 +371,8 @@ void HppP8(string herwFile, string pythFile) {
     hppHs->GetYaxis()->SetTitle("Flavor fraction");
     
     leg->SetNColumns(2);
-    leg->SetHeader("CTEQ6L1/MRST LO**");
+    //leg->SetHeader("CTEQ6L1/MRST LO**");
+    leg->SetHeader("P8 Hw++");
     leg->AddEntry(p8Unmatched," ","f");
     leg->AddEntry(hppUnmatched,"None ","p");
     leg->AddEntry(p8Gluons," ","f");
@@ -478,7 +479,7 @@ void HppP8(string herwFile, string pythFile) {
 //     gPad->Update();
 //     gPad->GetCanvas()->Modified();
   
-    sample->SetHeader("dijet sample");
+    sample->SetHeader("#gamma+jet sample");
     //heading->SetHeader("Pythia8 Simulation (4C Tune)");
     //alphacut->SetHeader("#alpha<0.3");
 
@@ -487,7 +488,8 @@ void HppP8(string herwFile, string pythFile) {
     hppHs->GetYaxis()->SetTitle("Flavor fraction");
     
     legEta->SetNColumns(2);
-    legEta->SetHeader("CTEQ6L1/MRST LO**");
+    //legEta->SetHeader("CTEQ6L1/MRST LO**");
+    legEta->SetHeader("P8 Hw++");
     legEta->AddEntry(p8EtaUnmatched," ","f");
     legEta->AddEntry(hppEtaUnmatched,"None ","p");
     legEta->AddEntry(p8EtaGluons," ","f");

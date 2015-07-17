@@ -69,5 +69,5 @@ int main(int argc, char** argv)
     
     cout << "Saving to file " << fileName << endl;
 
-    return makeEventSample(nEvent, fileName, std::stoi(nameId));
+    return Pythia6EventLoop(nEvent, fileName, std::stoi(nameId),choiceId);
 }

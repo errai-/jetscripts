@@ -139,7 +139,7 @@ f.write('mkdir /Herwig/Weights\n')
 f.write('cd /Herwig/Weights\n')
 f.write('create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so\n')
 f.write('set reweightMinPT:Power 4.5\n')
-f.write('set reweightMinPT:Scale 15*GeV\n\n')
+f.write('set reweightMinPT:Scale 10*GeV\n\n')
 
 f.write('# Set matrix element settings\n')
 f.write('cd /Herwig/MatrixElements/\n')
