@@ -77,8 +77,8 @@ namespace
         pythia->SetPARJ(71,10); // ctau = 10 mm
         pythia->SetMSTP(33,0); // no K factors in hard cross sections
         pythia->SetMSTP(2,1); // which order running alphaS
-        //pythia->SetMSTP(51,10042); // Structure function (PDF CTEQ6L1)
-        //pythia->SetMSTP(52,2); // LHAPDF
+        pythia->SetMSTP(51,10042); // Structure function (PDF CTEQ6L1)
+        pythia->SetMSTP(52,2); // LHAPDF
 
         pythia->SetPARP(82,1.921); // pt cutoff, multiparton interactions
         pythia->SetPARP(89,1800.); // sqrts for which parp82 is set 
@@ -139,7 +139,7 @@ namespace
 
         /* Simulation loop */
         int timerStep = 1000;
-        Timer timer; timer.setParams(nEvent,100); timer.startTiming();
+        Timer timer; timer.setParams(nEvent,timerStep); timer.startTiming();
         std::size_t ev = 0;
         while (ev != nEvent) { 
             pythia->GenerateEvent();
@@ -159,6 +159,7 @@ namespace
 
     bool Pythia6ParticleLoop(TPythia6* pythia, PrtclEvent* pEvent, const int mode) {
         int muon1 = 12, muon2 = 13, gamma = 9;
+        pEvent->fWeight = 1./pythia->GetVINT(99);
         if (mode==3) while (abs(pythia->GetK(muon1,2))!=13) { ++muon1; ++muon2; }
         for (Int_t j = 1; j <= pythia->GetN(); ++j) {
             // j == 7,8: outgoing particles in the hardest subprocess
