@@ -113,15 +113,10 @@ namespace
         /* Simulation loop: */
         std::size_t ev = 0;
         while (ev != nEvent) {
-            if (!pythia.next()) continue;
-            //event.list();
-            
-            if (Pythia8ParticleLoop(pythia,event,pEvent,mode)) {
-                tree->Fill();
-                ++ev;
-            }
+            if (!pythia.next()) continue; //event.list();
+
+            if (Pythia8ParticleLoop(pythia,event,pEvent,mode)) { tree->Fill(); ++ev;}
             if (ev%timerStep==0) timer.printTime();
-            
             pEvent->Clear();
         }
 

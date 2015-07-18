@@ -149,9 +149,9 @@ namespace
             pEvent->Clear();
         }
 
-        tree->Print();
-
-        file->Write();
+        tree->AutoSave("Overwrite");
+        
+        delete pEvent; pEvent = 0;
         file->Close();
 
         return 0;
