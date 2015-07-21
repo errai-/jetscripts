@@ -82,25 +82,23 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
     /* Rotate to CMS, extract final state particles and call analyze(particles). */
     AnalysisHandler::analyze(event, ieve, loop, status);
     if (ieve%timerStep==0&&ieve>0) timer->printTime();
-    
+
     if ( loop > 0 || status != 0 || !event ) return;
-    
+
     pEvent->fWeight = event->weight();
     eh = event->primaryCollision()->handler();
     //event->printGraphviz();
-    
+
     /* The hardest subprocess */
     int gammaIdx = -1, mu1Idx = -1, mu2Idx = -1;
     const ParticleVector hardProc = event->primarySubProcess()->outgoing();
     if (hardProc.size() != 2 && hardProc.size() != 3) { 
         cout << "Unexpected behaviour for the hardest subprocess" << endl; 
     }
-    
-//     cout << "Tempo!" << endl;
+
     for (ParticleVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
         bool gammaCase = (mode==2 && abs((*part)->id())==ParticleID::gamma);
         bool ZCase = (mode==3 && abs((*part)->id())==ParticleID::muminus);
-//         cout << (*part)->id() << " " << (*part)->momentum().perp() << endl;
         if (gammaCase) {
             PPtr gamma = *part;
             while (gamma->decayed()) {
