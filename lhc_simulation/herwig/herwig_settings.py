@@ -36,6 +36,8 @@ elif mode == 2:
     name += "gammajet"
 elif mode == 3:
     name += "Zjet"
+elif mode == 4:
+    name += "ttbar"
 
 name += "_"
 name += str(tot_evts)
@@ -129,6 +131,8 @@ elif mode==2:
     f.write('set /Herwig/Cuts/JetKtCut:MinKT 10.0*GeV\n\n')
 elif mode==3:
     f.write('set /Herwig/Cuts/JetKtCut:MinKT 20.0*GeV\n\n')
+elif mode==4:
+    f.write('set /Herwig/Cuts/JetKtCut:MinKT 30.0*GeV\n\n')
 
 f.write('##############################################\n')
 f.write('# Matrix Elements for hadron-hadron collisions\n')
@@ -150,8 +154,12 @@ elif mode==2:
 elif mode==3:
     f.write('set MEZJet:ZDecay Muon\n')
     f.write('set MEZJet:GammaZ All\n')
-    f.write('set /Herwig/Cuts/QCDCuts:MHatMin 75.0*GeV\n');
+    f.write('set /Herwig/Cuts/QCDCuts:MHatMin 75.0*GeV\n')
     f.write('insert SimpleQCD:MatrixElements[0] MEZJet\n')
+elif mode==4:
+    f.write('set MEPP2QQ:QuarkType Top\n')
+    f.write('set MEPP2QQ:Process Pair\n')
+    f.write('insert SimpleQCD:MatrixElements[0] MEPP2QQ\n')
 f.write('insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
 
 f.write('# Save final particles and hardest subprocess particles\n')

@@ -36,6 +36,8 @@ elif mode == 2:
     name += "gammajet"
 elif mode == 3:
     name += "Zjet"
+elif mode == 4:
+    name += "ttbar"
 
 name += "_"
 name += str(tot_evts)
@@ -89,6 +91,10 @@ if mode==3:
     f.write("23:7:onMode = on\n");
     f.write("PhaseSpace:pTHatMin = 20.\n\n");
     f.write("PhaseSpace:mHatMin = 75.\n");
+if mode==4:
+    f.write("Top::gg2ttbar = on\n");
+    f.write("Top::qqbar2ttbar = on\n");
+    f.write("PhaseSpace:pTHatMin = 30.\n\n")
 
 f.write("Tune:preferLHAPDF = 2\n")
 if tune==0:
