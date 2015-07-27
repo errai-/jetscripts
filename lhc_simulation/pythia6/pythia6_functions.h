@@ -9,6 +9,7 @@
 #include "TError.h"
 #include "TTree.h"
 #include "TClonesArray.h"
+#include "TLorentzVector.h"
 #include "TH1.h"
 #include "TF1.h"
 #include "TStyle.h"
@@ -34,7 +35,7 @@ namespace
             // Standard QCD
             pythia->SetMSEL(1);
             // Min and max pthat
-            pythia->SetCKIN(3,15);
+            pythia->SetCKIN(3,30);
             pythia->SetCKIN(4,3000);
         } else if (mode == 2) {
             // photon+jets
@@ -144,13 +145,17 @@ namespace
         while (ev != nEvent) { 
             pythia->GenerateEvent();
 
+            cout << "event " << ev << endl;
             if ( Pythia6ParticleLoop(pythia,pEvent,mode) ) { tree->Fill(); ++ev; }
             if (ev%timerStep==0) timer.printTime();
             pEvent->Clear();
         }
 
+        pythia->Pylist(1);
+        pythia->Pystat(1);
+
         tree->AutoSave("Overwrite");
-        
+
         delete pEvent; pEvent = 0;
         file->Close();
 
@@ -192,7 +197,6 @@ namespace
                 }
             }
         }
-
         if ( mode==3 && (muon1<0 || muon2<0 || pythia->GetK(muon1,1)>10 || pythia->GetK(muon2,1)>10) ) {
             cout << "Unexpected behaviour with Zmumu+jets" << endl;
         }

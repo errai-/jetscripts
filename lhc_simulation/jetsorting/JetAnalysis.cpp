@@ -156,9 +156,9 @@ void JetAnalysis::EventLoop()
         if (ientry < 0) break;
         fChain->GetEntry(jentry);
         assert( fPrtcls_ < kMaxfPrtcls );
-        
+
         ParticlesToJetsorterInput();
-        
+
         if ( hardStudy ) {
             for ( auto i : mPartonList ) {
                 fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),
@@ -171,25 +171,100 @@ void JetAnalysis::EventLoop()
             fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
             vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
             sortedJets = sorted_by_pt( unsorteds );
-            if (sortedJets.size()==0) continue;
-            
+
             if (!GoodEvent()) continue;
 
             JetLoop(jentry);
         }
-        
+
         fOutTree->Fill();
-        
+
         fjEvent->Clear();
     }
-    
+
     fOutFile = fOutTree->GetCurrentFile();
     fOutTree->AutoSave("Overwrite");
     delete fjEvent;  fjEvent = 0;
-    
+
     WriteResults();
-    
+
     fOutFile->Close();
+}
+
+bool JetAnalysis::GoodEvent()
+{
+    if (sortedJets.size()==0) return false;
+
+    if (mMode == 1) {
+        /** dijet events: for the 2 leading jets: 
+          *  -Back-to-back angle of min 2.8 rad (2.5 rad)
+          *  -Minimum pT of 30 GeV.
+          *  -Max eta of 2.5
+          *  -A third jet has at most 30% of the average pt of the leading jets */ 
+        if (   (sortedJets.size()<2) )
+        {
+            return false;
+        }
+        //if (   ( sortedJets.size()<2 ) 
+        //    || ( sortedJets.size()>2 
+        //    &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
+        //    || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
+        //    || ( sortedJets[1].pt()<30 )
+        //    || ( fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))<2.8 ))
+        //{
+        //    return false;
+        //}
+        return true;
+    } else if (mMode == 2) {
+        /** gamma-jet events:
+          *  -Check for a sufficient resolution.
+          *  -Back-to-back angle of min 2.8 rad
+          *  -Minimum pT of 30 GeV
+          *  -A cut for the subleading jet pT with respect to gamma pT 
+          *  -Max eta of 2.5 */
+        if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R )
+            || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
+            || ( fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0])) < 2.8 )
+            || ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() )
+            || ( fabs(sortedJets[0].eta()) > 2.5 || fabs(hiddenInputs[mGammaId].eta()) > 2.5 ) )
+        {
+            return false;
+        }
+        return true;
+    } else if (mMode == 3) {
+        /** Z-jet events:
+          *  -Require sufficient resolution between the leading jet and the muon system.
+          *  -Back-to-back angle of min 2.8 rad
+          *  -The subleading jet has to have a small-enough pT compared to the muons.
+          *  -Min. muon pT 20GeV and 10GeV 
+          *  -Min. leading jet pT of 30GeV
+          *  -Subleading jet with a pT smaller than 30% of the dimuon system 
+          *  -The dimuon invariant mass is required to fall in the 70-110 GeV range 
+          *  -Max eta of 2.5 */
+        if (   ( mMuonList.size()!=2 )
+            || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R 
+            ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R ) 
+            || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10) 
+            && ( hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
+            || ( sortedJets[0].pt()<30 ) )
+        {
+            return false;
+        }
+
+        /* Dimuon system */
+        fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
+        tmpVec += hiddenInputs[mMuonList[1]];
+        if (   ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*tmpVec.pt() ) 
+            || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
+            || ( fabs(tmpVec.delta_phi_to( sortedJets[0] )) < 2.5 )
+            || ( fabs(sortedJets[0].eta())>2.5 || fabs(tmpVec.eta())>2.5 ) )
+        {
+            return false;
+        }
+
+        return true;
+    }
+    return false;
 }
 
 void JetAnalysis::ParticlesToJetsorterInput()
@@ -237,82 +312,11 @@ void JetAnalysis::ParticlesToJetsorterInput()
     assert( fjInputs.size() ); /* The input should not be empty */
 }
 
-bool JetAnalysis::GoodEvent()
-{
-    if ( sortedJets.size() == 0 ) return false;
-    if (mMode == 1) {
-        /** dijet events: for the 2 leading jets: 
-          *  -Back-to-back angle of min 2.8 rad (2.5 rad)
-          *  -Minimum pT of 30 GeV.
-          *  -Max eta of 2.5
-          *  -A third jet has at most 30% of the average pt of the leading jets */ 
-        if (   ( sortedJets.size()<2 ) 
-            || ( sortedJets.size()>2 
-            &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
-            || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
-            || ( sortedJets[1].pt()<30 )
-            || ( fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))<2.8 ))
-        {
-            return false;
-        }
-        return true;
-    } else if (mMode == 2) {
-        /** gamma-jet events:
-          *  -Check for a sufficient resolution.
-          *  -Back-to-back angle of min 2.8 rad
-          *  -Minimum pT of 30 GeV
-          *  -A cut for the subleading jet pT with respect to gamma pT 
-          *  -Max eta of 2.5 */
-        if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R )
-            || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
-            || ( fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0])) < 2.8 )
-            || ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() )
-            || ( fabs(sortedJets[0].eta()) > 2.5 || fabs(hiddenInputs[mGammaId].eta()) > 2.5 ) )
-        { 
-            return false;
-        }
-        return true;
-    } else if (mMode == 3) {
-        /** Z-jet events:
-          *  -Require sufficient resolution between the leading jet and the muon system.
-          *  -Back-to-back angle of min 2.8 rad
-          *  -The subleading jet has to have a small-enough pT compared to the muons.
-          *  -Min. muon pT 20GeV and 10GeV 
-          *  -Min. leading jet pT of 30GeV
-          *  -Subleading jet with a pT smaller than 30% of the dimuon system 
-          *  -The dimuon invariant mass is required to fall in the 70-110 GeV range 
-          *  -Max eta of 2.5 */
-        if (   ( mMuonList.size()!=2 )
-            || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R 
-            ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R ) 
-            || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10) 
-            && ( hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
-            || ( sortedJets[0].pt()<30 ) )
-        {
-            return false;
-        }
-
-        /* Dimuon system */
-        fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
-        tmpVec += hiddenInputs[mMuonList[1]];
-        if (   ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*tmpVec.pt() ) 
-            || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
-            || ( fabs(tmpVec.delta_phi_to( sortedJets[0] )) < 2.5 )
-            || ( fabs(sortedJets[0].eta())>2.5 || fabs(tmpVec.eta())>2.5 ) )
-        {
-            return false;
-        }
-
-        return true;
-    }
-    return false;
-}
-
 void JetAnalysis::JetLoop(int jentry)
 {
     for (size_t i = 0; i < sortedJets.size(); i++) {
         if ( i == jetsPerEvent ) break;
-        
+
         jetParts = sorted_by_pt(sortedJets[i].constituents());
 
         if (mDefinition == 1) {
@@ -320,17 +324,16 @@ void JetAnalysis::JetLoop(int jentry)
         } else if (mDefinition == 2) {
             FlavorLoop(i);
         }
-        
+
         Cuts();
         int multiplicity = cutJetParts.size();
-        
+
         ParticleLoop(i); /* Operations on jet particles */
-        
+
         TypeSort(); /* Get ready for adding the jet */
 
-        HistFill(i);        
-       
-        //cout << jentry << " " << i << " " << sortedJets[i].pt() << " " << mFlavour << endl;
+        HistFill(i);
+
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
             fWeight,mFlavour,multiplicity,PTD(),Sigma2());
@@ -340,21 +343,21 @@ void JetAnalysis::JetLoop(int jentry)
 void JetAnalysis::PhysicsFlavor(size_t i) 
 {
     mFlavour = 0;
-    for ( size_t k = 0; k != mPartonList.size(); ++k ) {
-        double dR = sortedJets[i].delta_R( hiddenInputs[mPartonList[k]] );
-        if ( dR < R) {
+    for ( auto k : mPartonList ) {
+        double dR = sortedJets[i].delta_R( hiddenInputs[k] );
+        if ( dR < 0.3 ) {
             if (mFlavour!=0) {
                 mFlavour = 0;
                 break;
             } else {
-                mFlavour = abs(hiddenInputs[mPartonList[k]].user_index());
+                mFlavour = abs(hiddenInputs[k].user_index());
             }
         }
     }
     mIsHadron = 0;
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
-    
+
 void JetAnalysis::FlavorLoop(size_t i)
 {
    /* Particle identification.

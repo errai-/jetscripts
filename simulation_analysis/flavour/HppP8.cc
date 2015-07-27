@@ -28,6 +28,8 @@ const double ptRange[]=
 const double ptUpper = 2000;
 const double ptLower = 0;
 const double etaMax = 2.5;//1.3;
+const int sampleType=1;
+const int isHerwig=0;
 
 void HppP8(string herwFile, string pythFile) {
 /* Init branches */
@@ -179,7 +181,7 @@ void HppP8(string herwFile, string pythFile) {
         
         for (int i = 0; i < hppJets_; ++i) {
             TLorentzVector tmpVec(hppX[i],hppY[i],hppZ[i],hppT[i]);
-            //if (fabs(tmpVec.Eta())>etaMax) continue;
+            if (fabs(tmpVec.Eta())>etaMax) continue;
             ++hppCount;
             
             //hppWeight=1;
@@ -212,7 +214,7 @@ void HppP8(string herwFile, string pythFile) {
             } else {
                 hppMultHist[1]->Fill(hppConstituents[i],hppWeight);
                 hppPTDHist [1]->Fill(hppPTD[i],hppWeight);
-                hppS2Hist  [1]->Fill(hppSigma2[i],hppWeight);         
+                hppS2Hist  [1]->Fill(hppSigma2[i],hppWeight);
             }
         }
     }
@@ -225,10 +227,10 @@ void HppP8(string herwFile, string pythFile) {
     for(size_t x=0; x != p8N; ++x) {
         p8Tree->GetEntry(x);
         assert(kMaxfJets>p8Jets_);
-        
+
         for (int i = 0; i < p8Jets_; ++i) {
             TLorentzVector tmpVec(p8X[i],p8Y[i],p8Z[i],p8T[i]);
-            //if (fabs(tmpVec.Eta())>etaMax) continue;
+            if (fabs(tmpVec.Eta())>etaMax) continue;
             ++p8Count;
             //p8Weight = 1;
 
@@ -238,10 +240,10 @@ void HppP8(string herwFile, string pythFile) {
             p8CharmFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 4)? 1:0, p8Weight);
             p8BottomFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 5)? 1:0, p8Weight);
             p8UnmatchedFrac.Fill(tmpVec.Pt(), (p8Flav[i] == 0)? 1:0, p8Weight);
-                                
+
             p8Pt->Fill(tmpVec.Pt(),p8Weight);
             p8Weighting->Fill(tmpVec.Pt(),p8Weight);
-            
+
             if(tmpVec.Pt()>ptUpper || tmpVec.Pt()<ptLower) continue;
             p8EtaGluonFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 21)? 1:0, p8Weight);
             p8EtaLightquarkFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 1 || p8Flav[i] == 2)? 1:0, p8Weight);
@@ -249,7 +251,7 @@ void HppP8(string herwFile, string pythFile) {
             p8EtaCharmFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 4)? 1:0, p8Weight);
             p8EtaBottomFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 5)? 1:0, p8Weight);
             p8EtaUnmatchedFrac.Fill(tmpVec.Eta(), (p8Flav[i] == 0)? 1:0, p8Weight);
-                                
+
             if(p8Flav[i] == 21) {
                 p8MultHist[0]->Fill(p8Constituents[i],p8Weight);
                 p8PTDHist [0]->Fill(p8PTD[i],p8Weight);
@@ -274,7 +276,7 @@ void HppP8(string herwFile, string pythFile) {
     TH1D *hppCharm = hppCharmFrac.ProjectionX("hpp charm","");
     TH1D *hppBottom = hppBottomFrac.ProjectionX("hpp bottom","");
     TH1D *hppUnmatched = hppUnmatchedFrac.ProjectionX("hpp unmatch","");
-    
+
     TH1D *h1 = new TH1D("h",";p_{T} (GeV);Fraction",ptBins,ptRange);
     setTDRStyle();
     gROOT->ForceStyle();
@@ -353,14 +355,20 @@ void HppP8(string herwFile, string pythFile) {
     //TLegend *leg = tdrLeg(0.2,0.41,0.5,0.91);
     TLegend *leg = tdrLeg(0.3,0.4,0.75,0.85);
     TLegend *heading = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
-    TLegend *sample = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
+    TLegend *sample = tdrLeg(0.65,0.50+0.05,0.75,0.505+0.05);
     //TLegend *alphacut = tdrLeg(0.77,0.50,0.87,0.505);
-    TLegend *etacut = tdrLeg(0.675,0.50,0.775,0.505);
+    TLegend *etacut = tdrLeg(0.65,0.50,0.75,0.505);
 
 //     gPad->Update();
 //     gPad->GetCanvas()->Modified();
   
-    sample->SetHeader("dijet sample");
+    if (sampleType==1) {
+        sample->SetHeader("dijet sample");
+    } else if (sampleType==2) {
+        sample->SetHeader("#gamma+jet sample");
+    } else if (sampleType==3) {
+        sample->SetHeader("Z#mu#mu+jet sample");
+    }
     //heading->SetHeader("Pythia8 Simulation (4C Tune)");
     //alphacut->SetHeader("#alpha<0.3");
     etacut->SetHeader("#left|#eta#right|< 2.5");
@@ -372,7 +380,13 @@ void HppP8(string herwFile, string pythFile) {
     
     leg->SetNColumns(2);
     //leg->SetHeader("CTEQ6L1/MRST LO**");
-    leg->SetHeader("P8 Hw++");
+    if (isHerwig==0) {
+        leg->SetHeader("P8 Hw++");
+    } else if (isHerwig==1) {
+        leg->SetHeader("P8 P6");
+    } else if (isHerwig==2) {
+        leg->SetHeader("P6 Hw++");
+    }
     leg->AddEntry(p8Unmatched," ","f");
     leg->AddEntry(hppUnmatched,"None ","p");
     leg->AddEntry(p8Gluons," ","f");
@@ -406,10 +420,11 @@ void HppP8(string herwFile, string pythFile) {
     gStyle->SetNdivisions(510, "XYZ");
     gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
     gStyle->SetPadTickY(1);
+    gStyle->SetOptLogx(0);
 
     THStack *hppEtaHs  = new THStack("hpp hs","");
     TCanvas *canvEta = tdrCanvas("c1 eta",h1eta,12,0,1);
-    hppHs->SetHistogram(h1eta);
+    hppEtaHs->SetHistogram(h1eta);
     h1eta->GetYaxis()->SetTitleOffset(1.25);
     h1eta->GetXaxis()->SetTitleOffset(1.0);
     h1eta->GetXaxis()->SetLabelSize(0.045);
@@ -432,14 +447,14 @@ void HppP8(string herwFile, string pythFile) {
     hppEtaHs->Add(hppEtaGluons);
     hppEtaHs->Add(hppEtaUnmatched);
 
-/* Pythia8 fraction histograms */    
+/* Pythia8 fraction histograms */
     TH1D *p8EtaLightquarks = p8EtaLightquarkFrac.ProjectionX("p8 eta light quarks","");
     TH1D *p8EtaGluons = p8EtaGluonFrac.ProjectionX("p8 eta gluons","");
     TH1D *p8EtaStrange = p8EtaStrangeFrac.ProjectionX("p8 eta strange","");
     TH1D *p8EtaCharm = p8EtaCharmFrac.ProjectionX("p8 eta charm","");
     TH1D *p8EtaBottom = p8EtaBottomFrac.ProjectionX("p8 eta bottom","");
     TH1D *p8EtaUnmatched = p8EtaUnmatchedFrac.ProjectionX("p8 eta unmatch","");
-    
+
     gStyle->SetOptStat(kFALSE); //removes old legend
     tdrDraw(p8EtaUnmatched,"",kFullStar,kGray+2,kSolid,-1,1001,kGray);
     tdrDraw(p8EtaGluons,"",kFullDotLarge,kBlue+2,kSolid,-1,1001,kBlue-9);
@@ -450,7 +465,7 @@ void HppP8(string herwFile, string pythFile) {
 
     THStack *p8EtaHs  = new THStack("p8 hs","");
     p8EtaHs->SetHistogram(h1eta);
-    
+
     //light_quarks->Add(strange);
     p8EtaHs->Add(p8EtaBottom);
     p8EtaHs->Add(p8EtaCharm);
@@ -458,7 +473,7 @@ void HppP8(string herwFile, string pythFile) {
     p8EtaHs->Add(p8EtaLightquarks);
     p8EtaHs->Add(p8EtaGluons);
     p8EtaHs->Add(p8EtaUnmatched);
-    
+
     p8EtaHs->SetMaximum(0.95);
     hppEtaHs->SetMaximum(0.95);
 
@@ -473,13 +488,19 @@ void HppP8(string herwFile, string pythFile) {
     //TLegend *leg = tdrLeg(0.2,0.41,0.5,0.91);
     TLegend *legEta = tdrLeg(0.3,0.4,0.75,0.85);
     TLegend *headingEta = tdrLeg(0.675-0.3,0.50+0.44,0.775-0.3,0.505+0.44);
-    TLegend *sampleEta = tdrLeg(0.675,0.50+0.05,0.775,0.505+0.05);
+    TLegend *sampleEta = tdrLeg(0.65,0.50+0.05,0.75,0.505+0.05);
     //TLegend *alphacut = tdrLeg(0.77,0.50,0.87,0.505);
 
 //     gPad->Update();
 //     gPad->GetCanvas()->Modified();
   
-    sample->SetHeader("#gamma+jet sample");
+    if (sampleType==1) {
+        sampleEta->SetHeader("dijet sample");
+    } else if (sampleType==2) {
+        sampleEta->SetHeader("#gamma+jet sample");
+    } else if (sampleType==3) {
+        sampleEta->SetHeader("Z#mu#mu+jet sample");
+    }
     //heading->SetHeader("Pythia8 Simulation (4C Tune)");
     //alphacut->SetHeader("#alpha<0.3");
 
@@ -489,7 +510,13 @@ void HppP8(string herwFile, string pythFile) {
     
     legEta->SetNColumns(2);
     //legEta->SetHeader("CTEQ6L1/MRST LO**");
-    legEta->SetHeader("P8 Hw++");
+    if (isHerwig==0) {
+        legEta->SetHeader("P8 Hw++");
+    } else if (isHerwig==1) {
+        legEta->SetHeader("P8 P6");
+    } else if (isHerwig==2) {
+        legEta->SetHeader("P6 Hw++");
+    }
     legEta->AddEntry(p8EtaUnmatched," ","f");
     legEta->AddEntry(hppEtaUnmatched,"None ","p");
     legEta->AddEntry(p8EtaGluons," ","f");

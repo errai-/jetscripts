@@ -120,6 +120,8 @@ namespace
             pEvent->Clear();
         }
 
+        pythia.stat();
+
         outFile = tree->GetCurrentFile();
         tree->AutoSave("Overwrite");
 
