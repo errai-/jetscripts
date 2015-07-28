@@ -168,6 +168,12 @@ f.write('cd /Herwig/Analysis\n')
 f.write('create jetanalysis::StoreParticles jetAnalysis libStoreParticles.so\n')
 f.write('insert /Herwig/Generators/LHCGenerator:AnalysisHandlers 0 jetAnalysis\n\n')
 
+#f.write("set /Herwig/Shower/SplittingGenerator:ISR No\n")
+#f.write("set /Herwig/Shower/SplittingGenerator:FSR No\n")
+#f.write("set /Herwig/Shower/ShowerHandler:MPIHandler NULL\n")
+
+#f.write("set /Herwig/EventHandlers/LHCHandler:HadronizationHandler NULL\n")
+
 f.write('# For now saverun does not work with LHAPDF\n')
 f.write('run {} /Herwig/Generators/LHCGenerator\n'.format(name[0:-3]))
 

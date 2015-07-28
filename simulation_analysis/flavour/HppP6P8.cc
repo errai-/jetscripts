@@ -287,8 +287,8 @@ void HppP6P8(string herwFile, string p6File, string p8File, bool debugPlots = fa
     for(size_t x=0; x != p6N; ++x) {
         p6Tree->GetEntry(x);
         assert(kMaxfJets>p6Jets_);
-        double xDiff = -( p6X[0]+p6X[1] )/2;
-        double yDiff = -( p6Y[0]+p6Y[1] )/2;
+        double xDiff = 0;// -( p6X[0]+p6X[1] )/2;
+        double yDiff = 0;// -( p6Y[0]+p6Y[1] )/2;
 
         for (int i = 0; i < p6Jets_; ++i) {
             TLorentzVector tmpVec(p6X[i]+xDiff,p6Y[i]+yDiff,p6Z[i],p6T[i]);
@@ -653,8 +653,8 @@ void HppP6P8(string herwFile, string p6File, string p8File, bool debugPlots = fa
     //h1eta->GetXaxis()->SetRange(9,47);
     //h1->GetYaxis()->SetRangeUser(-0.001,1.001);
     p8EtaHs->Draw("");
-    p6EtaHs->Draw("sameP");
     hppEtaHs->Draw("sameP");
+    p6EtaHs->Draw("sameP");
 
 /* Fraction legends */
     //heading->AddEntry()

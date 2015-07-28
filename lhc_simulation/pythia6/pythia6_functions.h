@@ -104,6 +104,12 @@ namespace
         pythia->SetMSTP(81,21); // MPI
         pythia->SetMSTP(82,4); // MPI model
 
+        // pythia->SetMSTP(61,0); // ISR off
+        // pythia->SetMSTP(71,0); // FSR off
+        // pythia->SetMSTP(81,0); // MPI off
+
+        // pythia->SetMSTP(111,0); // Hadronization off
+
         pythia->Initialize("cms", "p", "p", 8000);
         return 1;
     }
@@ -113,8 +119,9 @@ namespace
     {
         /* Create an instance of the Pythia event generator: */
         TPythia6* pythia = new TPythia6;
-        /* Set a seed value according to the run index: */
+        /* Set a seed value according to the run index and make sure it is used: */
         pythia->SetMRPY(1,10000*nameId);
+        pythia->SetMRPY(2,0);
         /* Other settings: */
         if (Pythia6Settings(pythia,mode) == -1) return -1;
 

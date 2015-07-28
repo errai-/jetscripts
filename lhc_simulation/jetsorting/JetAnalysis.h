@@ -97,9 +97,6 @@ private:
     double etaMax = 1.3;    /* Pseudorapidity range */
     int jetsPerEvent = 2;   /* How many leading jets are stored in a run /
 
-    /* Analysis: select algorithm and parameters */
-    fastjet::JetDefinition* jetDef;
-
     /* PseudoJet storages */
     vector<fastjet::PseudoJet> sortedJets, jetParts, cutJetParts, 
                                fjInputs, hiddenInputs;
@@ -177,6 +174,8 @@ private:
 // Others:
 //////////
     Timer mTimer;
+
+    double mUnpaired, mDuplicate;
 
     /* Energy counters: */ 
     TLorentzVector mPiPlus, mPiMinus, mPi0Gamma, mGamma, 

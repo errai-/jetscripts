@@ -12,10 +12,7 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
 {
     assert(tree);
     Init(tree);
-    
-    jetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
-    //fastjet::JetDefinition(fastjet::genkt_algorithm, R, power); 
-    
+
     /* Tree: autosave every 1 Gb, 10 Mb cache */ 
     fOutFile = new TFile(outFile1, "RECREATE");
     fOutFile->SetCompressionLevel(1);
@@ -27,26 +24,26 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
     fJetBranch = fOutTree->Branch("event", &fjEvent, 32000, 4);
     fJetBranch->SetAutoDelete(kFALSE);
     fOutTree->BranchRef();
-    
+
     gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
-    
+
     InitCI();
-    InitFP();  
-    
+    InitFP();
+
     jetsPerEvent = 2;
     if (mode==1) jetsPerEvent = 2;
     if (mode==2||mode==3) jetsPerEvent = 1;
+
+    mUnpaired = 0; mDuplicate = 0;
 }
 
-JetAnalysis::~JetAnalysis() 
+JetAnalysis::~JetAnalysis()
 {
     delete fjEvent; fjEvent = 0;
     if (!fChain) return;
     delete fChain->GetCurrentFile();
     if (!fOutTree) return;
     delete fOutTree->GetCurrentFile();
-    
-    delete jetDef;
 }
 
 
@@ -138,20 +135,20 @@ void JetAnalysis::Show(Long64_t entry)
 // Loop over events and particles:
 //////////////////////////////////
 
-void JetAnalysis::EventLoop() 
+void JetAnalysis::EventLoop()
 {
-    bool hardStudy = true;
+    bool hardStudy = false;
     if (fChain == 0) return;
 
     Long64_t nentries = fChain->GetEntries();
-    mTimer.setParams(nentries,2000); mTimer.startTiming();  
-    
+    mTimer.setParams(nentries,2000); mTimer.startTiming();
+
     cout << mMode << endl;
     int good=0,bad=0;
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
         mFlavorIndices.clear();
         if (jentry!=0&&jentry%2000==0) mTimer.printTime();
-        
+
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break;
         fChain->GetEntry(jentry);
@@ -167,8 +164,8 @@ void JetAnalysis::EventLoop()
             }
         } else {
             /* Fastjet algorithm */
-            fastjet::JetDefinition jotDof(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
-            fastjet::ClusterSequence clustSeq(fjInputs, jotDof);
+            fastjet::JetDefinition jetDef(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+            fastjet::ClusterSequence clustSeq(fjInputs, jetDef);
             vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
             sortedJets = sorted_by_pt( unsorteds );
 
@@ -178,7 +175,6 @@ void JetAnalysis::EventLoop()
         }
 
         fOutTree->Fill();
-
         fjEvent->Clear();
     }
 
@@ -187,6 +183,8 @@ void JetAnalysis::EventLoop()
     delete fjEvent;  fjEvent = 0;
 
     WriteResults();
+
+    cout << "Unpaired: " << mUnpaired << ", duplicates: " << mDuplicate << endl;
 
     fOutFile->Close();
 }
@@ -200,13 +198,16 @@ bool JetAnalysis::GoodEvent()
           *  -Back-to-back angle of min 2.8 rad (2.5 rad)
           *  -Minimum pT of 30 GeV.
           *  -Max eta of 2.5
-          *  -A third jet has at most 30% of the average pt of the leading jets */ 
-        if (   (sortedJets.size()<2) )
+          *  -A third jet has at most 30% of the average pt of the leading jets */
+        if (   (sortedJets.size()<2)
+            || ( sortedJets.size()>2
+            &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
+            || ( fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))<2.8 ))
         {
             return false;
         }
-        //if (   ( sortedJets.size()<2 ) 
-        //    || ( sortedJets.size()>2 
+        //if (   ( sortedJets.size()<2 )
+        //    || ( sortedJets.size()>2
         //    &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
         //    || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
         //    || ( sortedJets[1].pt()<30 )
@@ -342,17 +343,22 @@ void JetAnalysis::JetLoop(int jentry)
 
 void JetAnalysis::PhysicsFlavor(size_t i) 
 {
-    mFlavour = 0;
+    mFlavour = -1;
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( hiddenInputs[k] );
         if ( dR < 0.3 ) {
-            if (mFlavour!=0) {
+            if (mFlavour!=-1) {
                 mFlavour = 0;
+                ++mDuplicate;
                 break;
             } else {
                 mFlavour = abs(hiddenInputs[k].user_index());
             }
         }
+    }
+    if (mFlavour==-1) {
+        ++mUnpaired;
+        mFlavour = 0;
     }
     mIsHadron = 0;
     mQuarkJetCharge = ChargeSign(mFlavour);
