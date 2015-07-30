@@ -46,38 +46,38 @@ public :
 
     // Declaration of leaf types
  //QCDEvent        *events;
-    Int_t           EvtHdr__mRun;
-    Int_t           EvtHdr__mEvent;
-    Int_t           EvtHdr__mLumi;
-    Int_t           EvtHdr__mNVtxGood;
-    Float_t         EvtHdr__mTrPu;
-    Float_t         EvtHdr__mPthat;
-    Float_t         EvtHdr__mPFRho;
+    Int_t           mRun;
+    Int_t           mEvent;
+    Int_t           mLumi;
+    Int_t           mNVtxGood;
+    Float_t         mTrPu;
+    Float_t         mPthat;
+    Float_t         mPFRho;
     Float_t         PFMet__et_;
     Float_t         PFMet__sumEt_;
     vector<int>     TriggerDecision_;
-    vector<int>     L1Prescale_;
-    vector<int>     HLTPrescale_;
-    Int_t           PFJets__;
-    Double_t        PFJets__P4__fCoordinates_fX[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__P4__fCoordinates_fY[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__P4__fCoordinates_fZ[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__P4__fCoordinates_fT[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__genP4__fCoordinates_fX[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__genP4__fCoordinates_fY[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__genP4__fCoordinates_fZ[kMaxPFJets_];   //[PFJets__]
-    Double_t        PFJets__genP4__fCoordinates_fT[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__area_[kMaxPFJets_];   //[PFJets__]
-    Bool_t          PFJets__looseID_[kMaxPFJets_];   //[PFJets__]
-    Bool_t          PFJets__tightID_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__chf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__nhf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__phf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__elf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__muf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__hf_hf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__hf_phf_[kMaxPFJets_];   //[PFJets__]
-    Float_t         PFJets__betaStar_[kMaxPFJets_];   //[PFJets__]
+    vector<int>     L1_;
+    vector<int>     HLT_;
+    Int_t           PFJets_;
+    Double_t        fX[kMaxPFJets_];   //[PFJets__]
+    Double_t        fY[kMaxPFJets_];   //[PFJets__]
+    Double_t        fZ[kMaxPFJets_];   //[PFJets__]
+    Double_t        fT[kMaxPFJets_];   //[PFJets__]
+    Double_t        gen_fX[kMaxPFJets_];   //[PFJets__]
+    Double_t        gen_fY[kMaxPFJets_];   //[PFJets__]
+    Double_t        gen_fZ[kMaxPFJets_];   //[PFJets__]
+    Double_t        gen_fT[kMaxPFJets_];   //[PFJets__]
+    Float_t         area_[kMaxPFJets_];   //[PFJets__]
+    Bool_t          looseID_[kMaxPFJets_];   //[PFJets__]
+    Bool_t          tightID_[kMaxPFJets_];   //[PFJets__]
+    Float_t         chf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         nhf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         phf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         elf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         muf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         hf_hf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         hf_phf_[kMaxPFJets_];   //[PFJets__]
+    Float_t         betaStar_[kMaxPFJets_];   //[PFJets__]
 
     AnalyzeData(TTree * = 0, Long64_t = 0, Int_t = 0, Int_t = 0);
     virtual ~AnalyzeData();
@@ -131,38 +131,38 @@ void AnalyzeData::Init(TTree *tree)
     fCurrent = -1;
     fChain->SetMakeClass(1);
 
-    fChain->SetBranchAddress("EvtHdr_.mRun", &EvtHdr__mRun);
-    fChain->SetBranchAddress("EvtHdr_.mEvent", &EvtHdr__mEvent);
-    fChain->SetBranchAddress("EvtHdr_.mLumi", &EvtHdr__mLumi);
-    fChain->SetBranchAddress("EvtHdr_.mNVtxGood", &EvtHdr__mNVtxGood);
-    fChain->SetBranchAddress("EvtHdr_.mTrPu", &EvtHdr__mTrPu);
-    fChain->SetBranchAddress("EvtHdr_.mPthat", &EvtHdr__mPthat);
-    fChain->SetBranchAddress("EvtHdr_.mPFRho", &EvtHdr__mPFRho);
+    fChain->SetBranchAddress("EvtHdr_.mRun", &mRun);
+    fChain->SetBranchAddress("EvtHdr_.mEvent", &mEvent);
+    fChain->SetBranchAddress("EvtHdr_.mLumi", &mLumi);
+    fChain->SetBranchAddress("EvtHdr_.mNVtxGood", &mNVtxGood);
+    fChain->SetBranchAddress("EvtHdr_.mTrPu", &mTrPu);
+    fChain->SetBranchAddress("EvtHdr_.mPthat", &mPthat);
+    fChain->SetBranchAddress("EvtHdr_.mPFRho", &mPFRho);
     fChain->SetBranchAddress("PFMet_.et_", &PFMet__et_);
     fChain->SetBranchAddress("PFMet_.sumEt_", &PFMet__sumEt_);
     fChain->SetBranchAddress("TriggerDecision_", &TriggerDecision_);
-    fChain->SetBranchAddress("L1Prescale_", &L1Prescale_);
-    fChain->SetBranchAddress("HLTPrescale_", &HLTPrescale_);
-    fChain->SetBranchAddress("PFJets_", &PFJets__);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fX", PFJets__P4__fCoordinates_fX);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fY", PFJets__P4__fCoordinates_fY);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fZ", PFJets__P4__fCoordinates_fZ);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fT", PFJets__P4__fCoordinates_fT);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fX", PFJets__genP4__fCoordinates_fX);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fY", PFJets__genP4__fCoordinates_fY);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fZ", PFJets__genP4__fCoordinates_fZ);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fT", PFJets__genP4__fCoordinates_fT);
-    fChain->SetBranchAddress("PFJets_.area_", PFJets__area_);
-    fChain->SetBranchAddress("PFJets_.looseID_", PFJets__looseID_);
-    fChain->SetBranchAddress("PFJets_.tightID_", PFJets__tightID_);
-    fChain->SetBranchAddress("PFJets_.chf_", PFJets__chf_);
-    fChain->SetBranchAddress("PFJets_.nhf_", PFJets__nhf_);
-    fChain->SetBranchAddress("PFJets_.phf_", PFJets__phf_);
-    fChain->SetBranchAddress("PFJets_.elf_", PFJets__elf_);
-    fChain->SetBranchAddress("PFJets_.muf_", PFJets__muf_);
-    fChain->SetBranchAddress("PFJets_.hf_hf_", PFJets__hf_hf_);
-    fChain->SetBranchAddress("PFJets_.hf_phf_", PFJets__hf_phf_);
-    fChain->SetBranchAddress("PFJets_.betaStar_", PFJets__betaStar_);
+    fChain->SetBranchAddress("L1Prescale_", &L1_);
+    fChain->SetBranchAddress("HLTPrescale_", &HLT_);
+    fChain->SetBranchAddress("PFJets_", &PFJets_);
+    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fX", fX);
+    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fY", fY);
+    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fZ", fZ);
+    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fT", fT);
+    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fX", gen_fX);
+    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fY", gen_fY);
+    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fZ", gen_fZ);
+    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fT", gen_fT);
+    fChain->SetBranchAddress("PFJets_.area_", area_);
+    fChain->SetBranchAddress("PFJets_.looseID_", looseID_);
+    fChain->SetBranchAddress("PFJets_.tightID_", tightID_);
+    fChain->SetBranchAddress("PFJets_.chf_", chf_);
+    fChain->SetBranchAddress("PFJets_.nhf_", nhf_);
+    fChain->SetBranchAddress("PFJets_.phf_", phf_);
+    fChain->SetBranchAddress("PFJets_.elf_", elf_);
+    fChain->SetBranchAddress("PFJets_.muf_", muf_);
+    fChain->SetBranchAddress("PFJets_.hf_hf_", hf_hf_);
+    fChain->SetBranchAddress("PFJets_.hf_phf_", hf_phf_);
+    fChain->SetBranchAddress("PFJets_.betaStar_", betaStar_);
     
     /* First disable all branches and then enable the branches in use */
     fChain->SetBranchStatus("*",0);

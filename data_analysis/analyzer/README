@@ -12,5 +12,5 @@ root -l
 .L runAnalyzeData.C
 runAnalyzeData( [Events to analyze], [First file index], [Last file index] )
 
-File indices can be found from runAnalyzeData.C
+File indices can be found and edited from runAnalyzeData.C
 

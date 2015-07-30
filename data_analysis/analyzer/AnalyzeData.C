@@ -91,28 +91,25 @@ void AnalyzeData::Loop(string writeFile)
         if (isMC != 3 && PFMet__et_ >= 0.3*PFMet__sumEt_) continue;
         
         /* Duplicate events are ignored */
-        if (!usedEvents.emplace(EvtHdr__mRun, EvtHdr__mLumi, EvtHdr__mEvent).second) {
+        if (!usedEvents.emplace(mRun, mLumi, mEvent).second) {
             duplicEvents++;
             continue;
         }
         
-        assert( PFJets__ < kMaxPFJets_ );
+        assert( PFJets_ < kMaxPFJets_ );
         
         /* Jet loop */
-        for (Long64_t kentry=0; kentry<PFJets__; kentry++){
-            if (!PFJets__tightID_[kentry]) continue;
+        for (Long64_t kentry=0; kentry<PFJets_; kentry++){
+            if (!tightID_[kentry]) continue;
 
             TLorentzVector jetMomentum;
-            jetMomentum.SetPxPyPzE(PFJets__P4__fCoordinates_fX[kentry],
-                                   PFJets__P4__fCoordinates_fY[kentry],
-                                   PFJets__P4__fCoordinates_fZ[kentry],
-                                   PFJets__P4__fCoordinates_fT[kentry]);
+            jetMomentum.SetPxPyPzE(fX[kentry],fY[kentry],fZ[kentry],fT[kentry]);
         
             /* Applying energy corrections (for pythia, corr = 1) */
             double corr = 1;     
             if (isMC != 3){
-                jetECor->setRho( EvtHdr__mPFRho );
-                jetECor->setJetA( PFJets__area_[kentry] );
+                jetECor->setRho( mPFRho );
+                jetECor->setJetA( area_[kentry] );
                 jetECor->setJetPt( jetMomentum.Pt() );
                 jetECor->setJetEta( jetMomentum.Eta() );
                 corr = jetECor->getCorrection();
@@ -130,52 +127,39 @@ void AnalyzeData::Loop(string writeFile)
                 for (int triggerIdx = 7*triggerType; triggerIdx!=7*triggerType+7; ++triggerIdx) {
                     if ( TriggerDecision_[triggerIdx]!=1 ) continue;
                     
-                    analysisHelper->FillHelper( jetPt, jetEta,
-                        PFJets__chf_[kentry]*PFJets__betaStar_[kentry], 
-                        PFJets__chf_[kentry]*(1 - PFJets__betaStar_[kentry]), 
-                        PFJets__phf_[kentry], PFJets__nhf_[kentry] - PFJets__hf_hf_[kentry],
-                        PFJets__elf_[kentry] + PFJets__muf_[kentry],
-                        PFJets__hf_hf_[kentry], PFJets__hf_phf_[kentry],
+                    analysisHelper->FillHelper( jetPt, jetEta,chf_[kentry]*betaStar_[kentry], 
+                        chf_[kentry]*(1 - betaStar_[kentry]), phf_[kentry], nhf_[kentry] - hf_hf_[kentry],
+                        elf_[kentry] + muf_[kentry], hf_hf_[kentry], hf_phf_[kentry],
                         1.0, lumiScale ? triggerLumi[5]/triggerLumi[triggerType] : 
-                        L1Prescale_[triggerIdx]*HLTPrescale_[triggerIdx]);
+                        L1_[triggerIdx]*HLT_[triggerIdx]);
 
-                    pileUpHists[triggerType]->Fill(EvtHdr__mNVtxGood);
+                    pileUpHists[triggerType]->Fill(mNVtxGood);
                     goodJets++;
                     break;
                 }
             } else if (isMC==1 || isMC==2) {
-                if ( jetPt >= 1.5*EvtHdr__mPthat ) continue;
+                if ( jetPt >= 1.5*mPthat ) continue;
                 
-                jetMomentum.SetPxPyPzE(PFJets__genP4__fCoordinates_fX[kentry],
-                                    PFJets__genP4__fCoordinates_fY[kentry],
-                                    PFJets__genP4__fCoordinates_fZ[kentry],
-                                    PFJets__genP4__fCoordinates_fT[kentry]);
+                jetMomentum.SetPxPyPzE(gen_fX[kentry],gen_fY[kentry],gen_fZ[kentry],gen_fT[kentry]);
                 if ( jetPt >= 1.5*jetMomentum.Pt() ) continue;
         
                 /* Values used to scale the pileup */
-                int puBinIdx = dtPiles[triggerType]->FindBin(EvtHdr__mTrPu);
+                int puBinIdx = dtPiles[triggerType]->FindBin(mTrPu);
                 double dtBinCont = dtPiles[triggerType]->GetBinContent(puBinIdx);
                 double mcBinCont = mcPiles->GetBinContent(puBinIdx);
                 
-                analysisHelper->FillHelper( jetPt, jetEta,
-                    PFJets__chf_[kentry]*PFJets__betaStar_[kentry], 
-                    PFJets__chf_[kentry]*(1 - PFJets__betaStar_[kentry]), 
-                    PFJets__phf_[kentry], PFJets__nhf_[kentry] - PFJets__hf_hf_[kentry],
-                    PFJets__elf_[kentry] + PFJets__muf_[kentry], 
-                    PFJets__hf_hf_[kentry], PFJets__hf_phf_[kentry],
+                analysisHelper->FillHelper( jetPt, jetEta, chf_[kentry]*betaStar_[kentry], 
+                    chf_[kentry]*(1 - betaStar_[kentry]), phf_[kentry], nhf_[kentry] - hf_hf_[kentry],
+                    elf_[kentry] + muf_[kentry], hf_hf_[kentry], hf_phf_[kentry],
                     (dtBinCont == 0 || mcBinCont == 0) ? 1. : dtBinCont/mcBinCont );
-                pileUpHists[triggerType]->Fill(EvtHdr__mNVtxGood, 
+                pileUpHists[triggerType]->Fill(mNVtxGood, 
                     (dtBinCont == 0 || mcBinCont == 0) ? 1. : dtBinCont/mcBinCont );
                 goodJets++;
             } else {
-                analysisHelper->FillHelper( jetPt, jetEta,
-                    0, 
-                    PFJets__chf_[kentry], 
-                    PFJets__phf_[kentry], PFJets__nhf_[kentry] - PFJets__hf_hf_[kentry],
-                    PFJets__elf_[kentry] + PFJets__muf_[kentry], 
-                    PFJets__hf_hf_[kentry], PFJets__hf_phf_[kentry],
-                    1 );
-                pileUpHists[triggerType]->Fill(EvtHdr__mNVtxGood); 
+                analysisHelper->FillHelper( jetPt, jetEta, 0, chf_[kentry], 
+                    phf_[kentry], nhf_[kentry] - hf_hf_[kentry], elf_[kentry] + muf_[kentry], 
+                    hf_hf_[kentry], hf_phf_[kentry], 1 );
+                pileUpHists[triggerType]->Fill(mNVtxGood); 
                 goodJets++;
             }
         }
