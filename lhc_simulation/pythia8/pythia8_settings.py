@@ -6,7 +6,7 @@ import os
 # Hard coded tune type
 # 0: 4C from Herwig++ defaults (CTEQ6L1)
 # 1: CUETP8S1 from CMS         (CTEQ6L1)
-tune = 0
+tune = 1
 
 # Hard coded PDF choice
 # 0: CTEQ6L1
