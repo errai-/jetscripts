@@ -6,12 +6,14 @@ import os
 # Hard coded tune type
 # 0: EE 5C from Herwig++ defaults (CTEQ6L1)
 # 1: CUETHS1 from CMS             (CTEQ6L1)
+# 2: CUETH_7_2 from CMS           (MSTW2008LO)
 tune = 0
 
 # Hard coded PDF choice
 # 0: CTEQ6L1
 # 1: CT10
 # 2: MSTW2008LO
+# 3: default
 pdf = 0
 
 # Read run settings from command line parameters
@@ -82,6 +84,8 @@ if tune==0:
     f.write('set /Herwig/UnderlyingEvent/MPIHandler:Power 0.33\n')
 elif tune==1:
     f.write('set /Herwig/UnderlyingEvent/MPIHandler:Power 0.3705288\n')
+elif tune==2:
+    f.write('set /Herwig/UnderlyingEvent/MPIHandler:Power 0.3705288\n')
 f.write('set /Herwig/UnderlyingEvent/MPIHandler:pTmin0 3.91*GeV\n\n')
 
 f.write('# Colour reconnection settings\n')
@@ -90,23 +94,32 @@ if tune==0:
     f.write('set /Herwig/Hadronization/ColourReconnector:ReconnectionProbability 0.49\n\n')
 elif tune==1:
     f.write('set /Herwig/Hadronization/ColourReconnector:ReconnectionProbability 0.5278926\n\n')
+elif tune==2:
+    f.write('set /Herwig/Hadronization/ColourReconnector:ReconnectionProbability 0.6165547\n\n')
 
 f.write('# Colour Disrupt settings\n')
 if tune==0:
     f.write('set /Herwig/Partons/RemnantDecayer:colourDisrupt 0.80\n\n')
 elif tune==1:
     f.write('set /Herwig/Partons/RemnantDecayer:colourDisrupt 0.6284222\n\n')
+elif tune==2:
+    f.write('set /Herwig/Partons/RemnantDecayer:colourDisrupt 0.3493643\n\n')
 
 f.write('# inverse hadron radius\n')
 if tune==0:
     f.write('set /Herwig/UnderlyingEvent/MPIHandler:InvRadius 2.30\n\n')
 elif tune==1:
     f.write('set /Herwig/UnderlyingEvent/MPIHandler:InvRadius 2.254998\n\n')
+elif tune==2:
+    f.write('set /Herwig/UnderlyingEvent/MPIHandler:InvRadius 0.81\n\n')
 
 f.write('# MPI model settings\n')
 f.write('set /Herwig/UnderlyingEvent/MPIHandler:softInt Yes\n')
 f.write('set /Herwig/UnderlyingEvent/MPIHandler:twoComp Yes\n')
-f.write('set /Herwig/UnderlyingEvent/MPIHandler:DLmode 2\n\n')
+if tune==2:
+    f.write('set /Herwig/UnderlyingEvent/MPIHandler:DLmode 3\n\n')
+else:
+    f.write('set /Herwig/UnderlyingEvent/MPIHandler:DLmode 2\n\n')
 
 f.write('# LHAPDF settings\n')
 f.write('cd /Herwig/Partons\n')
@@ -115,6 +128,8 @@ if pdf==0:
     f.write('set customPDF:PDFName cteq6l1\n')
 elif pdf==1:
     f.write('set customPDF:PDFName CT10\n')
+elif pdf==2:
+    f.write('set customPDF:PDFName MSTW2008lo90cl\n')
 f.write('set customPDF:RemnantHandler /Herwig/Partons/HadronRemnants\n')
 f.write('set /Herwig/Particles/p+:PDF customPDF\n')
 f.write('set /Herwig/Particles/pbar-:PDF customPDF\n\n')
@@ -138,7 +153,6 @@ elif mode==4:
 f.write('##############################################\n')
 f.write('# Matrix Elements for hadron-hadron collisions\n')
 f.write('##############################################\n\n')
-
 f.write('# Event weighting scheme\n')
 f.write('mkdir /Herwig/Weights\n')
 f.write('cd /Herwig/Weights\n')

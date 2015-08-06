@@ -6,12 +6,12 @@ import os
 # Hard coded tune type
 # 0: 4C from Herwig++ defaults (CTEQ6L1)
 # 1: CUETP8S1 from CMS         (CTEQ6L1)
+# 2: CUETP8M1 from CMS         (NNPDF2.3LO)
 tune = 1
 
 # Hard coded PDF choice
 # 0: CTEQ6L1
-# 1: CT10
-# 2: MSTW2008LO
+# 1: use the default
 pdf = 0
 
 # Read run settings from command line parameters
@@ -111,6 +111,13 @@ elif tune==1:
     f.write('MultipartonInteractions:expPow=1.6089\n')
     f.write('MultipartonInteractions:a1=0.00\n')
     f.write('ColourReconnection:range=3.31257\n\n')
+elif tune==2:
+    f.write('! CMS UE Tune CUETP8M1-based on pythia8 monash-star tune\n')
+    f.write('Tune:pp 14\n')
+    f.write('Tune:ee 7\n')
+    f.write('MultipartonInteractions:pT0Ref=2.4024\n')
+    f.write('MultipartonInteractions:ecmPow=0.25208\n')
+    f.write('MultipartonInteractions:expPow=1.6\n\n')
 
 if pdf==0:
     f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")
