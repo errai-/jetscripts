@@ -104,9 +104,9 @@ namespace
         pythia->SetMSTP(81,21); // MPI
         pythia->SetMSTP(82,4); // MPI model
 
-        // pythia->SetMSTP(61,0); // ISR off
-        // pythia->SetMSTP(71,0); // FSR off
-        // pythia->SetMSTP(81,0); // MPI off
+        pythia->SetMSTP(61,0); // ISR off
+        pythia->SetMSTP(71,0); // FSR off
+        pythia->SetMSTP(81,0); // MPI off
 
         // pythia->SetMSTP(111,0); // Hadronization off
 
@@ -152,7 +152,6 @@ namespace
         while (ev != nEvent) { 
             pythia->GenerateEvent();
 
-            cout << "event " << ev << endl;
             if ( Pythia6ParticleLoop(pythia,pEvent,mode) ) { tree->Fill(); ++ev; }
             if (ev%timerStep==0) timer.printTime();
             pEvent->Clear();

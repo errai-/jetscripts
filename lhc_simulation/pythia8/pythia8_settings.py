@@ -115,9 +115,9 @@ elif tune==1:
 if pdf==0:
     f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")
 
-#f.write("PartonLevel:MPI = off\n")
-#f.write("PartonLevel:ISR = off\n")
-#f.write("PartonLevel:FSR = off\n")
+f.write("PartonLevel:MPI = off\n")
+f.write("PartonLevel:ISR = off\n")
+f.write("PartonLevel:FSR = off\n")
 
 #f.write("HadronLevel:Hadronize = off\n")
 

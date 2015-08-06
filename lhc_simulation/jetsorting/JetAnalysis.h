@@ -183,10 +183,9 @@ private:
         mProton, mAproton, mNeutron, mAneutron,
         mLambda0, mSigma, mElec, mMuon, mOthers, mEtSum;
     
-    vector<size_t> mFlavorIndices; 
-    
     Int_t           mMode;       /* Event type */
     Int_t           mDefinition; /* Flavour definition */
+    Int_t           mBookedParton; /* Monitor partons that are paired with jets */
     
     vector<Int_t>   mMuonList; /* Z-jets */
     Int_t           mGammaId;    /* gamma-jets */
@@ -209,6 +208,11 @@ private:
     double mPhm;
     double mElm;
     double mMum;
+    
+    /* Temporary indicators: */
+    double mDR;
+    double mAlpha;
+    double mDPhi;
 };
 
 #endif // JETANALYSIS_H

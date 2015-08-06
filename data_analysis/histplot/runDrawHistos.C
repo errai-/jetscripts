@@ -29,12 +29,12 @@ using std::endl;
 
 void runDrawHistos(string readMcFile, string readDtFile)
 {
-    int puInspect = 1;
+    int puInspect = 0;
     int etaProfile = 0;
     int ptProfile = 0;
     int ptDifference = 0;
     int debugger = 0;
-    int angle = 0;
+    int angle = 1;
 
     ProfileProjector mcProcessor(readMcFile,"mc");
     ProfileProjector dtProcessor(readDtFile,"dt"); 

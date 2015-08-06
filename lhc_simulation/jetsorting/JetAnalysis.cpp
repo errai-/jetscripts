@@ -67,37 +67,37 @@ void JetAnalysis::Init(TTree *tree)
 }
 
 void JetAnalysis::InitCI(){
-  // Create file on which histogram(s) can be saved.
-  chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
-  chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
-  chargeIndicator.push_back(new TH1D("gluonjet charge","",30,-15,15) );
-  chargeIndicator.push_back(new TH1D("quarkjet charge","",30,-15,15) );
-  chargeIndicator.push_back(new TH1D("gluonjet wcharge","",200,-1,1) );
-  chargeIndicator.push_back(new TH1D("quarkjet wcharge","",200,-1,1) );
-  chargeIndicator.push_back(new TH1D("gluonjet w2charge","",200,-0.8,0.8) );
-  chargeIndicator.push_back(new TH1D("quarkjet w2charge","",200,-0.8,0.8) );
-  chargeIndicator.push_back(new TH1D("gluonjet w","",250,0,1) );
-  chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
+    // Create file on which histogram(s) can be saved.
+    chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
+    chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
+    chargeIndicator.push_back(new TH1D("gluonjet charge","",30,-15,15) );
+    chargeIndicator.push_back(new TH1D("quarkjet charge","",30,-15,15) );
+    chargeIndicator.push_back(new TH1D("gluonjet wcharge","",200,-1,1) );
+    chargeIndicator.push_back(new TH1D("quarkjet wcharge","",200,-1,1) );
+    chargeIndicator.push_back(new TH1D("gluonjet w2charge","",200,-0.8,0.8) );
+    chargeIndicator.push_back(new TH1D("quarkjet w2charge","",200,-0.8,0.8) );
+    chargeIndicator.push_back(new TH1D("gluonjet w","",250,0,1) );
+    chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
 }
 
 void JetAnalysis::InitFP(){
-  for (int idx = 0; idx != 16; ++idx){
-    std::stringstream tmpString("");
-    tmpString << "g" << idx;
-    fractionProfilesGluon.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-    tmpString.str("");
-    tmpString << "q" << idx;
-    fractionProfilesQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-    tmpString.str("");
-    tmpString << "lq" << idx;
-    fractionProfilesLQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-    tmpString.str("");
-    tmpString << "hq" << idx;
-    fractionProfilesHQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-    tmpString.str("");
-    tmpString << "a" << idx;
-    fractionProfilesAll.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-  }
+    for (int idx = 0; idx != 16; ++idx){
+        std::stringstream tmpString("");
+        tmpString << "g" << idx;
+        fractionProfilesGluon.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "q" << idx;
+        fractionProfilesQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "lq" << idx;
+        fractionProfilesLQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "hq" << idx;
+        fractionProfilesHQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "a" << idx;
+        fractionProfilesAll.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+    }
 }
 
 ///////////////////////////////////////////////////
@@ -146,7 +146,6 @@ void JetAnalysis::EventLoop()
     cout << mMode << endl;
     int good=0,bad=0;
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
-        mFlavorIndices.clear();
         if (jentry!=0&&jentry%2000==0) mTimer.printTime();
 
         Long64_t ientry = LoadTree(jentry);
@@ -160,7 +159,7 @@ void JetAnalysis::EventLoop()
             for ( auto i : mPartonList ) {
                 fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),
                                 hiddenInputs[i].e(),0,0,0,0,0,0,0,0,0,0,fWeight,
-                                abs(hiddenInputs[i].user_index()),0,0,0);
+                                abs(hiddenInputs[i].user_index()),0,0,0,0,0,0);
             }
         } else {
             /* Fastjet algorithm */
@@ -199,23 +198,17 @@ bool JetAnalysis::GoodEvent()
           *  -Minimum pT of 30 GeV.
           *  -Max eta of 2.5
           *  -A third jet has at most 30% of the average pt of the leading jets */
+        mAlpha = (sortedJets.size() > 2) ? 2*sortedJets[2].pt()/fabs(sortedJets[0].pt()+sortedJets[1].pt()) : 0;
+        mDPhi = fabs(sortedJets[0].delta_phi_to( sortedJets[1] ));
+        
         if (   (sortedJets.size()<2)
-            || ( sortedJets.size()>2
-            &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
-            || ( fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))<2.8 ))
+            || (mAlpha > 0.30) 
+            || (mDPhi < 2.8 )
+            || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
+            || ( sortedJets[1].pt()<30 ))
         {
             return false;
         }
-        //if (   ( sortedJets.size()<2 )
-        //    || ( sortedJets.size()>2
-        //    &&   0.15*fabs(sortedJets[0].pt()+sortedJets[1].pt())<sortedJets[2].pt())
-        //    || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
-        //    || ( sortedJets[1].pt()<30 )
-        //    || ( fabs(sortedJets[0].delta_phi_to( sortedJets[1] ))<2.8 ))
-        //{
-        //    return false;
-        //}
-        return true;
     } else if (mMode == 2) {
         /** gamma-jet events:
           *  -Check for a sufficient resolution.
@@ -223,15 +216,17 @@ bool JetAnalysis::GoodEvent()
           *  -Minimum pT of 30 GeV
           *  -A cut for the subleading jet pT with respect to gamma pT 
           *  -Max eta of 2.5 */
+        mAlpha = (sortedJets.size()>1) ? sortedJets[1].pt()/hiddenInputs[mGammaId].pt() : 0;
+        mDPhi = fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0]));
+        
         if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R )
             || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
-            || ( fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0])) < 2.8 )
-            || ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*hiddenInputs[mGammaId].pt() )
+            || ( mDPhi < 2.8 )
+            || ( mAlpha > 0.3 )
             || ( fabs(sortedJets[0].eta()) > 2.5 || fabs(hiddenInputs[mGammaId].eta()) > 2.5 ) )
         {
             return false;
         }
-        return true;
     } else if (mMode == 3) {
         /** Z-jet events:
           *  -Require sufficient resolution between the leading jet and the muon system.
@@ -243,29 +238,33 @@ bool JetAnalysis::GoodEvent()
           *  -The dimuon invariant mass is required to fall in the 70-110 GeV range 
           *  -Max eta of 2.5 */
         if (   ( mMuonList.size()!=2 )
-            || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R 
-            ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R ) 
-            || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10) 
+            || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R
+            ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R )
+            || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10)
             && ( hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
-            || ( sortedJets[0].pt()<30 ) )
+            || ( sortedJets[0].pt()<30 ))
         {
             return false;
         }
-
+        
         /* Dimuon system */
         fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
         tmpVec += hiddenInputs[mMuonList[1]];
-        if (   ( sortedJets.size()>1 && sortedJets[1].pt()>0.3*tmpVec.pt() ) 
+        mAlpha = (sortedJets.size() > 1 ) ? sortedJets[1].pt()/tmpVec.pt() : 0;
+        mDPhi = tmpVec.delta_phi_to( sortedJets[0] );
+        
+        if (   ( mAlpha > 0.3 )
             || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
-            || ( fabs(tmpVec.delta_phi_to( sortedJets[0] )) < 2.5 )
+            || ( mDPhi < 2.8 )
             || ( fabs(sortedJets[0].eta())>2.5 || fabs(tmpVec.eta())>2.5 ) )
         {
             return false;
         }
-
-        return true;
+    } else {
+        return false;
     }
-    return false;
+
+    return true;
 }
 
 void JetAnalysis::ParticlesToJetsorterInput()
@@ -315,7 +314,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
 
 void JetAnalysis::JetLoop(int jentry)
 {
-    for (size_t i = 0; i < sortedJets.size(); i++) {
+    for (size_t i = 0; i < sortedJets.size(); ++i) {
         if ( i == jetsPerEvent ) break;
 
         jetParts = sorted_by_pt(sortedJets[i].constituents());
@@ -337,29 +336,37 @@ void JetAnalysis::JetLoop(int jentry)
 
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
-            fWeight,mFlavour,multiplicity,PTD(),Sigma2());
+            fWeight,mFlavour,multiplicity,PTD(),Sigma2(),mDR,mAlpha,mDPhi);
     }
 }
 
+/* If there are conflicts, save the preferred flavour with a minus sign. 
+   Assumes a 2 -> 2 hard process () */
 void JetAnalysis::PhysicsFlavor(size_t i) 
 {
-    mFlavour = -1;
+    mFlavour = 0;
+    double dR_min = 10; Int_t id_min = 0; 
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( hiddenInputs[k] );
+        if ( dR < dR_min ) {
+            dR_min = dR;
+            id_min = k;
+        }
         if ( dR < 0.3 ) {
-            if (mFlavour!=-1) {
-                mFlavour = 0;
-                ++mDuplicate;
-                break;
+            if (mFlavour!=0) {
+                if (id_min != k) { mFlavour *= -1; }
+                else { mFlavour = -abs(hiddenInputs[k].user_index()); }
+                ++mDuplicate; break;
             } else {
                 mFlavour = abs(hiddenInputs[k].user_index());
             }
         }
     }
-    if (mFlavour==-1) {
+    if (mFlavour==0) {
         ++mUnpaired;
-        mFlavour = 0;
+        mFlavour = -abs(hiddenInputs[id_min].user_index());
     }
+    mDR = dR_min;
     mIsHadron = 0;
     mQuarkJetCharge = ChargeSign(mFlavour);
 }

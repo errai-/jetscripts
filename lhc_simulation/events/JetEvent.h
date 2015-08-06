@@ -28,7 +28,7 @@ public:
     
     void SetPxPyPzE(double,double,double,double);
     void SetParams(double,double,double,double,double,double,double,double,
-        double,double,int,int,double,double);
+        double,double,int,int,double,double,double,double,double);
     
     Double_t P() const { return fP4.P(); }
     Double_t Pt() const { return fP4.Pt(); }
@@ -59,7 +59,11 @@ private:
     int fConstituents;
     double fPTD;
     double fSigma2;
-   
+    
+    double fDR;
+    double fAlpha;
+    double fDPhi;
+    
 public:
    ClassDef(JetData,1)
 };
@@ -72,7 +76,7 @@ public:
     virtual ~JetEvent();
 
     void AddJet(double,double,double,double,double,double,double,double,double,
-        double,double,double,double,double,double,int,int,double,double);
+        double,double,double,double,double,double,int,int,double,double,double,double,double);
     JetData *InitJet();
     
     void Clear(Option_t *option ="");
