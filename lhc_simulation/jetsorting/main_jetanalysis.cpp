@@ -61,6 +61,8 @@ int main(int argc, char* argv[])
                     mode = 2;
                 } else if (tmpStr=="Zjet") {
                     mode = 3;
+                } else if (tmpStr=="ttbarjet") {
+                    mode = 4;
                 }
                 output += i;
                 output2 += i;

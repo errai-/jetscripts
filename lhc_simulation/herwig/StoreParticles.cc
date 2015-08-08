@@ -96,9 +96,12 @@ void StoreParticles::analyze(tEventPtr event, long ieve, int loop, int status)
         cout << "Unexpected behaviour for the hardest subprocess" << endl; 
     }
 
+//     generator()->
+    
     for (ParticleVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
         bool gammaCase = (mode==2 && abs((*part)->id())==ParticleID::gamma);
         bool ZCase = (mode==3 && abs((*part)->id())==ParticleID::muminus);
+        cout << (*part)->momentum().x() << " " << (*part)->momentum().y() << " " << (*part)->momentum().z() << endl;
         if (gammaCase) {
             PPtr gamma = *part;
             while (gamma->decayed()) {

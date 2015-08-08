@@ -31,8 +31,10 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
     InitFP();
 
     jetsPerEvent = 2;
+    if (mode==0) jetsPerEvent = 100;
     if (mode==1) jetsPerEvent = 2;
     if (mode==2||mode==3) jetsPerEvent = 1;
+    if (mode==4) jetsPerEvent = 4;
 
     mUnpaired = 0; mDuplicate = 0;
 }
@@ -143,7 +145,6 @@ void JetAnalysis::EventLoop()
     Long64_t nentries = fChain->GetEntries();
     mTimer.setParams(nentries,2000); mTimer.startTiming();
 
-    cout << mMode << endl;
     int good=0,bad=0;
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
         if (jentry!=0&&jentry%2000==0) mTimer.printTime();
@@ -192,7 +193,9 @@ bool JetAnalysis::GoodEvent()
 {
     if (sortedJets.size()==0) return false;
 
-    if (mMode == 1) {
+    if (mMode == 0) {
+        return true;
+    } else if (mMode == 1) {
         /** dijet events: for the 2 leading jets: 
           *  -Back-to-back angle of min 2.8 rad (2.5 rad)
           *  -Minimum pT of 30 GeV.
@@ -260,6 +263,8 @@ bool JetAnalysis::GoodEvent()
         {
             return false;
         }
+    } else if (mMode == 4) {
+        return true;
     } else {
         return false;
     }
@@ -319,14 +324,23 @@ void JetAnalysis::JetLoop(int jentry)
 
         jetParts = sorted_by_pt(sortedJets[i].constituents());
 
-        if (mDefinition == 1) {
-            PhysicsFlavor(i);
-        } else if (mDefinition == 2) {
-            FlavorLoop(i);
-        }
+        /* Check the jet flavour if not a generic case */
+        int multiplicity = 0;
+        if (mMode==0) {
+            mFlavour = 0;
+            mDR = 0;
+            mAlpha = 0;
+            mDPhi = 0;
+        } else {
+            if (mDefinition == 1) {
+                PhysicsFlavor(i);
+            } else if (mDefinition == 2) {
+                FlavorLoop(i);
+            }
 
-        Cuts();
-        int multiplicity = cutJetParts.size();
+            Cuts();
+            multiplicity = cutJetParts.size();
+        }
 
         ParticleLoop(i); /* Operations on jet particles */
 
@@ -656,7 +670,8 @@ bool JetAnalysis::IsCharged(int pdg)
 }
 
 double JetAnalysis::PTD()
-{  
+{
+    if (mMode==0) return 0;
     double square = 0, linear = 0;
     for(size_t q = 0; q != cutJetParts.size(); ++q) {
         square += pow(cutJetParts[q].pt(),2);
@@ -667,6 +682,7 @@ double JetAnalysis::PTD()
 
 double JetAnalysis::Sigma2()
 {
+    if (mMode==0) return 0;
     double weightedDiffs[4] = {0,0,0,0};
     double phi = 0, eta = 0, pT2 = 0;
     
