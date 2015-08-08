@@ -33,6 +33,6 @@ int main(int argc, char **argv)
     string fileName = "particles_pythia8_";
     fileName += name;
     fileName += ".root";
-    
+
     return Pythia8EventLoop(settings, fileName, choiceId);
 }

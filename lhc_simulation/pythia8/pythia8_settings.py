@@ -30,14 +30,16 @@ if tot_evts%procs!=0:
 
 # Set a unique name for the run
 name = ""
-if mode == 1:
+if mode == 0:
+    name += "generic"
+elif mode == 1:
     name += "dijet"
 elif mode == 2:
     name += "gammajet"
 elif mode == 3:
     name += "Zjet"
 elif mode == 4:
-    name += "ttbar"
+    name += "ttbarjet"
 
 name += "_"
 name += str(tot_evts)
@@ -74,6 +76,9 @@ f.write("PhaseSpace:bias2SelectionRef = 15.\n\n")
 f.write("! CM energy\n")
 f.write("Beams:eCM = 8000.\n\n")
 
+if mode==0:
+    f.write("HardQCD:all = on\n")
+    f.write("PhaseSpace:pTHatMin = 20.\n\n")
 if mode==1:
     f.write("HardQCD:all = on\n")
     f.write("PhaseSpace:pTHatMin = 30.\n\n")
@@ -96,35 +101,36 @@ if mode==4:
     f.write("Top::qqbar2ttbar = on\n");
     f.write("PhaseSpace:pTHatMin = 30.\n\n")
 
-f.write("Tune:preferLHAPDF = 2\n")
-if tune==0:
-    f.write("! Tune (4C)\n")
-    f.write("Tune:ee = 3\n")
-    f.write("Tune:pp = 5\n")
-elif tune==1:
-    f.write("! CMS UE Tune CUETP8S1-CTEQ6L1\n")
-    #f.write("Tune:pp = 15\n\n")
-    f.write('Tune:ee 3\n')
-    f.write('Tune:pp 5\n')
-    f.write('MultipartonInteractions:pT0Ref=2.1006\n')
-    f.write('MultipartonInteractions:ecmPow=0.21057\n')
-    f.write('MultipartonInteractions:expPow=1.6089\n')
-    f.write('MultipartonInteractions:a1=0.00\n')
-    f.write('ColourReconnection:range=3.31257\n\n')
-elif tune==2:
-    f.write('! CMS UE Tune CUETP8M1-based on pythia8 monash-star tune\n')
-    f.write('Tune:pp 14\n')
-    f.write('Tune:ee 7\n')
-    f.write('MultipartonInteractions:pT0Ref=2.4024\n')
-    f.write('MultipartonInteractions:ecmPow=0.25208\n')
-    f.write('MultipartonInteractions:expPow=1.6\n\n')
+if mode>0:
+    f.write("Tune:preferLHAPDF = 2\n")
+    if tune==0:
+        f.write("! Tune (4C)\n")
+        f.write("Tune:ee = 3\n")
+        f.write("Tune:pp = 5\n")
+    elif tune==1:
+        f.write("! CMS UE Tune CUETP8S1-CTEQ6L1\n")
+        #f.write("Tune:pp = 15\n\n")
+        f.write('Tune:ee 3\n')
+        f.write('Tune:pp 5\n')
+        f.write('MultipartonInteractions:pT0Ref=2.1006\n')
+        f.write('MultipartonInteractions:ecmPow=0.21057\n')
+        f.write('MultipartonInteractions:expPow=1.6089\n')
+        f.write('MultipartonInteractions:a1=0.00\n')
+        f.write('ColourReconnection:range=3.31257\n\n')
+    elif tune==2:
+        f.write('! CMS UE Tune CUETP8M1-based on pythia8 monash-star tune\n')
+        f.write('Tune:pp 14\n')
+        f.write('Tune:ee 7\n')
+        f.write('MultipartonInteractions:pT0Ref=2.4024\n')
+        f.write('MultipartonInteractions:ecmPow=0.25208\n')
+        f.write('MultipartonInteractions:expPow=1.6\n\n')
 
-if pdf==0:
-    f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")
+    if pdf==0:
+        f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")
 
-f.write("PartonLevel:MPI = off\n")
-f.write("PartonLevel:ISR = off\n")
-f.write("PartonLevel:FSR = off\n")
+#f.write("PartonLevel:MPI = off\n")
+#f.write("PartonLevel:ISR = off\n")
+#f.write("PartonLevel:FSR = off\n")
 
 #f.write("HadronLevel:Hadronize = off\n")
 
