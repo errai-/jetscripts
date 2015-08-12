@@ -91,7 +91,7 @@ void AnalyzeData::Loop(string writeFile)
         if (isMC != 3 && PFMet__et_ >= 0.3*PFMet__sumEt_) continue;
         
         /* Duplicate events are ignored */
-        if (!usedEvents.emplace(mRun, mLumi, mEvent).second) {
+        if (isMC != 3 && !usedEvents.emplace(mRun, mLumi, mEvent).second) {
             duplicEvents++;
             continue;
         }
@@ -100,14 +100,14 @@ void AnalyzeData::Loop(string writeFile)
         
         /* Jet loop */
         for (Long64_t kentry=0; kentry<PFJets_; kentry++){
-            if (!tightID_[kentry]) continue;
+            if (isMC!=3 && !tightID_[kentry]) continue;
 
             TLorentzVector jetMomentum;
             jetMomentum.SetPxPyPzE(fX[kentry],fY[kentry],fZ[kentry],fT[kentry]);
         
             /* Applying energy corrections (for pythia, corr = 1) */
             double corr = 1;     
-            if (isMC != 3){
+            if (!isMC) { //!= 3) {
                 jetECor->setRho( mPFRho );
                 jetECor->setJetA( area_[kentry] );
                 jetECor->setJetPt( jetMomentum.Pt() );
@@ -156,10 +156,10 @@ void AnalyzeData::Loop(string writeFile)
                     (dtBinCont == 0 || mcBinCont == 0) ? 1. : dtBinCont/mcBinCont );
                 goodJets++;
             } else {
-                analysisHelper->FillHelper( jetPt, jetEta, 0, chf_[kentry], 
-                    phf_[kentry], nhf_[kentry] - hf_hf_[kentry], elf_[kentry] + muf_[kentry], 
-                    hf_hf_[kentry], hf_phf_[kentry], 1 );
-                pileUpHists[triggerType]->Fill(mNVtxGood); 
+                analysisHelper->FillHelper( jetPt, jetEta, 0, chf[kentry], 
+                    phf[kentry], nhf[kentry], elf[kentry] + muf[kentry], 
+                    0, 0, fWeight );
+                pileUpHists[triggerType]->Fill(0); 
                 goodJets++;
             }
         }

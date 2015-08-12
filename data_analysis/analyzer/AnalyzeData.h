@@ -59,6 +59,7 @@ public :
     vector<int>     L1_;
     vector<int>     HLT_;
     Int_t           PFJets_;
+    Double_t        fWeight;
     Double_t        fX[kMaxPFJets_];   //[PFJets_]
     Double_t        fY[kMaxPFJets_];   //[PFJets_]
     Double_t        fZ[kMaxPFJets_];   //[PFJets_]
@@ -75,6 +76,11 @@ public :
     Float_t         phf_[kMaxPFJets_];   //[PFJets_]
     Float_t         elf_[kMaxPFJets_];   //[PFJets_]
     Float_t         muf_[kMaxPFJets_];   //[PFJets_]
+    Double_t         chf[kMaxPFJets_];   //[PFJets_]
+    Double_t         nhf[kMaxPFJets_];   //[PFJets_]
+    Double_t         phf[kMaxPFJets_];   //[PFJets_]
+    Double_t         elf[kMaxPFJets_];   //[PFJets_]
+    Double_t         muf[kMaxPFJets_];   //[PFJets_]
     Float_t         hf_hf_[kMaxPFJets_];   //[PFJets_]
     Float_t         hf_phf_[kMaxPFJets_];   //[PFJets_]
     Float_t         betaStar_[kMaxPFJets_];   //[PFJets_]
@@ -130,75 +136,102 @@ void AnalyzeData::Init(TTree *tree)
     fChain = tree;
     fCurrent = -1;
     fChain->SetMakeClass(1);
-
-    fChain->SetBranchAddress("EvtHdr_.mRun", &mRun);
-    fChain->SetBranchAddress("EvtHdr_.mEvent", &mEvent);
-    fChain->SetBranchAddress("EvtHdr_.mLumi", &mLumi);
-    fChain->SetBranchAddress("EvtHdr_.mNVtxGood", &mNVtxGood);
-    fChain->SetBranchAddress("EvtHdr_.mTrPu", &mTrPu);
-    fChain->SetBranchAddress("EvtHdr_.mPthat", &mPthat);
-    fChain->SetBranchAddress("EvtHdr_.mPFRho", &mPFRho);
-    fChain->SetBranchAddress("PFMet_.et_", &PFMet__et_);
-    fChain->SetBranchAddress("PFMet_.sumEt_", &PFMet__sumEt_);
-    fChain->SetBranchAddress("TriggerDecision_", &TriggerDecision_);
-    fChain->SetBranchAddress("L1Prescale_", &L1_);
-    fChain->SetBranchAddress("HLTPrescale_", &HLT_);
-    fChain->SetBranchAddress("PFJets_", &PFJets_);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fX", fX);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fY", fY);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fZ", fZ);
-    fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fT", fT);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fX", gen_fX);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fY", gen_fY);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fZ", gen_fZ);
-    fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fT", gen_fT);
-    fChain->SetBranchAddress("PFJets_.area_", area_);
-    fChain->SetBranchAddress("PFJets_.looseID_", looseID_);
-    fChain->SetBranchAddress("PFJets_.tightID_", tightID_);
-    fChain->SetBranchAddress("PFJets_.chf_", chf_);
-    fChain->SetBranchAddress("PFJets_.nhf_", nhf_);
-    fChain->SetBranchAddress("PFJets_.phf_", phf_);
-    fChain->SetBranchAddress("PFJets_.elf_", elf_);
-    fChain->SetBranchAddress("PFJets_.muf_", muf_);
-    fChain->SetBranchAddress("PFJets_.hf_hf_", hf_hf_);
-    fChain->SetBranchAddress("PFJets_.hf_phf_", hf_phf_);
-    fChain->SetBranchAddress("PFJets_.betaStar_", betaStar_);
+    
+    if (isMC!=3) {
+        fChain->SetBranchAddress("EvtHdr_.mRun", &mRun);
+        fChain->SetBranchAddress("EvtHdr_.mEvent", &mEvent);
+        fChain->SetBranchAddress("EvtHdr_.mLumi", &mLumi);
+        fChain->SetBranchAddress("EvtHdr_.mNVtxGood", &mNVtxGood);
+        fChain->SetBranchAddress("EvtHdr_.mTrPu", &mTrPu);
+        fChain->SetBranchAddress("EvtHdr_.mPthat", &mPthat);
+        fChain->SetBranchAddress("EvtHdr_.mPFRho", &mPFRho);
+        fChain->SetBranchAddress("PFMet_.et_", &PFMet__et_);
+        fChain->SetBranchAddress("PFMet_.sumEt_", &PFMet__sumEt_);
+        fChain->SetBranchAddress("TriggerDecision_", &TriggerDecision_);
+        fChain->SetBranchAddress("L1Prescale_", &L1_);
+        fChain->SetBranchAddress("HLTPrescale_", &HLT_);
+        fChain->SetBranchAddress("PFJets_", &PFJets_);
+        fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fX", fX);
+        fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fY", fY);
+        fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fZ", fZ);
+        fChain->SetBranchAddress("PFJets_.P4_.fCoordinates.fT", fT);
+        fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fX", gen_fX);
+        fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fY", gen_fY);
+        fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fZ", gen_fZ);
+        fChain->SetBranchAddress("PFJets_.genP4_.fCoordinates.fT", gen_fT);
+        fChain->SetBranchAddress("PFJets_.area_", area_);
+        fChain->SetBranchAddress("PFJets_.looseID_", looseID_);
+        fChain->SetBranchAddress("PFJets_.tightID_", tightID_);
+        fChain->SetBranchAddress("PFJets_.chf_", chf_);
+        fChain->SetBranchAddress("PFJets_.nhf_", nhf_);
+        fChain->SetBranchAddress("PFJets_.phf_", phf_);
+        fChain->SetBranchAddress("PFJets_.elf_", elf_);
+        fChain->SetBranchAddress("PFJets_.muf_", muf_);
+        fChain->SetBranchAddress("PFJets_.hf_hf_", hf_hf_);
+        fChain->SetBranchAddress("PFJets_.hf_phf_", hf_phf_);
+        fChain->SetBranchAddress("PFJets_.betaStar_", betaStar_);
+    } else {
+        fChain->SetBranchAddress("fJets", &PFJets_);
+        fChain->SetBranchAddress("fWeight", &fWeight);
+        fChain->SetBranchAddress("fJets.fP4.fCoordinates.fX", fX);
+        fChain->SetBranchAddress("fJets.fP4.fCoordinates.fY", fY);
+        fChain->SetBranchAddress("fJets.fP4.fCoordinates.fZ", fZ);
+        fChain->SetBranchAddress("fJets.fP4.fCoordinates.fT", fT);
+        fChain->SetBranchAddress("fJets.fChf", chf);
+        fChain->SetBranchAddress("fJets.fNhf", nhf);
+        fChain->SetBranchAddress("fJets.fPhf", phf);
+        fChain->SetBranchAddress("fJets.fElf", elf);
+        fChain->SetBranchAddress("fJets.fMuf", muf);
+    }
     
     /* First disable all branches and then enable the branches in use */
     fChain->SetBranchStatus("*",0);
-    fChain->SetBranchStatus("EvtHdr_.mRun", 1);
-    fChain->SetBranchStatus("EvtHdr_.mEvent", 1);
-    fChain->SetBranchStatus("EvtHdr_.mLumi", 1);
-    fChain->SetBranchStatus("EvtHdr_.mNVtxGood", 1);
-    fChain->SetBranchStatus("EvtHdr_.mTrPu", 1);
-    fChain->SetBranchStatus("EvtHdr_.mPthat", 1);
-    fChain->SetBranchStatus("EvtHdr_.mPFRho", 1);
-    fChain->SetBranchStatus("PFMet_.et_", 1);
-    fChain->SetBranchStatus("PFMet_.sumEt_", 1);
-    fChain->SetBranchStatus("TriggerDecision_", 1);
-    fChain->SetBranchStatus("L1Prescale_", 1);
-    fChain->SetBranchStatus("HLTPrescale_", 1);
-    fChain->SetBranchStatus("PFJets_", 1);
-    fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fX",1);
-    fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fY",1);
-    fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fZ",1);
-    fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fT",1);
-    fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fX", 1);
-    fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fY", 1);
-    fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fZ", 1);
-    fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fT", 1);
-    fChain->SetBranchStatus("PFJets_.area_", 1);
-    fChain->SetBranchStatus("PFJets_.looseID_", 1);
-    fChain->SetBranchStatus("PFJets_.tightID_", 1);
-    fChain->SetBranchStatus("PFJets_.chf_", 1);
-    fChain->SetBranchStatus("PFJets_.nhf_", 1);
-    fChain->SetBranchStatus("PFJets_.phf_", 1);
-    fChain->SetBranchStatus("PFJets_.elf_", 1);
-    fChain->SetBranchStatus("PFJets_.muf_", 1);
-    fChain->SetBranchStatus("PFJets_.hf_hf_", 1);
-    fChain->SetBranchStatus("PFJets_.hf_phf_", 1);
-    fChain->SetBranchStatus("PFJets_.betaStar_", 1);
-
+    if (isMC!=3) {
+        fChain->SetBranchStatus("EvtHdr_.mRun", 1);
+        fChain->SetBranchStatus("EvtHdr_.mEvent", 1);
+        fChain->SetBranchStatus("EvtHdr_.mLumi", 1);
+        fChain->SetBranchStatus("EvtHdr_.mNVtxGood", 1);
+        fChain->SetBranchStatus("EvtHdr_.mTrPu", 1);
+        fChain->SetBranchStatus("EvtHdr_.mPthat", 1);
+        fChain->SetBranchStatus("EvtHdr_.mPFRho", 1);
+        fChain->SetBranchStatus("PFMet_.et_", 1);
+        fChain->SetBranchStatus("PFMet_.sumEt_", 1);
+        fChain->SetBranchStatus("TriggerDecision_", 1);
+        fChain->SetBranchStatus("L1Prescale_", 1);
+        fChain->SetBranchStatus("HLTPrescale_", 1);
+        fChain->SetBranchStatus("PFJets_", 1);
+        fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fX",1);
+        fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fY",1);
+        fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fZ",1);
+        fChain->SetBranchStatus("PFJets_.P4_.fCoordinates.fT",1);
+        fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fX", 1);
+        fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fY", 1);
+        fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fZ", 1);
+        fChain->SetBranchStatus("PFJets_.genP4_.fCoordinates.fT", 1);
+        fChain->SetBranchStatus("PFJets_.area_", 1);
+        fChain->SetBranchStatus("PFJets_.looseID_", 1);
+        fChain->SetBranchStatus("PFJets_.tightID_", 1);
+        fChain->SetBranchStatus("PFJets_.chf_", 1);
+        fChain->SetBranchStatus("PFJets_.nhf_", 1);
+        fChain->SetBranchStatus("PFJets_.phf_", 1);
+        fChain->SetBranchStatus("PFJets_.elf_", 1);
+        fChain->SetBranchStatus("PFJets_.muf_", 1);
+        fChain->SetBranchStatus("PFJets_.hf_hf_", 1);
+        fChain->SetBranchStatus("PFJets_.hf_phf_", 1);
+        fChain->SetBranchStatus("PFJets_.betaStar_", 1);
+    } else {
+        fChain->SetBranchStatus("fJets",1);
+        fChain->SetBranchStatus("fWeight",1);
+        fChain->SetBranchStatus("fJets.fP4.fCoordinates.fX",1);
+        fChain->SetBranchStatus("fJets.fP4.fCoordinates.fY",1);
+        fChain->SetBranchStatus("fJets.fP4.fCoordinates.fZ",1);
+        fChain->SetBranchStatus("fJets.fP4.fCoordinates.fT",1);
+        fChain->SetBranchStatus("fJets.fChf",1);
+        fChain->SetBranchStatus("fJets.fNhf",1);
+        fChain->SetBranchStatus("fJets.fPhf",1);
+        fChain->SetBranchStatus("fJets.fElf",1);
+        fChain->SetBranchStatus("fJets.fMuf",1);
+    }
     
 }
 

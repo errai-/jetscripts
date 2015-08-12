@@ -183,15 +183,15 @@ public:
     }
 
     void LegendFill( int forward ){
-        leg->AddEntry( chfPuSlice, "Charged pile-up" );
-        leg->AddEntry( chfSlice, "Charged hadrons" );
-        leg->AddEntry( phfSlice, "Photons" );
-        leg->AddEntry( nhfSlice, "Neutral hadrons" );
-        leg->AddEntry( elfMufSlice, "Electrons & Muons" );
         if (forward){
-        leg->AddEntry( hfHfSlice, "Forward hadrons" );
-        leg->AddEntry( hfPhfSlice, "Forward photons" );
+            leg->AddEntry( hfPhfSlice, "Forward photons" );
+            leg->AddEntry( hfHfSlice, "Forward hadrons" );
         }
+        leg->AddEntry( elfMufSlice, "Electrons & Muons" );
+        leg->AddEntry( nhfSlice, "Neutral hadrons" );
+        leg->AddEntry( phfSlice, "Photons" );
+        leg->AddEntry( chfSlice, "Charged hadrons" );
+        leg->AddEntry( chfPuSlice, "Charged pile-up" );
     }
 
     /* Does the desired projection; a bit clumsy in order to avoid repetitive names */

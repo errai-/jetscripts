@@ -109,11 +109,11 @@ void runDrawHistos(string readMcFile, string readDtFile)
         firstHisto->Draw("same");
     } else if (debugger) {
         THStack *tutkain1 = mcProcessor.EnergyFractions(1,0,-1,0,1);
-        THStack *tutkain2 = dtProcessor.EnergyFractions(1,0,-1,1,1);
+        THStack *tutkain2 = dtProcessor.EnergyFractions(1,0,-1,0,1);
         canvas->SetLogx();
-        tutkain1->Draw("");
-        tutkain2->Draw("samee1");
-        mcProcessor.GetLeg()->Draw();
+        tutkain2->Draw("");
+        tutkain1->Draw("samep");
+        dtProcessor.GetLeg()->Draw();
         cmsFinal();
         canvas->Modified();
         canvas->SetSelected(canvas);

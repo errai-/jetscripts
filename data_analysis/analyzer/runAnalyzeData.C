@@ -16,7 +16,7 @@ using std::endl;
     2   - cmssw MC (old)
     3-9 - real detector data */
 const string fileArray[] = {
-    "fjpythia.root",
+    "pythia8.root",
     "ProcessedTree_RDMC_START53_V7N_try2.root",
     "27thJune_MC_NTuple.root",
     "29thAugust_Run2012A.root",
@@ -55,7 +55,8 @@ void runAnalyzeData(Long64_t events=0, Int_t firstIdx=0, Int_t lastIdx = 0,
     gROOT->ProcessLine(".L QCDModules/QCDPFJet.cc+");
     gROOT->ProcessLine(".L QCDModules/QCDEventHdr.cc+");
     
-    TChain *forest = new TChain("ak5/ProcessedTree");
+    //TChain *forest = new TChain("ak5/ProcessedTree");
+    TChain *forest = new TChain("JetTree");
 
     /* isDT is complementary to isMC, but isMC has many options depending on
        the data file in use */

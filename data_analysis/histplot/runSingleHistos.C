@@ -49,18 +49,18 @@ void runSingleHistos(string readFile="mc_histos.root")
     if (puInspect) {
         canvas->Divide(3,2,0,0);
         for (int i=0; i<6; i++) {
-        mcPuHists[i]->Scale(1./mcPuHists[i]->Integral());
-        canvas->cd(i+1);
-        mcPuHists[i]->Draw("");
-        Double_t meanMC = mcPuHists[i]->GetMean();
-        Double_t meanMCError = mcPuHists[i]->GetMeanError();
-        std::stringstream textMC;
-        textMC << "MC: " << meanMC << " #pm " << meanMCError;
-        TLatex info;
-        info.SetNDC();
-        info.SetTextFont(43);
-        info.SetTextSize(20);
-        info.DrawLatex(0.5,0.6,textMC.str().c_str());
+            mcPuHists[i]->Scale(1./mcPuHists[i]->Integral());
+            canvas->cd(i+1);
+            mcPuHists[i]->Draw("");
+            Double_t meanMC = mcPuHists[i]->GetMean();
+            Double_t meanMCError = mcPuHists[i]->GetMeanError();
+            std::stringstream textMC;
+            textMC << "DT: " << meanMC << " #pm " << meanMCError;
+            TLatex info;
+            info.SetNDC();
+            info.SetTextFont(43);
+            info.SetTextSize(20);
+            info.DrawLatex(0.5,0.6,textMC.str().c_str());
         }
     } else if (ptProfile) {
         canvas->SetLogx();
@@ -76,7 +76,7 @@ void runSingleHistos(string readFile="mc_histos.root")
         TH1D *firstHisto = mcProcessor.PtProfileScaled(1,0,-1);
         firstHisto->GetXaxis()->SetNoExponent();
         firstHisto->GetXaxis()->SetMoreLogLabels();
-        firstHisto->Draw("");
+        firstHisto->Draw("HIST");
         //pythiaFinal();
     } else if (etaProfile) {
         TH1D *firstHisto = mcProcessor.PtProfile(0,0,-1);
