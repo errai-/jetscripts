@@ -132,7 +132,6 @@ void JetAnalysis::Show(Long64_t entry)
     fChain->Show(entry);
 }
 
-
 //////////////////////////////////
 // Loop over events and particles:
 //////////////////////////////////
@@ -145,7 +144,11 @@ void JetAnalysis::EventLoop()
     Long64_t nentries = fChain->GetEntries();
     mTimer.setParams(nentries,2000); mTimer.startTiming();
 
+    // fastjet setup
+    fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+    
     int good=0,bad=0;
+
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
         if (jentry!=0&&jentry%2000==0) mTimer.printTime();
 
@@ -249,17 +252,18 @@ bool JetAnalysis::GoodEvent()
         {
             return false;
         }
-        
+
         /* Dimuon system */
         fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
         tmpVec += hiddenInputs[mMuonList[1]];
         mAlpha = (sortedJets.size() > 1 ) ? sortedJets[1].pt()/tmpVec.pt() : 0;
         mDPhi = tmpVec.delta_phi_to( sortedJets[0] );
-        
+
         if (   ( mAlpha > 0.3 )
             || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
-            || ( mDPhi < 2.8 )
-            || ( fabs(sortedJets[0].eta())>2.5 || fabs(tmpVec.eta())>2.5 ) )
+            || ( mDPhi < 2.5 )
+            || ( fabs(sortedJets[0].eta())>2.5 ) )
+
         {
             return false;
         }
@@ -279,11 +283,11 @@ void JetAnalysis::ParticlesToJetsorterInput()
     mPartonList.clear();
     mMuonList.clear();
     int hiddenCount = 0;
-    
+
     for (size_t i = 0; i != fPrtcls_; ++i) {
         fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
         int stat = fAnalysisStatus[i];
-        
+
         /* Ghost partons, hadrons and normal particles */
         if (stat==1) {
             particleTemp.set_user_index( i ); /* Save particle index */
@@ -356,21 +360,24 @@ void JetAnalysis::JetLoop(int jentry)
 
 /* If there are conflicts, save the preferred flavour with a minus sign. 
    Assumes a 2 -> 2 hard process () */
-void JetAnalysis::PhysicsFlavor(size_t i) 
+void JetAnalysis::PhysicsFlavor(std::size_t i) 
 {
     mFlavour = 0;
-    double dR_min = 10; Int_t id_min = 0; 
+    double dR_min = 10; Int_t id_min = -1; 
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( hiddenInputs[k] );
+        
         if ( dR < dR_min ) {
             dR_min = dR;
             id_min = k;
         }
+        
         if ( dR < 0.3 ) {
             if (mFlavour!=0) {
                 if (id_min != k) { mFlavour *= -1; }
                 else { mFlavour = -abs(hiddenInputs[k].user_index()); }
-                ++mDuplicate; break;
+                ++mDuplicate; 
+                break;
             } else {
                 mFlavour = abs(hiddenInputs[k].user_index());
             }
@@ -394,13 +401,13 @@ void JetAnalysis::FlavorLoop(size_t i)
     * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
     * for further information. */
     int hadronFlav = 0, partonFlav = 0, hardestLightParton = 0;
-    
+
     for ( size_t k = 0; k != jetParts.size(); ++k ){
         if (jetParts[k].user_index() > 0) continue; /* Not ghosts */
         int idx = -jetParts[k].user_index();
         int id = abs(fPDGCode[idx]);
         int stat = fAnalysisStatus[idx];
-    
+
         // Hadrons, set the id's to correspond to the hadron flavour
         if (stat == 7) {
             hadronFlav = 5;
@@ -418,7 +425,7 @@ void JetAnalysis::FlavorLoop(size_t i)
         }
     }
     if (!partonFlav) partonFlav = hardestLightParton;
-    
+
     /* mFlavour is determined with the domination of hadronFlav. If parton flavour
         * is used separately, partonFlav tells the complete parton flavour. */
     if (hadronFlav != 0) {
@@ -614,26 +621,34 @@ void JetAnalysis::Cuts()
 {
     cutJetParts.clear();
     vector<fastjet::PseudoJet> tmpParts;
+    bool cutMode = false;
     
-    /* Explicit cuts */
-    for (size_t q = 0; q != jetParts.size(); ++q) {
-        if (jetParts[q].user_index() < 0) continue;
-        int id = abs(fPDGCode[ jetParts[q].user_index() ]);
-        if (!(jetParts[q].pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) {
-            tmpParts.push_back(jetParts[q]);
+    if (cutMode) {
+        /* Explicit cuts */
+        for ( auto q : jetParts ) {
+            if ( q.user_index() < 0) continue;
+            int id = abs(fPDGCode[ q.user_index() ]);
+            if (!( q.pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) {
+                tmpParts.push_back( q );
+            }
         }
-    }
-    
-    /* Implicit cuts */
-    for (size_t q = 0; q != tmpParts.size(); ++q) {
-        int id = abs(fPDGCode[ abs(tmpParts[q].user_index()) ]);
-        if ( !IsHadron(id) || ( (IsCharged(id) && tmpParts[q].pt()>0.3) || 
-            (!IsCharged(id) && tmpParts[q].pt()>3) ) )
-        {
-            cutJetParts.push_back(tmpParts[q]);
+        
+        /* Implicit cuts */
+        for ( auto q : tmpParts ) {
+            int id = abs(fPDGCode[ q.user_index() ]);
+            if ( !IsHadron(id) || ( (IsCharged(id) && q.pt()>0.3) || 
+                (!IsCharged(id) && q.pt()>3) ) )
+            {
+                cutJetParts.push_back( q );
+            }
+        }
+    } else {
+        for ( auto q : jetParts ) {
+            cutJetParts.push_back(q);
         }
     }
 }
+
 
 bool JetAnalysis::IsHadron(int pdg)
 {
@@ -668,6 +683,7 @@ bool JetAnalysis::IsCharged(int pdg)
     if (charge == 0) return false;
     else return true; 
 }
+
 
 double JetAnalysis::PTD()
 {

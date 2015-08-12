@@ -209,7 +209,7 @@ void setTDRStyle() {
   tdrStyle->SetPadTickY(1);
 
 // Change for log plots:
-  tdrStyle->SetOptLogx(1);
+  tdrStyle->SetOptLogx(0);
   tdrStyle->SetOptLogy(0);
   tdrStyle->SetOptLogz(0);
 
