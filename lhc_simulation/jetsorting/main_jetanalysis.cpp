@@ -10,6 +10,7 @@
 // ROOT, Trees
 #include "TTree.h"
 #include "TChain.h"
+#include "TFile.h"
 
 // scripts
 #include "JetAnalysis.h"
@@ -22,14 +23,14 @@ using std::vector;
 
 int main(int argc, char* argv[]) 
 {
-    if (argc != 3) {
-        cout << "Usage: ./jetanalysis.exe [Standard form input file name] [Flavour def.]" << endl;
+    if (argc != 4) {
+        cout << "Usage: ./jetanalysis.exe [Standard form input file name] [path - e.g. './'] [Flavour def.]" << endl;
         cout << "Flavour options:" << endl << "1: Physics definition" << endl;
         cout << "2: Hadronic definition" << endl;
         return 1;
     }
     
-    int definition = std::stoi(argv[2]);
+    int definition = std::stoi(argv[3]);
     if ( definition!=1&&definition!=2 ) {
         cout << "Flavour options: 1/2" << endl;
         return 0;
@@ -37,7 +38,8 @@ int main(int argc, char* argv[])
     
     int generator = -1, mode = -1;
     bool beginning = false;
-    string input = argv[1], tmpStr = "", output = "", output2 = "hists_";
+    string input = argv[1], fullPath = argv[2], tmpStr = "", output = "", output2 = "hists_";
+    fullPath += input;
     for (auto i : input) {
         if (i=='_') {
             if (!beginning && tmpStr=="particles") {
@@ -99,20 +101,23 @@ int main(int argc, char* argv[])
         treePath = "Pythia6Tree";
     }
     
-    /* Try to open tree */
-    TChain *forest = new TChain(treePath.c_str());
-    forest->AddFile(input.c_str()); /* Opens tree with the highest key */
-    if (!(forest->GetEntries())) {
+    /* Try to open a tree */
+    TFile *f = new TFile(fullPath.c_str(),"READ");
+    assert(f && !f->IsZombie());
+    
+    TTree *tree = (TTree*)f->Get(treePath.c_str());
+    assert(tree && !tree->IsZombie());
+        
+    if (!(tree->GetEntries())) {
         cout << "Incorrect file name " << input << " or tree with zero events" << endl;
         return 1;
     }
 
-    cout << mode << endl;
     /* Analysis process */
-    JetAnalysis treeHandle(forest, output.c_str(), output2.c_str(), mode, definition);
+    JetAnalysis treeHandle(tree, output.c_str(), output2.c_str(), mode, definition);
     treeHandle.EventLoop();
     
-    delete forest;
+    delete tree;
     
     return 0;
 }
