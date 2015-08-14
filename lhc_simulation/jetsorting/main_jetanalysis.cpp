@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     }
     
     /* Try to open a tree */
-    TFile *f = new TFile(fullPath.c_str(),"READ");
+    TFile *f = TFile::Open(fullPath.c_str(),"READ");
     assert(f && !f->IsZombie());
     
     TTree *tree = (TTree*)f->Get(treePath.c_str());

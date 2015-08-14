@@ -13,7 +13,7 @@ WRKDIR=store/group/phys_jetmet/hsiikone/$SUBDIR
 
 xrdcp root://eoscms.cern.ch//eos/cms/$WRKDIR/$FILE .
 
-/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/jetanalysis.exe $FILE 1
+/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/jetanalysis.exe $FILE ./ 1
 
 rm $FILE 
 
