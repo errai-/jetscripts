@@ -24,7 +24,7 @@ using std::vector;
 /* Switches for turning of plots */
 const bool ptPlots = true;
 const bool uptPlots = false;
-const bool etaPlots = true;
+const bool etaPlots = false;
 const bool debugPlots = false;
 const bool indicatorPlots = true;
 const bool separatorPlots = false;
@@ -656,12 +656,12 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         h2->GetXaxis()->SetNoExponent();
         h2->GetXaxis()->SetRangeUser(0,60);
             
-        tdrDraw(p8Hists.mult[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,300,kRed-3);
         tdrDraw(p6Hists.mult[0],"HIST",kOpenTriangleDown,kCyan,kSolid,-1,3003,kCyan);
-        tdrDraw(hppHists.mult[0],"HIST P",kFullTriangleDown,kGreen+3,kSolid,-1,300,kGreen+3);
-        tdrDraw(p8Hists.mult[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,300,kBlue);
         tdrDraw(p6Hists.mult[1],"HIST",kOpenTriangleUp,kOrange+7,kSolid,-1,3005,kOrange+7);
+        tdrDraw(hppHists.mult[0],"HIST P",kFullTriangleDown,kGreen+3,kSolid,-1,300,kGreen+3);
         tdrDraw(hppHists.mult[1],"HIST P",kFullTriangleUp,kMagenta,kSolid,-1,300,kMagenta);
+        tdrDraw(p8Hists.mult[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,300,kRed-3);
+        tdrDraw(p8Hists.mult[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,300,kBlue);
         //     tdrDraw(multiplicity_u,"HIST",kDot,kGreen-1,kSolid,-1,3004,kGreen-1);
         //     tdrDraw(multiplicity_u,"HIST",kDot,kGreen-1,kSolid,-1,3004,kGreen-1);
 
@@ -687,12 +687,12 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         h3->GetXaxis()->SetNoExponent();
         h3->GetXaxis()->SetRangeUser(0,30);
 
-        tdrDraw(p8Hists.ptd[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,300,kRed-3);
         tdrDraw(p6Hists.ptd[0],"HIST",kOpenTriangleDown,kCyan,kSolid,-1,3003,kCyan);
-        tdrDraw(hppHists.ptd[0],"HIST P",kFullTriangleDown,kGreen+3,kSolid,-1,300,kGreen+3);
-        tdrDraw(p8Hists.ptd[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,300,kBlue);
         tdrDraw(p6Hists.ptd[1],"HIST",kOpenTriangleUp,kOrange+7,kSolid,-1,3005,kOrange+7);
+        tdrDraw(hppHists.ptd[0],"HIST P",kFullTriangleDown,kGreen+3,kSolid,-1,300,kGreen+3);
         tdrDraw(hppHists.ptd[1],"HIST P",kFullTriangleUp,kMagenta,kSolid,-1,300,kMagenta);
+        tdrDraw(p8Hists.ptd[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,300,kRed-3);
+        tdrDraw(p8Hists.ptd[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,300,kBlue);
         //     tdrDraw(pTD_u,"HIST",kDot,kGreen-1,kSolid,-1,3004,kGreen-1);
         //     tdrDraw(pTD_u,"HIST",kDot,kGreen-1,kSolid,-1,3004,kGreen-1);
 
@@ -718,12 +718,12 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         h4->GetXaxis()->SetNoExponent();
         h4->GetXaxis()->SetRangeUser(0,0.2);
 
-        tdrDraw(p8Hists.s2[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,300,kRed-3);
         tdrDraw(p6Hists.s2[0],"HIST",kOpenTriangleDown,kCyan,kSolid,-1,3003,kCyan);
-        tdrDraw(hppHists.s2[0],"HIST P",kFullTriangleDown,kGreen+3,kSolid,-1,300,kGreen+3);
-        tdrDraw(p8Hists.s2[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,300,kBlue);
         tdrDraw(p6Hists.s2[1],"HIST",kOpenTriangleUp,kOrange+7,kSolid,-1,3005,kOrange+7);
+        tdrDraw(hppHists.s2[0],"HIST P",kFullTriangleDown,kGreen+3,kSolid,-1,300,kGreen+3);
         tdrDraw(hppHists.s2[1],"HIST P",kFullTriangleUp,kMagenta,kSolid,-1,300,kMagenta);
+        tdrDraw(p8Hists.s2[0],"HIST",kFullTriangleDown,kRed-3,kSolid,-1,300,kRed-3);
+        tdrDraw(p8Hists.s2[1],"HIST",kFullTriangleUp,kBlue,kSolid,-1,300,kBlue);
         //     tdrDraw(sigma2_u,"HIST",kDot,kGreen-1,kSolid,-1,3005,kGreen-1);
         //     tdrDraw(sigma2_u,"HIST",kDot,kGreen-1,kSolid,-1,3005,kGreen-1);
 
@@ -754,9 +754,9 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         p8Pt->Scale(1/p8Pt->Integral());
         p6Pt->Scale(1/p6Pt->Integral());
         hppPt->Scale(1/hppPt->Integral());
-        tdrDraw(p8Pt,"HIST",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
         tdrDraw(p6Pt,"HIST P",kOpenTriangleDown,kBlue,kSolid,-1,3003,kBlue);
         tdrDraw(hppPt,"HIST P",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
+        tdrDraw(p8Pt,"HIST",kFullTriangleDown,kBlue,kSolid,-1,3003,kBlue);
         TLegend *ptLeg = tdrLeg(0.5,0.6,0.8,0.9);
 
         ptLeg->AddEntry(p8Pt,"Pythia8","f");
@@ -788,9 +788,9 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         p8Hists.dR->Scale(1/p8Hists.dR->Integral());
         p6Hists.dR->Scale(1/p6Hists.dR->Integral());
         hppHists.dR->Scale(1/hppHists.dR->Integral());
-        tdrDraw(p8Hists.dR,"HIST",kFullTriangleDown,kBlue,kSolid,-1,300,kBlue);
         tdrDraw(p6Hists.dR,"HIST",kOpenTriangleDown,kRed,kSolid,-1,300,kRed);
         tdrDraw(hppHists.dR,"HIST",kFullTriangleDown,kGreen+3,kSolid,-1,3003,kGreen+3);
+        tdrDraw(p8Hists.dR,"HIST",kFullTriangleDown,kBlue,kSolid,-1,300,kBlue);
         TLegend *drLeg = tdrLeg(0.5,0.6,0.8,0.9);
         
         drLeg->AddEntry(p8Hists.dR,"Pythia 8","l");
@@ -816,9 +816,9 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         p8Hists.alpha->Scale(1/p8Hists.alpha->Integral());
         p6Hists.alpha->Scale(1/p6Hists.alpha->Integral());
         hppHists.alpha->Scale(1/hppHists.alpha->Integral());
-        tdrDraw(p8Hists.alpha,"HIST",kFullTriangleDown,kBlue,kSolid,-1,300,kBlue);
         tdrDraw(p6Hists.alpha,"HIST",kOpenTriangleDown,kRed,kSolid,-1,300,kRed);
         tdrDraw(hppHists.alpha,"HIST",kFullTriangleDown,kGreen+3,kSolid,-1,3003,kGreen+3);
+        tdrDraw(p8Hists.alpha,"HIST",kFullTriangleDown,kBlue,kSolid,-1,300,kBlue);
         TLegend *alphaLeg = tdrLeg(0.5,0.6,0.8,0.9);
         
         alphaLeg->AddEntry(p8Hists.alpha,"Pythia 8","l");
@@ -836,9 +836,9 @@ void HppP6P8(string herwFile, string p6File, string p8File) {
         p8Hists.dPhi->Scale(1/p8Hists.dPhi->Integral());
         p6Hists.dPhi->Scale(1/p6Hists.dPhi->Integral());
         hppHists.dPhi->Scale(1/hppHists.dPhi->Integral());
-        tdrDraw(p8Hists.dPhi,"HIST",kFullTriangleDown,kBlue,kSolid,-1,300,kBlue);
         tdrDraw(p6Hists.dPhi,"HIST",kOpenTriangleDown,kRed,kSolid,-1,300,kRed);
         tdrDraw(hppHists.dPhi,"HIST",kFullTriangleDown,kGreen+3,kSolid,-1,3003,kGreen+3);
+        tdrDraw(p8Hists.dPhi,"HIST",kFullTriangleDown,kBlue,kSolid,-1,300,kBlue);
         TLegend *dphiLeg = tdrLeg(0.5,0.6,0.8,0.9);
         
         dphiLeg->AddEntry(p8Hists.dPhi,"Pythia 8","l");
