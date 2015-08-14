@@ -11,11 +11,11 @@ SUBDIR=$2
 
 WRKDIR=store/group/phys_jetmet/hsiikone/$SUBDIR
 
-xrdcp root://eoscms.cern.ch//eos/cms/$WRKDIR/$FILE .
+#xrdcp root://eoscms.cern.ch//eos/cms/$WRKDIR/$FILE .
 
-/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/jetanalysis.exe $FILE ./ 1
+/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/jetanalysis.exe $FILE root://eoscms.cern.ch//eos/cms/$WRKDIR/ 1
 
-rm $FILE 
+#rm $FILE 
 
 xrdcp ./*.root root://eoscms.cern.ch//eos/cms/$WRKDIR/.
 
