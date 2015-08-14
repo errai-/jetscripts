@@ -1,3 +1,4 @@
 bsub -n 8 -q 1nw -R "pool>20000" herwig_lxplus.sh 2000000 3 8
 bsub -n 8 -q 8nh -R "pool>20000" pythia8_lxplus.sh 100000 1 8
+bsub -n 1 -q 8nh -R "pool>2000" analysis_lxplus.sh particles_pythia8_dijet_2000000.root cms_tunes
 eos ls -alrt store/group/phys_jetmet/hsiikone
