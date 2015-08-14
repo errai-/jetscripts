@@ -175,7 +175,7 @@ private:
 //////////
     Timer mTimer;
 
-    double mUnpaired, mDuplicate;
+    int mUnpaired, mDuplicate;
 
     /* Energy counters: */ 
     TLorentzVector mPiPlus, mPiMinus, mPi0Gamma, mGamma, 
@@ -193,6 +193,7 @@ private:
  
     /* Weights etc.: */
     double mChargSum, mChargWSum, mChargW2Sum, mW2;
+    double mPartonPT;
     int mQuarkJetCharge, mFlavour, mIsHadron;
     
     /* Temporary fractions: */

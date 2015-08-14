@@ -163,7 +163,7 @@ void JetAnalysis::EventLoop()
             for ( auto i : mPartonList ) {
                 fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),
                                 hiddenInputs[i].e(),0,0,0,0,0,0,0,0,0,0,fWeight,
-                                abs(hiddenInputs[i].user_index()),0,0,0,0,0,0);
+                                abs(hiddenInputs[i].user_index()),0,0,0,0,0,0,0);
             }
         } else {
             /* Fastjet algorithm */
@@ -354,7 +354,7 @@ void JetAnalysis::JetLoop(int jentry)
 
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
-            fWeight,mFlavour,multiplicity,PTD(),Sigma2(),mDR,mAlpha,mDPhi);
+            fWeight,mFlavour,multiplicity,PTD(),Sigma2(),mDR,mAlpha,mDPhi,mPartonPT);
     }
 }
 
@@ -363,6 +363,7 @@ void JetAnalysis::JetLoop(int jentry)
 void JetAnalysis::PhysicsFlavor(std::size_t i) 
 {
     mFlavour = 0;
+    mPartonPT = 0;
     double dR_min = 10; Int_t id_min = -1; 
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( hiddenInputs[k] );
@@ -370,6 +371,7 @@ void JetAnalysis::PhysicsFlavor(std::size_t i)
         if ( dR < dR_min ) {
             dR_min = dR;
             id_min = k;
+            mPartonPT = hiddenInputs[k].pt();
         }
         
         if ( dR < 0.3 ) {
