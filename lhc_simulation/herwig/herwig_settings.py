@@ -16,6 +16,11 @@ tune = 0
 # 3: default
 pdf = 0
 
+# CMS energy
+# 0: 8  TeV
+# 1: 13 TeV
+eScale = 0
+
 # Read run settings from command line parameters
 if len(sys.argv) != 5:
     print "Incorrect amount of command line parameters"
@@ -137,10 +142,16 @@ f.write('set /Herwig/Particles/p+:PDF customPDF\n')
 f.write('set /Herwig/Particles/pbar-:PDF customPDF\n\n')
 
 f.write('# CM energy\n')
-f.write('set /Herwig/Generators/LHCGenerator:EventHandler:LuminosityFunction:Energy 8000.0*GeV\n\n')
+if eScale==0:
+    f.write('set /Herwig/Generators/LHCGenerator:EventHandler:LuminosityFunction:Energy 8000.0*GeV\n\n')
+elif eScale==1:
+    f.write('set /Herwig/Generators/LHCGenerator:EventHandler:LuminosityFunction:Energy 13000.0*GeV\n\n')
 
 f.write('# Intrinsic pT tune extrapolated to LHC energy\n')
-f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.0*GeV\n\n')
+if eScale==0:
+    f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.0*GeV\n\n')
+elif eScale==1:
+    f.write('set /Herwig/Shower/Evolver:IntrinsicPtGaussian 2.2*GeV\n\n')
 
 f.write('# ptHat min\n')
 if mode==1:

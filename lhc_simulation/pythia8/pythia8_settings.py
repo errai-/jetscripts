@@ -14,6 +14,11 @@ tune = 1
 # 1: use the default
 pdf = 0
 
+# CMS energy
+# 0: 8  TeV
+# 1: 13 TeV
+eScale = 0
+
 # Read run settings from command line parameters
 if len(sys.argv) != 5:
     print "Incorrect amount of command line parameters"
@@ -74,7 +79,10 @@ f.write("PhaseSpace:bias2SelectionPow = 4.5\n")
 f.write("PhaseSpace:bias2SelectionRef = 15.\n\n")
 
 f.write("! CM energy\n")
-f.write("Beams:eCM = 8000.\n\n")
+if eScale==0:
+    f.write("Beams:eCM = 8000.\n\n")
+elif eScale==1:
+    f.write("Beams:eCM = 13000.\n\n")
 
 if mode==0:
     f.write("HardQCD:all = on\n")

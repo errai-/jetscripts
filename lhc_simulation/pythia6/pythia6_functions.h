@@ -110,7 +110,8 @@ namespace
 
         // pythia->SetMSTP(111,0); // Hadronization off
 
-        pythia->Initialize("cms", "p", "p", 8000);
+        pythia->Initialize("cms", "p", "p", 13000);
+        //pythia->Initialize("cms", "p", "p", 8000);
         return 1;
     }
 

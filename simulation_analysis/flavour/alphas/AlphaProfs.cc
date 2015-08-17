@@ -15,9 +15,9 @@ void AlphaProfs(Int_t generator = 0)
 
 	string files[3];
 
-    files[0] = "pythia8_dijet_physics_2000000.root";
-    files[1] = "pythia6_dijet_physics_1000000.root";
-    files[2] = "herwig_dijet_physics_2000000.root";
+    files[0] = "../cteq6l1-cms/pythia8_dijet_physics_2000000.root";
+    files[1] = "../cteq6l1-cms/pythia6_dijet_physics_1000000.root";
+    files[2] = "../cteq6l1-cms/herwig_dijet_physics_2000000.root";
 
     Int_t ptBins = 40;
     Double_t ptRange[] = {40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,520,540,560,580,600,620,640,660,680,700,720,740,760,780,800,820,840};

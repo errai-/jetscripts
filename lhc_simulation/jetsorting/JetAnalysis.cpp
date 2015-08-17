@@ -2,136 +2,6 @@
 #include "Pythia8Plugins/FastJet3.h"
 #include "fastjet/tools/GridMedianBackgroundEstimator.hh"
 
-/////////
-// Setup:
-/////////
-
-JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2, 
-                         int mode, int definition ) 
-                         : fChain(0), mMode(mode), mDefinition(definition)
-{
-    assert(tree);
-    Init(tree);
-
-    /* Tree: autosave every 1 Gb, 10 Mb cache */ 
-    fOutFile = new TFile(outFile1, "RECREATE");
-    fOutFile->SetCompressionLevel(1);
-    fOutTree = new TTree("JetTree","Tree with jet data");
-    fOutTree->SetAutoSave(1000000000); fOutTree->SetCacheSize(10000000);  
-    TTree::SetBranchStyle(1);
-    fOutFileName = outFile2;
-    fjEvent = new JetEvent;
-    fJetBranch = fOutTree->Branch("event", &fjEvent, 32000, 4);
-    fJetBranch->SetAutoDelete(kFALSE);
-    fOutTree->BranchRef();
-
-    gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
-
-    InitCI();
-    InitFP();
-
-    jetsPerEvent = 2;
-    if (mode==0) jetsPerEvent = 100;
-    if (mode==1) jetsPerEvent = 2;
-    if (mode==2||mode==3) jetsPerEvent = 1;
-    if (mode==4) jetsPerEvent = 4;
-
-    mUnpaired = 0; mDuplicate = 0;
-}
-
-JetAnalysis::~JetAnalysis()
-{
-    delete fjEvent; fjEvent = 0;
-    if (!fChain) return;
-    delete fChain->GetCurrentFile();
-    if (!fOutTree) return;
-    delete fOutTree->GetCurrentFile();
-}
-
-
-/* Initializes the tree that is read */
-void JetAnalysis::Init(TTree *tree)
-{
-    /* Set branch addresses and branch pointers */
-    if (!tree) return;
-    fChain = tree;
-    fCurrent = -1;
-    fChain->SetMakeClass(1);
-
-    fChain->SetBranchAddress("fWeight", &fWeight, &b_fWeight);
-    fChain->SetBranchAddress("fPrtcls", &fPrtcls_, &b_fPrtcls_);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fX", fX, &b_fX);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fY", fY, &b_fY);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fZ", fZ, &b_fZ);
-    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT, &b_fT);
-    fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode, &b_fPDGCode);
-    fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus, &b_fAnalysisStatus);
-}
-
-void JetAnalysis::InitCI(){
-    // Create file on which histogram(s) can be saved.
-    chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
-    chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
-    chargeIndicator.push_back(new TH1D("gluonjet charge","",30,-15,15) );
-    chargeIndicator.push_back(new TH1D("quarkjet charge","",30,-15,15) );
-    chargeIndicator.push_back(new TH1D("gluonjet wcharge","",200,-1,1) );
-    chargeIndicator.push_back(new TH1D("quarkjet wcharge","",200,-1,1) );
-    chargeIndicator.push_back(new TH1D("gluonjet w2charge","",200,-0.8,0.8) );
-    chargeIndicator.push_back(new TH1D("quarkjet w2charge","",200,-0.8,0.8) );
-    chargeIndicator.push_back(new TH1D("gluonjet w","",250,0,1) );
-    chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
-}
-
-void JetAnalysis::InitFP(){
-    for (int idx = 0; idx != 16; ++idx){
-        std::stringstream tmpString("");
-        tmpString << "g" << idx;
-        fractionProfilesGluon.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-        tmpString.str("");
-        tmpString << "q" << idx;
-        fractionProfilesQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-        tmpString.str("");
-        tmpString << "lq" << idx;
-        fractionProfilesLQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-        tmpString.str("");
-        tmpString << "hq" << idx;
-        fractionProfilesHQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-        tmpString.str("");
-        tmpString << "a" << idx;
-        fractionProfilesAll.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
-    }
-}
-
-///////////////////////////////////////////////////
-// Generic functions, these should not be modified:
-///////////////////////////////////////////////////
-
-Int_t JetAnalysis::GetEntry(Long64_t entry)
-{
-    if (!fChain) return 0;
-    return fChain->GetEntry(entry);
-}
-
-
-Long64_t JetAnalysis::LoadTree(Long64_t entry)
-{
-    /* Set the environment to read one entry */
-    if (!fChain) return -5;
-    Long64_t centry = fChain->LoadTree(entry);
-    if (centry < 0) return centry;
-    if (fChain->GetTreeNumber() != fCurrent) {
-        fCurrent = fChain->GetTreeNumber();
-    }
-    return centry;
-}
-
-
-void JetAnalysis::Show(Long64_t entry)
-{
-    if (!fChain) return;
-    fChain->Show(entry);
-}
-
 //////////////////////////////////
 // Loop over events and particles:
 //////////////////////////////////
@@ -394,6 +264,117 @@ void JetAnalysis::PhysicsFlavor(std::size_t i)
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
 
+double JetAnalysis::PTD()
+{
+    if (mMode==0) return 0;
+    double square = 0, linear = 0;
+    for(size_t q = 0; q != cutJetParts.size(); ++q) {
+        square += pow(cutJetParts[q].pt(),2);
+        linear += cutJetParts[q].pt();
+    }
+    return sqrt(square)/linear;
+}
+
+double JetAnalysis::Sigma2()
+{
+    if (mMode==0) return 0;
+    double weightedDiffs[4] = {0,0,0,0};
+    double phi = 0, eta = 0, pT2 = 0;
+    
+    for(size_t q = 0; q != cutJetParts.size(); ++q) {
+        pT2 += pow(cutJetParts[q].pt(),2);
+        eta += pow(cutJetParts[q].pt(),2)*cutJetParts[q].eta();
+        phi += pow(cutJetParts[q].pt(),2)*cutJetParts[q].phi();
+    }
+    eta /= pT2; phi /= pT2;
+
+    for(unsigned int q = 0; q != cutJetParts.size(); ++q) 
+    {
+        double deltaEta = eta-cutJetParts[q].eta();
+        double deltaPhi = TVector2::Phi_mpi_pi( phi-cutJetParts[q].phi() );
+        double pT2Tmp = pow(cutJetParts[q].pt(),2);
+        weightedDiffs[0] += pT2Tmp*deltaEta*deltaEta;
+        weightedDiffs[3] += pT2Tmp*deltaPhi*deltaPhi;
+        weightedDiffs[1] -= pT2Tmp*deltaEta*deltaPhi;    
+    }
+    weightedDiffs[2] = weightedDiffs[1];
+
+    TMatrixDSymEigen me( TMatrixDSym(2,weightedDiffs) );
+    TVectorD eigenvals = me.GetEigenValues();
+
+    return sqrt(eigenvals[1]/pT2);
+}
+
+void JetAnalysis::Cuts()
+{
+    cutJetParts.clear();
+    vector<fastjet::PseudoJet> tmpParts;
+    bool cutMode = false;
+    
+    if (cutMode) {
+        /* Explicit cuts */
+        for ( auto q : jetParts ) {
+            if ( q.user_index() < 0) continue;
+            int id = abs(fPDGCode[ q.user_index() ]);
+            if (!( q.pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) {
+                tmpParts.push_back( q );
+            }
+        }
+        
+        /* Implicit cuts */
+        for ( auto q : tmpParts ) {
+            int id = abs(fPDGCode[ q.user_index() ]);
+            if ( !IsHadron(id) || ( (IsCharged(id) && q.pt()>0.3) || 
+                (!IsCharged(id) && q.pt()>3) ) )
+            {
+                cutJetParts.push_back( q );
+            }
+        }
+    } else {
+        for ( auto q : jetParts ) {
+            cutJetParts.push_back(q);
+        }
+    }
+}
+
+
+bool JetAnalysis::IsHadron(int pdg)
+{
+    if(pdg>99) return true;
+    return false;
+}
+
+bool JetAnalysis::IsCharged(int pdg)
+{
+    int charge = 0;
+    /* photons and neutrinos */
+    if (pdg==22 || pdg==12 || pdg==14 ||pdg==16 ) return false;
+    /* charged leptons */
+    if (pdg==11 || pdg==13 || pdg==15 ) return true; 
+
+    pdg = (pdg/10)%1000;
+    if (pdg < 100) { /* Mesons */
+        if ((pdg%10)%2 == 0) { charge += 2; }
+        else { charge -= 1; }
+        
+        if ((pdg/10)%2 == 0) { charge -= 2; }
+        else { charge += 1; }
+        
+    } else { /* Baryons */
+        while (pdg != 0) {
+            int digit = pdg%10;
+            pdg = pdg/10;
+            if (digit%2 == 0) { charge += 2; }
+            else { charge -= 1; } 
+        }
+    }
+    if (charge == 0) return false;
+    else return true; 
+}
+
+
+// OLD ROUTINES:
+
 void JetAnalysis::FlavorLoop(size_t i)
 {
    /* Particle identification.
@@ -619,115 +600,6 @@ void JetAnalysis::FillerHandle( vector<TProfile*> &hists, double pt, double scal
     hists[15]->Fill( pt, mOthers.Et()  /scale );
 }
 
-void JetAnalysis::Cuts()
-{
-    cutJetParts.clear();
-    vector<fastjet::PseudoJet> tmpParts;
-    bool cutMode = false;
-    
-    if (cutMode) {
-        /* Explicit cuts */
-        for ( auto q : jetParts ) {
-            if ( q.user_index() < 0) continue;
-            int id = abs(fPDGCode[ q.user_index() ]);
-            if (!( q.pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) ) {
-                tmpParts.push_back( q );
-            }
-        }
-        
-        /* Implicit cuts */
-        for ( auto q : tmpParts ) {
-            int id = abs(fPDGCode[ q.user_index() ]);
-            if ( !IsHadron(id) || ( (IsCharged(id) && q.pt()>0.3) || 
-                (!IsCharged(id) && q.pt()>3) ) )
-            {
-                cutJetParts.push_back( q );
-            }
-        }
-    } else {
-        for ( auto q : jetParts ) {
-            cutJetParts.push_back(q);
-        }
-    }
-}
-
-
-bool JetAnalysis::IsHadron(int pdg)
-{
-    if(pdg>99) return true;
-    return false;
-}
-
-bool JetAnalysis::IsCharged(int pdg)
-{
-    int charge = 0;
-    /* photons and neutrinos */
-    if (pdg==22 || pdg==12 || pdg==14 ||pdg==16 ) return false;
-    /* charged leptons */
-    if (pdg==11 || pdg==13 || pdg==15 ) return true; 
-
-    pdg = (pdg/10)%1000;
-    if (pdg < 100) { /* Mesons */
-        if ((pdg%10)%2 == 0) { charge += 2; }
-        else { charge -= 1; }
-        
-        if ((pdg/10)%2 == 0) { charge -= 2; }
-        else { charge += 1; }
-        
-    } else { /* Baryons */
-        while (pdg != 0) {
-            int digit = pdg%10;
-            pdg = pdg/10;
-            if (digit%2 == 0) { charge += 2; }
-            else { charge -= 1; } 
-        }
-    }
-    if (charge == 0) return false;
-    else return true; 
-}
-
-
-double JetAnalysis::PTD()
-{
-    if (mMode==0) return 0;
-    double square = 0, linear = 0;
-    for(size_t q = 0; q != cutJetParts.size(); ++q) {
-        square += pow(cutJetParts[q].pt(),2);
-        linear += cutJetParts[q].pt();
-    }
-    return sqrt(square)/linear;
-}
-
-double JetAnalysis::Sigma2()
-{
-    if (mMode==0) return 0;
-    double weightedDiffs[4] = {0,0,0,0};
-    double phi = 0, eta = 0, pT2 = 0;
-    
-    for(size_t q = 0; q != cutJetParts.size(); ++q) {
-        pT2 += pow(cutJetParts[q].pt(),2);
-        eta += pow(cutJetParts[q].pt(),2)*cutJetParts[q].eta();
-        phi += pow(cutJetParts[q].pt(),2)*cutJetParts[q].phi();
-    }
-    eta /= pT2; phi /= pT2;
-
-    for(unsigned int q = 0; q != cutJetParts.size(); ++q) 
-    {
-        double deltaEta = eta-cutJetParts[q].eta();
-        double deltaPhi = TVector2::Phi_mpi_pi( phi-cutJetParts[q].phi() );
-        double pT2Tmp = pow(cutJetParts[q].pt(),2);
-        weightedDiffs[0] += pT2Tmp*deltaEta*deltaEta;
-        weightedDiffs[3] += pT2Tmp*deltaPhi*deltaPhi;
-        weightedDiffs[1] -= pT2Tmp*deltaEta*deltaPhi;    
-    }
-    weightedDiffs[2] = weightedDiffs[1];
-
-    TMatrixDSymEigen me( TMatrixDSym(2,weightedDiffs) );
-    TVectorD eigenvals = me.GetEigenValues();
-
-    return sqrt(eigenvals[1]/pT2);
-}
-
 void JetAnalysis::WriteResults()
 {
     fOutFile2 = new TFile(fOutFileName.c_str(),"RECREATE");
@@ -749,4 +621,134 @@ void JetAnalysis::WriteResults()
     }
     
     fOutFile2->Close();
+}
+
+/////////
+// Setup:
+/////////
+
+JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2, 
+                         int mode, int definition ) 
+                         : fChain(0), mMode(mode), mDefinition(definition)
+{
+    assert(tree);
+    Init(tree);
+
+    /* Tree: autosave every 1 Gb, 10 Mb cache */ 
+    fOutFile = new TFile(outFile1, "RECREATE");
+    fOutFile->SetCompressionLevel(1);
+    fOutTree = new TTree("JetTree","Tree with jet data");
+    fOutTree->SetAutoSave(1000000000); fOutTree->SetCacheSize(10000000);  
+    TTree::SetBranchStyle(1);
+    fOutFileName = outFile2;
+    fjEvent = new JetEvent;
+    fJetBranch = fOutTree->Branch("event", &fjEvent, 32000, 4);
+    fJetBranch->SetAutoDelete(kFALSE);
+    fOutTree->BranchRef();
+
+    gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
+
+    InitCI();
+    InitFP();
+
+    jetsPerEvent = 2;
+    if (mode==0) jetsPerEvent = 100;
+    if (mode==1) jetsPerEvent = 2;
+    if (mode==2||mode==3) jetsPerEvent = 1;
+    if (mode==4) jetsPerEvent = 4;
+
+    mUnpaired = 0; mDuplicate = 0;
+}
+
+JetAnalysis::~JetAnalysis()
+{
+    delete fjEvent; fjEvent = 0;
+    if (!fChain) return;
+    delete fChain->GetCurrentFile();
+    if (!fOutTree) return;
+    delete fOutTree->GetCurrentFile();
+}
+
+
+/* Initializes the tree that is read */
+void JetAnalysis::Init(TTree *tree)
+{
+    /* Set branch addresses and branch pointers */
+    if (!tree) return;
+    fChain = tree;
+    fCurrent = -1;
+    fChain->SetMakeClass(1);
+
+    fChain->SetBranchAddress("fWeight", &fWeight, &b_fWeight);
+    fChain->SetBranchAddress("fPrtcls", &fPrtcls_, &b_fPrtcls_);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fX", fX, &b_fX);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fY", fY, &b_fY);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fZ", fZ, &b_fZ);
+    fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT, &b_fT);
+    fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode, &b_fPDGCode);
+    fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus, &b_fAnalysisStatus);
+}
+
+void JetAnalysis::InitCI(){
+    // Create file on which histogram(s) can be saved.
+    chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
+    chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
+    chargeIndicator.push_back(new TH1D("gluonjet charge","",30,-15,15) );
+    chargeIndicator.push_back(new TH1D("quarkjet charge","",30,-15,15) );
+    chargeIndicator.push_back(new TH1D("gluonjet wcharge","",200,-1,1) );
+    chargeIndicator.push_back(new TH1D("quarkjet wcharge","",200,-1,1) );
+    chargeIndicator.push_back(new TH1D("gluonjet w2charge","",200,-0.8,0.8) );
+    chargeIndicator.push_back(new TH1D("quarkjet w2charge","",200,-0.8,0.8) );
+    chargeIndicator.push_back(new TH1D("gluonjet w","",250,0,1) );
+    chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
+}
+
+void JetAnalysis::InitFP(){
+    for (int idx = 0; idx != 16; ++idx){
+        std::stringstream tmpString("");
+        tmpString << "g" << idx;
+        fractionProfilesGluon.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "q" << idx;
+        fractionProfilesQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "lq" << idx;
+        fractionProfilesLQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "hq" << idx;
+        fractionProfilesHQuark.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+        tmpString.str("");
+        tmpString << "a" << idx;
+        fractionProfilesAll.push_back(new TProfile(tmpString.str().c_str(),"",ptBins,ptRange));
+    }
+}
+
+///////////////////////////////////////////////////
+// Generic functions, these should not be modified:
+///////////////////////////////////////////////////
+
+Int_t JetAnalysis::GetEntry(Long64_t entry)
+{
+    if (!fChain) return 0;
+    return fChain->GetEntry(entry);
+}
+
+
+Long64_t JetAnalysis::LoadTree(Long64_t entry)
+{
+    /* Set the environment to read one entry */
+    if (!fChain) return -5;
+    Long64_t centry = fChain->LoadTree(entry);
+    if (centry < 0) return centry;
+    if (fChain->GetTreeNumber() != fCurrent) {
+        fCurrent = fChain->GetTreeNumber();
+    }
+    return centry;
+}
+
+
+void JetAnalysis::Show(Long64_t entry)
+{
+    if (!fChain) return;
+    fChain->Show(entry);
 }
