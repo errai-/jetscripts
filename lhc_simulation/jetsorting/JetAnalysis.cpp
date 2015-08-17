@@ -14,8 +14,9 @@ void JetAnalysis::EventLoop()
     Long64_t nentries = fChain->GetEntries();
     mTimer.setParams(nentries,2000); mTimer.startTiming();
 
-    // fastjet setup
-    fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
+    /* Fastjet algorithm */
+    fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best); 
+    //(fastjet::genkt_algorithm, R, power);
     
     int good=0,bad=0;
 
@@ -30,14 +31,18 @@ void JetAnalysis::EventLoop()
         ParticlesToJetsorterInput();
 
         if ( hardStudy ) {
+            mJetVars.Alpha = 0; mJetVars.DR = 0; mJetVars.DPhi = 0;
+            mJetVars.PTD = 0; mJetVars.Sigma2 = 0; mJetVars.constituents = 0;
+            mJetVars.matchPT = 0; mJetVars.partonPT = 0;
+            mJetVars.chf = 0; mJetVars.nhf = 0; mJetVars.phf = 0; mJetVars.elf = 0; mJetVars.muf = 0;
+            mJetVars.chm = 0; mJetVars.nhm = 0; mJetVars.phm = 0; mJetVars.elm = 0; mJetVars.mum = 0;
+            
             for ( auto i : mPartonList ) {
                 fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),
-                                hiddenInputs[i].e(),0,0,0,0,0,0,0,0,0,0,fWeight,
-                                abs(hiddenInputs[i].user_index()),0,0,0,0,0,0,0);
+                                hiddenInputs[i].e(),mJetVars,fWeight,
+                                abs(hiddenInputs[i].user_index()));
             }
         } else {
-            /* Fastjet algorithm */
-            fastjet::JetDefinition jetDef(fastjet::genkt_algorithm, R, power); //(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best);
             fastjet::ClusterSequence clustSeq(fjInputs, jetDef);
             vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
             sortedJets = sorted_by_pt( unsorteds );
@@ -74,12 +79,12 @@ bool JetAnalysis::GoodEvent()
           *  -Minimum pT of 30 GeV.
           *  -Max eta of 2.5
           *  -A third jet has at most 30% of the average pt of the leading jets */
-        mAlpha = (sortedJets.size() > 2) ? 2*sortedJets[2].pt()/fabs(sortedJets[0].pt()+sortedJets[1].pt()) : 0;
-        mDPhi = fabs(sortedJets[0].delta_phi_to( sortedJets[1] ));
+        mJetVars.Alpha = (sortedJets.size() > 2) ? 2*sortedJets[2].pt()/fabs(sortedJets[0].pt()+sortedJets[1].pt()) : 0;
+        mJetVars.DPhi = fabs(sortedJets[0].delta_phi_to( sortedJets[1] ));
         
         if (   (sortedJets.size()<2)
-            || (mAlpha > 0.30) 
-            || (mDPhi < 2.8 )
+            || (mJetVars.Alpha > 0.30) 
+            || (mJetVars.DPhi < 2.8 )
             || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
             || ( sortedJets[1].pt()<30 ))
         {
@@ -92,13 +97,14 @@ bool JetAnalysis::GoodEvent()
           *  -Minimum pT of 30 GeV
           *  -A cut for the subleading jet pT with respect to gamma pT 
           *  -Max eta of 2.5 */
-        mAlpha = (sortedJets.size()>1) ? sortedJets[1].pt()/hiddenInputs[mGammaId].pt() : 0;
-        mDPhi = fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0]));
+        mJetVars.Alpha = (sortedJets.size()>1) ? sortedJets[1].pt()/hiddenInputs[mGammaId].pt() : 0;
+        mJetVars.DPhi = fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0]));
+        mJetVars.matchPT = hiddenInputs[mGammaId].pt();
         
         if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R )
             || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
-            || ( mDPhi < 2.8 )
-            || ( mAlpha > 0.3 )
+            || ( mJetVars.DPhi < 2.8 )
+            || ( mJetVars.Alpha > 0.3 )
             || ( fabs(sortedJets[0].eta()) > 2.5 || fabs(hiddenInputs[mGammaId].eta()) > 2.5 ) )
         {
             return false;
@@ -126,12 +132,13 @@ bool JetAnalysis::GoodEvent()
         /* Dimuon system */
         fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
         tmpVec += hiddenInputs[mMuonList[1]];
-        mAlpha = (sortedJets.size() > 1 ) ? sortedJets[1].pt()/tmpVec.pt() : 0;
-        mDPhi = tmpVec.delta_phi_to( sortedJets[0] );
-
-        if (   ( mAlpha > 0.3 )
+        mJetVars.Alpha = (sortedJets.size() > 1 ) ? sortedJets[1].pt()/tmpVec.pt() : 0;
+        mJetVars.DPhi = tmpVec.delta_phi_to( sortedJets[0] );
+        mJetVars.matchPT = tmpVec.pt();
+        
+        if (   ( mJetVars.Alpha > 0.3 )
             || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
-            || ( mDPhi < 2.5 )
+            || ( mJetVars.DPhi < 2.5 )
             || ( fabs(sortedJets[0].eta())>2.5 ) )
 
         {
@@ -202,9 +209,12 @@ void JetAnalysis::JetLoop(int jentry)
         int multiplicity = 0;
         if (mMode==0) {
             mFlavour = 0;
-            mDR = 0;
-            mAlpha = 0;
-            mDPhi = 0;
+            mJetVars.DR = 0;
+            mJetVars.Alpha = 0;
+            mJetVars.DPhi = 0;
+            mJetVars.constituents = 0;
+            mJetVars.PTD = 0;
+            mJetVars.Sigma2 = 0;
         } else {
             if (mDefinition == 1) {
                 PhysicsFlavor(i);
@@ -213,7 +223,9 @@ void JetAnalysis::JetLoop(int jentry)
             }
 
             Cuts();
-            multiplicity = cutJetParts.size();
+            mJetVars.constituents = cutJetParts.size();
+            mJetVars.PTD = PTD();
+            mJetVars.Sigma2 = Sigma2();
         }
 
         ParticleLoop(i); /* Operations on jet particles */
@@ -223,8 +235,7 @@ void JetAnalysis::JetLoop(int jentry)
         HistFill(i);
 
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
-            sortedJets[i].e(),mChf,mNhf,mPhf,mElf,mMuf,mChm,mNhm,mPhm,mElm,mMum,
-            fWeight,mFlavour,multiplicity,PTD(),Sigma2(),mDR,mAlpha,mDPhi,mPartonPT);
+            sortedJets[i].e(),mJetVars,fWeight,mFlavour);
     }
 }
 
@@ -233,7 +244,7 @@ void JetAnalysis::JetLoop(int jentry)
 void JetAnalysis::PhysicsFlavor(std::size_t i) 
 {
     mFlavour = 0;
-    mPartonPT = 0;
+    mJetVars.partonPT = 0;
     double dR_min = 10; Int_t id_min = -1; 
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( hiddenInputs[k] );
@@ -241,7 +252,7 @@ void JetAnalysis::PhysicsFlavor(std::size_t i)
         if ( dR < dR_min ) {
             dR_min = dR;
             id_min = k;
-            mPartonPT = hiddenInputs[k].pt();
+            mJetVars.partonPT = hiddenInputs[k].pt();
         }
         
         if ( dR < 0.3 ) {
@@ -259,7 +270,7 @@ void JetAnalysis::PhysicsFlavor(std::size_t i)
         ++mUnpaired;
         mFlavour = -abs(hiddenInputs[id_min].user_index());
     }
-    mDR = dR_min;
+    mJetVars.DR = dR_min;
     mIsHadron = 0;
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
@@ -521,8 +532,8 @@ void JetAnalysis::TypeSort()
     tmpLorentz += mProton;
     tmpLorentz += mAproton;
     tmpLorentz += mSigma;
-    mChf = tmpLorentz.Et()/mEtSum.Et();
-    mChm = tmpLorentz.M();
+    mJetVars.chf = tmpLorentz.Et()/mEtSum.Et();
+    mJetVars.chm = tmpLorentz.M();
     tmpLorentz = zero;
     
     tmpLorentz += mKSZero;
@@ -530,20 +541,20 @@ void JetAnalysis::TypeSort()
     tmpLorentz += mNeutron;
     tmpLorentz += mAneutron;
     tmpLorentz += mLambda0;
-    mNhf = tmpLorentz.Et()/mEtSum.Et();
-    mNhm = tmpLorentz.M();
+    mJetVars.nhf = tmpLorentz.Et()/mEtSum.Et();
+    mJetVars.nhm = tmpLorentz.M();
     tmpLorentz = zero;
     
     tmpLorentz += mPi0Gamma;
     tmpLorentz += mGamma;
-    mPhf = tmpLorentz.Et()/mEtSum.Et();
-    mPhm = tmpLorentz.M();
+    mJetVars.phf = tmpLorentz.Et()/mEtSum.Et();
+    mJetVars.phm = tmpLorentz.M();
     
-    mElf = mElec.Et()/mEtSum.Et();
-    mElm = mElec.M();
+    mJetVars.elf = mElec.Et()/mEtSum.Et();
+    mJetVars.elm = mElec.M();
     
-    mMuf = mMuon.Et()/mEtSum.Et();
-    mMum = mMuon.M();
+    mJetVars.muf = mMuon.Et()/mEtSum.Et();
+    mJetVars.mum = mMuon.M();
 }
 
 void JetAnalysis::HistFill(int i){

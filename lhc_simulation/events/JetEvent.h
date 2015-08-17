@@ -19,6 +19,32 @@
 #include "Math/Vector3D.h"
 #include "Math/Vector4D.h"
 
+struct JetVariables
+{
+    double chf;
+    double nhf;
+    double phf;
+    double elf;
+    double muf;
+    
+    double chm;
+    double nhm;
+    double phm;
+    double elm;
+    double mum;
+    
+    double partonPT;
+    double matchPT;
+    
+    int constituents;
+    double PTD;
+    double Sigma2;
+    
+    double DR;
+    double Alpha;
+    double DPhi;
+};
+
 
 // The information concerning one jet, stored to a ROOT tree.
 class JetData : public TObject {
@@ -27,8 +53,7 @@ public:
     virtual ~JetData() { }
     
     void SetPxPyPzE(double,double,double,double);
-    void SetParams(double,double,double,double,double,double,double,double,
-        double,double,int,int,double,double,double,double,double,double);
+    void SetParams(JetVariables&,int);
     
     Double_t P() const { return fP4.P(); }
     Double_t Pt() const { return fP4.Pt(); }
@@ -42,7 +67,7 @@ private:
     * format than TLorentzVector and is in use for instance in the KKousouris 
     * scripts (indirectly, through CMSSW). */ 
     ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
-    
+
     double fChf;
     double fNhf;
     double fPhf;
@@ -57,6 +82,7 @@ private:
     
     int fFlav;
     double fPartonPT;
+    double fMatchPT;
     
     int fConstituents;
     double fPTD;
@@ -77,8 +103,7 @@ public:
     JetEvent(size_t = 1000);
     virtual ~JetEvent();
 
-    void AddJet(double,double,double,double,double,double,double,double,double,
-        double,double,double,double,double,double,int,int,double,double,double,double,double,double);
+    void AddJet(double,double,double,double,JetVariables&,double,int);
     JetData *InitJet();
     
     void Clear(Option_t *option ="");

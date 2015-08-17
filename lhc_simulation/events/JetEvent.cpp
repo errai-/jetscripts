@@ -15,29 +15,27 @@ void JetData::SetPxPyPzE(double px, double py, double pz, double e)
 }
 
 
-void JetData::SetParams(double chf, double nhf, double phf, double elf, double 
-    muf, double chm, double nhm, double phm, double elm, double mum, int flav,
-    int constit, double PTD, double S2, double dR, double alpha, double dPhi,
-    double partonPT)
+void JetData::SetParams(JetVariables& vars, int flav)
 {
-    fChf = chf;
-    fNhf = nhf;
-    fPhf = phf;
-    fElf = elf;
-    fMuf = muf;
-    fChm = chm;
-    fNhm = nhm;
-    fPhm = phm;
-    fElm = elm;
-    fMum = mum;
+    fChf = vars.chf;
+    fNhf = vars.nhf;
+    fPhf = vars.phf;
+    fElf = vars.elf;
+    fMuf = vars.muf;
+    fChm = vars.chm;
+    fNhm = vars.nhm;
+    fPhm = vars.phm;
+    fElm = vars.elm;
+    fMum = vars.mum;
     fFlav = flav;
-    fConstituents = constit;
-    fPTD = PTD;
-    fSigma2 = S2;
-    fDR = dR;
-    fAlpha = alpha;
-    fDPhi = dPhi;
-    fPartonPT = partonPT;
+    fConstituents = vars.constituents;
+    fPTD = vars.PTD;
+    fSigma2 = vars.Sigma2;
+    fDR = vars.DR;
+    fAlpha = vars.Alpha;
+    fDPhi = vars.DPhi;
+    fPartonPT = vars.partonPT;
+    fMatchPT = vars.matchPT;
 }
 
 
@@ -58,10 +56,7 @@ JetEvent::~JetEvent()
 }
 
 
-void JetEvent::AddJet( double Px, double Py, double Pz, double E, double Chf, 
-    double Nhf, double Phf, double Elf, double Muf, double Chm, double Nhm, 
-    double Phm, double Elm, double Mum, double weight, int flav, int constit,
-    double PTD, double S2, double dR, double alpha, double dPhi, double partonPT)
+void JetEvent::AddJet( double Px, double Py, double Pz, double E, JetVariables& jetVars, double weight, int flav)
 {
     Int_t ObjectNumber = TProcessID::GetObjectCount();
     
@@ -70,7 +65,7 @@ void JetEvent::AddJet( double Px, double Py, double Pz, double E, double Chf,
     jet = InitJet();
     fWeight = weight;
     jet->SetPxPyPzE(Px,Py,Pz,E);
-    jet->SetParams(Chf,Nhf,Phf,Elf,Muf,Chm,Nhm,Phm,Elm,Mum,flav,constit,PTD,S2,dR,alpha,dPhi,partonPT);
+    jet->SetParams(jetVars,flav);
     
     TProcessID::SetObjectCount(ObjectNumber);
 }

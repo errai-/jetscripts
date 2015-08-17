@@ -125,7 +125,7 @@ namespace
                     /* Gluon or quark from the hard process */
                     ParticleAdd(pEvent,event[prt],3);
                     ++hardCount;
-                } else if ( event[prt].idAbs() < 20 ) {
+                } else if ( mode==4 && event[prt].idAbs() < 20 ) {
                     /* Leptons, top events */
                     if (!HardProcess( event, pEvent, skipIndices, prt, mode )) return false;
                 }
@@ -136,7 +136,7 @@ namespace
                 bool ZCase = (mode==3 && event[prt].idAbs()==23);
                 
                 // Exclude leptons and uninteresting cases
-                if ( ZCase || gammaCase ) {
+                if ( (ZCase && skipIndices.size()<2) || (gammaCase && skipIndices.size()<1) ) {
                     if (!HardProcess( event, pEvent, skipIndices, prt, mode )) return false;
                     ++hardCount;
                 }
@@ -167,6 +167,7 @@ namespace
             || (mode==3 && skipIndices.size()!=2 ) 
             || (mode==4 && hardCount != 4) ) {
             cout << "Unexpected hard process structure" << endl;
+            event.list();
             return false;
         }
         return true;

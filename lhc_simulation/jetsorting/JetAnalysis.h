@@ -91,11 +91,8 @@ private:
 ///////////
 // Fastjet:
 ///////////
-    int power     = -1;     /* -1 = ant-kT; 0 = C/A; 1 = kT */
     double R      = 0.5;    /* Jet size. */
-    double pTMin  = 10.0;   /* Min jet pT */
-    double etaMax = 1.3;    /* Pseudorapidity range */
-    int jetsPerEvent = 2;   /* How many leading jets are stored in a run /
+    int jetsPerEvent;   /* How many leading jets are stored in a run /
 
     /* PseudoJet storages */
     vector<fastjet::PseudoJet> sortedJets, jetParts, cutJetParts, 
@@ -193,27 +190,9 @@ private:
  
     /* Weights etc.: */
     double mChargSum, mChargWSum, mChargW2Sum, mW2;
-    double mPartonPT;
     int mQuarkJetCharge, mFlavour, mIsHadron;
     
-    /* Temporary fractions: */
-    double mChf;
-    double mNhf;
-    double mPhf;
-    double mElf;
-    double mMuf;
-    
-    /* Temporary masses: */
-    double mChm;
-    double mNhm;
-    double mPhm;
-    double mElm;
-    double mMum;
-    
-    /* Temporary indicators: */
-    double mDR;
-    double mAlpha;
-    double mDPhi;
+    JetVariables mJetVars;
 };
 
 #endif // JETANALYSIS_H
