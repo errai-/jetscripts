@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 // File for auxiliary functions and classes for pythia8 event generation //
-// Hannu Siikonen 03.05.2015                                              //
+// Hannu Siikonen 18.08.2015                                             //
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef PYTHIA8_FUNCTIONS
@@ -40,7 +40,9 @@ namespace
     int GammaChecker(Event&, int);
     int IsExcitedHadronState(Event&, int, int);
     void GhostParticleAdd(PrtclEvent*, Event&, size_t);
-    bool HardProcess(Event&, PrtclEvent*, vector<std::size_t>&, std::size_t, const int );
+    bool GammaAdd(Event&, PrtclEvent*, vector<std::size_t>&, std::size_t );
+    bool MuonAdd(Event&, PrtclEvent*, vector<std::size_t>&, std::size_t );
+    bool LeptonAdd(Event&, PrtclEvent*, vector<std::size_t>&, std::size_t );
 
     /* Main loop for storing events
     *  mode:
@@ -84,13 +86,16 @@ namespace
         std::size_t ev = 0;
         while (ev != nEvent) {
             if (!pythia.next()) continue;
-//             event.list();
+            //event.list();
 
+            /* Fill tree and increase counter <=> the event is successful.
+             * An infinite loop can be caused by impossible standards. */
             if (Pythia8ParticleLoop(pythia,event,pEvent,mode)) { tree->Fill(); ++ev;}
             pEvent->Clear();
 
             if (ev%timerStep==0) timer.printTime();
         }
+        /* Cleaning up: */
         //pythia.stat();
 
         outFile = tree->GetCurrentFile();
@@ -101,6 +106,7 @@ namespace
         return 0;
     }
 
+    /* A handle for adding particle information */
     void ParticleAdd(PrtclEvent* pEvent, Particle& part, int saveStatus)
     {
         pEvent->AddPrtcl(part.px(),part.py(),part.pz(),part.e(),part.id(),saveStatus);
@@ -109,116 +115,132 @@ namespace
     /* Returns true if event is to be saved */
     bool Pythia8ParticleLoop(Pythia& pythia, Event& event,PrtclEvent* pEvent,const int mode)
     {
-        /* Indicators for stable particle indices saved within the hard process */
-        vector<std::size_t> skipIndices;
+        /* Special particle indices are saved to eliminate overlap. */
+        vector<std::size_t> specialIndices;
         
         pEvent->fWeight = pythia.info.weight();
-        /* Particle loop may save the same particle twice if it is a ghost particle */
-        int hardCount = 0;
-        for (std::size_t prt = 0; prt!=event.size(); ++prt){
-
+        
+        /* Particle loop, save final and interesting particles. */
+        int hardProcCount = 0;
+        for (std::size_t prt = 0; prt!=event.size(); ++prt) {
             /* Check for generic ghost particles (uncomment if hadronic definition is used) */
             //GhostParticleAdd(pEvent,event,prt);
+            
+            // TODO: Chase down the hard process partons on horseback, like men once did
 
-            if ( event[prt].statusAbs()==23 ) { 
+            /* Add the outgoing hard process parton (and lepton in ttbar events) */
+            if ( event[prt].statusAbs()==23 ) {
                 if ( event[prt].isParton() ) {
-                    /* Gluon or quark from the hard process */
-                    ParticleAdd(pEvent,event[prt],3);
-                    ++hardCount;
+                    ParticleAdd( pEvent, event[prt], 3 );
+                    ++hardProcCount;
                 } else if ( mode==4 && event[prt].idAbs() < 20 ) {
-                    /* Leptons, top events */
-                    if (!HardProcess( event, pEvent, skipIndices, prt, mode )) return false;
+                    if (!LeptonAdd( event, pEvent, specialIndices, prt )) return false;
                 }
             }
-            
-            if ( mode>1 && event[prt].statusAbs()==62 ) {
+
+            /* The first status 62 hits correspond to the hard process, use for special particles */
+            if ( mode>1 && specialIndices.size()==0 && event[prt].statusAbs()==62 ) {
                 bool gammaCase = (mode==2 && event[prt].idAbs()==22);
                 bool ZCase = (mode==3 && event[prt].idAbs()==23);
                 
-                // Exclude leptons and uninteresting cases
-                if ( (ZCase && skipIndices.size()<2) || (gammaCase && skipIndices.size()<1) ) {
-                    if (!HardProcess( event, pEvent, skipIndices, prt, mode )) return false;
-                    ++hardCount;
+                if (gammaCase) {
+                    if (!GammaAdd( event, pEvent, specialIndices, prt ) ) return false;
+                    ++hardProcCount;
+                } else if (ZCase) {
+                    if (!MuonAdd( event, pEvent, specialIndices, prt ) ) return false;
+                    ++hardProcCount;
                 }
             }
-            
+
             /* Special final-state particles have already been added */
-            if ( mode==3 && std::count(skipIndices.begin(), skipIndices.end(), prt)>0 ) {
+            if ( std::count( specialIndices.begin(), specialIndices.end(), prt)>0 ) {
                 continue;
             }
-                
-            /* Exclude final-state particles counted in the hard process.
+
+            /* Exclude final-state particles that have already been counted.
                With a generic event type, save pi0 photons with a status 2. */
             if ( event[prt].isFinal() ) {
-                if ( (mode==0) && event[prt].id()==22 &&  GammaChecker(event, prt) ) { 
-                    ParticleAdd(pEvent,event[prt],2);
+                if ( mode==0 && event[prt].id()==22 && GammaChecker(event, prt) ) { 
+                    ParticleAdd( pEvent, event[prt], 2 );
                 } else {
-                    ParticleAdd(pEvent,event[prt],1);
+                    ParticleAdd( pEvent, event[prt], 1 );
                 }
             }
         }
-        /* For ttbar-jets, require that one W has gone to leptons and the other to quarks */
-        if (mode==4 && skipIndices.size()!=2 ) {
+        /* ttbar events: seek lepton+jets (one w to leptons, one to quarks) */
+        if (mode==4 && specialIndices.size()!=2 ) {
             return false;
         }
+        
         /* Sanity checks */
-        if (   (mode<4 && hardCount !=2)
-            || (mode==2 && skipIndices.size()!=1 )
-            || (mode==3 && skipIndices.size()!=2 ) 
-            || (mode==4 && hardCount != 4) ) {
+        if (   (mode<4 && hardProcCount !=2)
+            || (mode==4 && hardProcCount != 4) ) {
             cout << "Unexpected hard process structure" << endl;
             event.list();
             return false;
         }
         return true;
     }
-
-    bool HardProcess(Event& event, PrtclEvent* pEvent, vector<std::size_t>& skipIds, 
-                     std::size_t prt, const int mode )
+    
+    bool GammaAdd(Event& event, PrtclEvent* pEvent, vector<std::size_t>& specIds,
+                  std::size_t prt)
     {
-        if (mode==2) {
-            /* For gammajets, find gamma from the hardest subprocess */
-            if (event[prt].isFinal()) {
-                skipIds.push_back(prt);
-                ParticleAdd(pEvent,event[prt],2);
-            }
-        } else if (mode==3) {
-            /* For Zjets, find the final descendant-muons of the Z0 */
-            for ( int daughter : event[prt].daughterList() ) {
-                if (event[daughter].idAbs()==13) {
-                    skipIds.push_back(daughter);
-                }
-            }
-            
-            /* Descend to the final muon forms */
-            for ( std::size_t i = 0; i < skipIds.size(); ++i ) {
-                while (!event[skipIds[i]].isFinal()) {
-                    vector<int> mus = event[skipIds[i]].daughterList();
-                    for (int daughter : mus) {
-                        if (event[daughter].idAbs()==13) {
-                            skipIds[i] = daughter; break;
-                        }
-                    }
-                }
-                ParticleAdd(pEvent,event[skipIds[i]],2);
-            }
-        } else if (mode==4) {
-            /* For ttbar-events, seek for the final-state leptons */
-            /* For a given neutrino expect neutrino etc. (indicated by type) */
-            int type = event[prt].idAbs()%2;
-            while (!event[prt].isFinal()) {
-                vector<int> leptons = event[prt].daughterList();
-                for (int daughter : leptons) {
-                    if (event[daughter].idAbs()<20 && event[daughter].idAbs()>10) {
-                        if (event[daughter].idAbs()%2==type) {
-                            prt = daughter; break;
-                        }
-                    }
-                }
-            }
-            skipIds.push_back(prt);
+        if (event[prt].isFinal()) {
+            specIds.push_back(prt);
             ParticleAdd(pEvent,event[prt],2);
+            return true;
         }
+        return false;
+    }
+    
+    bool MuonAdd(Event& event, PrtclEvent* pEvent, vector<std::size_t>& specIds,
+                 std::size_t prt)
+    {
+        for ( int daughter : event[prt].daughterList() ) {
+            if (event[daughter].idAbs()==13) {
+                specIds.push_back(daughter);
+            }
+        }
+        
+        /* Descend to the final muon forms */
+        for ( std::size_t i = 0; i < specIds.size(); ++i ) {
+            while (!event[specIds[i]].isFinal()) {
+                vector<int> mus = event[specIds[i]].daughterList();
+                for (int daughter : mus) {
+                    if (event[daughter].idAbs()==13) {
+                        specIds[i] = daughter; break;
+                    }
+                }
+            }
+            ParticleAdd( pEvent, event[specIds[i]], 2 );
+        }
+        
+        if ( specIds.size() != 2 ) return false;
+        return true;
+    }
+
+    bool LeptonAdd(Event& event, PrtclEvent* pEvent, vector<std::size_t>& specIds, 
+                   std::size_t prt )
+    {
+        /* For a given neutrino expect neutrino and for a charged lepton
+            * expect a charged lepton (indicated by type) */
+        int type = event[prt].idAbs()%2;
+        while (!event[prt].isFinal()) {
+            vector<int> leptons = event[prt].daughterList();
+            for (int daughter : leptons) {
+                if (event[daughter].idAbs()<20 && event[daughter].idAbs()>10) {
+                    if (event[daughter].idAbs()%2==type) {
+                        prt = daughter; break;
+                    }
+                }
+            }
+            /* Check if stuck in a loop (for instance if lepton goes to hadrons) */
+            if ( std::count( specIds.begin(), specIds.end(), prt)==0 ) {
+                return false;
+            }
+        }
+        specIds.push_back(prt);
+        ParticleAdd( pEvent, event[prt], 2 );
         return true;
     }
 
@@ -277,7 +299,7 @@ namespace
             if (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(event,prt,3)) {
                 ghostStatus = 5; /* s Hadrons */
             }
-            if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(event,prt,4)) {  
+            if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(event,prt,4)) {
                 ghostStatus = 6; /* c Hadrons */
             }
             if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(event,prt,5)) {

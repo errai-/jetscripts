@@ -105,13 +105,13 @@ namespace
         pythia->SetMSTP(82,4); // MPI model
 
         //pythia->SetMSTP(61,0); // ISR off
-        //pythia->SetMSTP(71,0); // FSR off
+        pythia->SetMSTP(71,0); // FSR off
         //pythia->SetMSTP(81,0); // MPI off
 
         // pythia->SetMSTP(111,0); // Hadronization off
 
-        pythia->Initialize("cms", "p", "p", 13000);
-        //pythia->Initialize("cms", "p", "p", 8000);
+        //pythia->Initialize("cms", "p", "p", 13000);
+        pythia->Initialize("cms", "p", "p", 8000);
         return 1;
     }
 
