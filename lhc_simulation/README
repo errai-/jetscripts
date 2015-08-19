@@ -19,6 +19,8 @@ USED STATUS CODES:
 
 3: Outgoing hardest subprocess
 
+Not in active use (ghost particles):
+
 4: Ghost partons
 5: Ghost s hadron
 6: Ghost c hadron

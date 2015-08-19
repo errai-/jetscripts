@@ -13,7 +13,7 @@ pidArr=()
 NAMES=""
 for (( i=1; i<=$NUM_PROC; i++ ))
 do
-    P8FILE=$(python pythia8_settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
+    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
     ./pythia8.exe $JOB_TYPE $P8FILE &
     pidArr+=($!)
     pidArr+=" "

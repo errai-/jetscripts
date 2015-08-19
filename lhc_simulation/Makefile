@@ -8,7 +8,7 @@ include config.mk
 .SECONDEXPANSION:
 .DELETE_ON_ERROR:
 .PHONY: all clean run_herwig pythia6 run_pythia6 pythia8 run_pythia8 jetanalysis ptcut
-VPATH= events:jetsorting:lib:pythia6:pythia8:herwig
+VPATH= events:jetanalysis:lib:pythia6:pythia8:herwig:ptcut
 
 INCLUDE := $(INCLUDE) -I.
 
@@ -60,49 +60,49 @@ JetDct.cc: JetEvent.h JetLinkDef.h
 
 # Jet analysis
 
-jetanalysis: jetsorting/main_$$@.cpp jetanalysis.o libPrtclEvent.so libJetEvent.so
-	cd jetsorting && $(CXX) main_$@.cpp jetanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
-	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../jetanalysis.exe
+jetanalysis: jetanalysis/main.cpp jetanalysis.o libPrtclEvent.so libJetEvent.so
+	cd jetsorting && $(CXX) main.cpp jetanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
 
-jetanalysis.o: jetsorting/JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
+jetanalysis.o: JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
 	cd jetsorting && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
 
-ptcut: jetsorting/main_$$@.cpp ptcut.o libPrtclEvent.so
-	cd jetsorting && $(CXX) main_$@.cpp ptcut.o -L../lib -lPrtclEvent -w \
+ptcut: ptcut/main.cpp ptcut.o libPrtclEvent.so
+	cd jetsorting && $(CXX) main.cpp ptcut.o -L../lib -lPrtclEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../$@.exe
 
-ptcut.o: jetsorting/PTCut.cpp libPrtclEvent.so
+ptcut.o: PTCut.cpp libPrtclEvent.so
 	cd jetsorting && $(CXX) -c PTCut.cpp -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
 # Pythia8
 
-pythia8: main_$$@.cpp libPrtclEvent.so pythia8_functions.h
-	cd pythia8 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+pythia8: pythia8/main.cpp libPrtclEvent.so pythia8/functions.h
+	cd pythia8 && $(CXX) main.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o pythia8.exe
 
 run_pythia8:
-	bash pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
+	bash bash/pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
 # Pythia6
 
-pythia6: main_$$@.cpp libPrtclEvent.so pythia6_functions.h
-	cd pythia6 && $(CXX) main_$@.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+pythia6: pythia6/main.cpp libPrtclEvent.so pythia6/functions.h
+	cd pythia6 && $(CXX) main.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(LHAPDF) $(PYTHIA6) -ldl -o pythia6.exe
 
 run_pythia6:
-	bash pythia6.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
+	bash bash/pythia6.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
 # Herwig
 
-libStoreParticles.so : StoreParticles.cc libPrtclEvent.so
+libStoreParticles.so : StoreParticles.cc StoreParticles.h libPrtclEvent.so
 	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \
 	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
 
 run_herwig:
-	bash herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
+	bash bash/herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
 # Clean.
 clean:

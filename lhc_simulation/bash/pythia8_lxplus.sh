@@ -21,7 +21,7 @@ pidArr=()
 NAMES=""
 for (( i=1; i<=$NUM_PROC; i++ ))
 do
-    cp $WRKDIR/pythia8_settings.py settings.py
+    cp $WRKDIR/settings.py .
     P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
     $WRKDIR/pythia8.exe $JOB_TYPE $P8FILE & 
     pidArr+=($!)
