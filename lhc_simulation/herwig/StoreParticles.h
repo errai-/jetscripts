@@ -103,8 +103,6 @@ protected:
     
     Timer *timer;
     int timerStep = 1000;
-    
-    double unitConversion;
     //@}
 private:
     /* The assignment operator is private and must never be called nor implemented. */
