@@ -25,8 +25,8 @@ using std::vector;
 const bool ptPlots = true;
 const bool uptPlots = false;
 const bool etaPlots = false;
-const bool debugPlots = false;
-const bool indicatorPlots = true;
+const bool debugPlots = true;
+const bool indicatorPlots = false;
 const bool separatorPlots = false;
 
 const int sampleType=1;

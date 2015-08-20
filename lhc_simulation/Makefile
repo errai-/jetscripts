@@ -1,6 +1,6 @@
 ###################################################################
 ## Makefile for building ROOT-fastjet analysis of simulated data ## 
-## Hannu Siikonen, 6.5.2015                                      ##  
+## Hannu Siikonen, 20.8.2015                                     ##  
 ###################################################################
 
 include config.mk
@@ -61,27 +61,31 @@ JetDct.cc: JetEvent.h JetLinkDef.h
 # Jet analysis
 
 jetanalysis: jetanalysis/main.cpp jetanalysis.o libPrtclEvent.so libJetEvent.so
-	cd jetsorting && $(CXX) main.cpp jetanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
+	cd jetanalysis && $(CXX) main.cpp jetanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
 
 jetanalysis.o: JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
-	cd jetsorting && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
+	cd jetanalysis && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
 
 ptcut: ptcut/main.cpp ptcut.o libPrtclEvent.so
-	cd jetsorting && $(CXX) main.cpp ptcut.o -L../lib -lPrtclEvent -w \
+	cd ptcut && $(CXX) main.cpp ptcut.o -L../lib -lPrtclEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../$@.exe
 
 ptcut.o: PTCut.cpp libPrtclEvent.so
-	cd jetsorting && $(CXX) -c PTCut.cpp -L../lib -lPrtclEvent $(INCLUDE) \
+	cd ptcut && $(CXX) -c PTCut.cpp -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) -w $(ROOT) -ldl -o $@
 
 # Pythia8
 
-pythia8: pythia8/main.cpp libPrtclEvent.so pythia8/functions.h
-	cd pythia8 && $(CXX) main.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+pythia8: pythia8/main.cpp pythia8.o libPrtclEvent.so
+	cd pythia8 && $(CXX) main.cpp pythia8.o -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) -ldl -o pythia8.exe
+
+pythia8.o: Pythia8Tree.cpp libPrtclEvent.so
+	cd pythia8 && $(CXX) -c Pythia8Tree.cpp -L../lib -lPrtclEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(PYTHIA8) -ldl -o $@
 
 run_pythia8:
 	bash bash/pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
@@ -97,8 +101,8 @@ run_pythia6:
 
 # Herwig
 
-libStoreParticles.so : StoreParticles.cc StoreParticles.h libPrtclEvent.so
-	cd herwig && $(CXX) -shared -fPIC StoreParticles.cc \
+libHerwigppTree.so : HerwigppTree.cpp HerwigppTree.h libPrtclEvent.so
+	cd herwig && $(CXX) -shared -fPIC HerwigppTree.cpp \
 	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
 
 run_herwig:
