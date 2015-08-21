@@ -1,10 +1,27 @@
+//////////////////////////////////////////////////////////////////////
+//                                                                  //
+// A class structure for storing particle data produced with event  //
+// generators (e.g. Pythia6/Pythia8/Herwig++) into ROOT trees.      //
+//                                                                  //
+// IMPORTANT NOTES:                                                 //
+//                                                                  //
+//  - fAnalysisStatus is a purely user-defined index for indicating //
+//    why a particle has been saved. Example:                       //
+//     1: final state particles                                     //
+//     2: final state particles which have interesting properties   //
+//     3: partons saved for flavor studies                          //
+//                                                                  //
+//  - This class structure includes some "bad c++" because of       //
+//    the way how ROOT works. Thus for instance some missing        //
+//    semicolons should not be corrected.                           //
+//                                                                  //
+// Author: Hannu Siikonen (errai- @GitHub)                          //
+// Last modification: 21.8.2015                                     //
+//                                                                  //
+//////////////////////////////////////////////////////////////////////
+
 #ifndef PRTCLEVENT_H
 #define PRTCLEVENT_H
-
-///////////////////////////////////////////////////////////////////////
-// A generic event class for storing particle data from simulations. //
-// Hannu Siikonen 19.5.2015                                          //
-///////////////////////////////////////////////////////////////////////
 
 #include <iostream>
 #include <cmath>
@@ -56,7 +73,7 @@ public:
 class PrtclEvent : public TObject 
 {
 public:
-    PrtclEvent(size_t = 10000);
+    PrtclEvent();
     virtual ~PrtclEvent() { Reset(); };
 
     void AddPrtcl(double,double,double,double,int,int);
@@ -70,7 +87,6 @@ public:
 
 private:
     size_t fN_Prtcl; //! Present amount of particles in the tree 
-    size_t fSizeLim; //! Maximal amount of particles within an event
     
     TClonesArray *fPrtcls;
     static TClonesArray *fgPrtcls;

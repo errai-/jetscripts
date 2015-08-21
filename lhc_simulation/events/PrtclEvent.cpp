@@ -23,13 +23,13 @@ void PrtclData::SetParams(int id, int status)
 }
 
 
-PrtclEvent::PrtclEvent(size_t storageSize)
+PrtclEvent::PrtclEvent()
 {
     Class()->IgnoreTObjectStreamer();
     PrtclData::Class()->IgnoreTObjectStreamer();
     fN_Prtcl = 0;
-    if (!fgPrtcls) fgPrtcls = new TClonesArray("PrtclData",storageSize);
-    fSizeLim = storageSize;
+    /* TClonesArray is dynamic in size, use 1000 for an approximation of the memory needed */
+    if (!fgPrtcls) fgPrtcls = new TClonesArray("PrtclData",1000);
     fPrtcls = fgPrtcls;
 }
 
@@ -49,7 +49,6 @@ void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id, int
 
 PrtclData* PrtclEvent::InitPrtcl()
 {
-    assert(fSizeLim>fN_Prtcl);
     PrtclData *part = (PrtclData*) fPrtcls->ConstructedAt(fN_Prtcl++);
     return part;
 }
