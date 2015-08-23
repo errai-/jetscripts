@@ -20,7 +20,7 @@
 //       - Ttbar production with WW -> qqbarllbar                 //
 //                                                                //
 // Author: Hannu Siikonen (errai- @GitHub)                        //
-// Last modification: 20.8.2015                                   //
+// Last modification: 21.8.2015                                   //
 //                                                                //
 ////////////////////////////////////////////////////////////////////
 
@@ -41,8 +41,10 @@
 
 #include "../generic/help_functions.h"
 
+#include "TROOT.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "TBranch.h"
 #include "../events/PrtclEvent.h"
 
 #include <iostream>
@@ -51,8 +53,10 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cassert>
+#include <stdexcept>
 using std::cout;
 using std::endl;
+using std::runtime_error;
 
 namespace jetanalysis {
 
@@ -92,6 +96,14 @@ protected:
     /** Finalize this object. Called in the run phase just after a run has ended. */
     virtual void dofinish();
     //@}
+    /** @name Functions for the particle loop. */
+    //@{
+    bool gammaAdd(tPPtr);
+
+    bool muonAdd(tPPtr);
+
+    bool leptonAdd(tPPtr);
+    //@}
     
     /** @name Help methods for the analysis */
     //@{
@@ -109,19 +121,21 @@ protected:
     
     /** @name Variables for the analysis */
     //@{
-    /* The hardest event */
-    tcEventBasePtr eh;
-    int mode;
 
-    /* Data handle for ROOT */
-    PrtclEvent *pEvent;
+    /* The hardest event */
+    tcEventBasePtr mHard;
     
-    /* ROOT, saving data */
-    TTree * tree;
-    TFile * file;
+    TFile *mFile;
+    TTree *mTree;
+    TBranch *mBranch;
+    PrtclEvent *mPrtclEvent;
     
-    Timer *timer;
-    int timerStep = 1000;
+    int mNumEvents;
+    int mMode;
+    int mTimerStep;
+    Timer mTimer;
+    
+    vector<std::size_t> mSpecialIndices;
     //@}
 private:
     /* The assignment operator is private and must never be called nor implemented. */
@@ -135,69 +149,68 @@ private:
 void HerwigppTree::doinitrun()
 {
     AnalysisHandler::doinitrun();
-    string fileName = "particles_herwig";
-    mode = 0;
-    
-    /* In a general multithread-case, generate a thread-unique root file name */
-    fileName += "_";
-    fileName += generator()->runName();
-    fileName += ".root";
-    
     try {
+        string fileName = "particles_herwig";
+        
+        /* In a general multithread-case, generate a thread-unique root file name */
+        fileName += "_";
+        fileName += generator()->runName();
+        fileName += ".root";
+        
         size_t pos = fileName.find("jet_");
         string modeName = fileName.substr(17,pos-17);
         if (modeName=="generic") {
-            mode = 0;
+            mMode = 0;
         } else if (modeName=="di") {
-            mode = 1;
+            mMode = 1;
         } else if (modeName=="gamma") {
-            mode = 2;
+            mMode = 2;
         } else if (modeName=="Z") {
-            mode = 3;
+            mMode = 3;
+        } else if (modeName=="ttbar") {
+            mMode = 4;
+        } else {
+            throw runtime_error("Bad mode");
         }
-    } catch (int e) {
-        cout << "Invalid mode name: " << e << endl;
+    
+        /* Setup a root file */
+        mFile = new TFile (fileName.c_str(),"RECREATE");
+        if (!mFile) throw runtime_error("Creating an output file failed");
+        mFile->SetCompressionLevel(1); 
+        
+        /* Setup a root tree */
+        mTree = new TTree ("HerwigTree","Herwig++ particle data.");
+        if (!mTree) throw runtime_error("Creating a tree failed");
+        mTree->SetAutoSave(100000000);  /* 0.1 GBytes */
+        mTree->SetCacheSize(10000000);  /* 10 MBytes */
+        TTree::SetBranchStyle(1); /* new style */
+        
+        /* Connect an event handle with the tree */
+        mPrtclEvent = new PrtclEvent;
+        if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
+        mBranch = mTree->Branch("event", &mPrtclEvent, 32000,4);
+        if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
+        mBranch->SetAutoDelete(kFALSE);
+        mTree->BranchRef();
+        
+        /* Timing functions */
+        mTimerStep = 1000;
+        mTimer.setParams(mNumEvents,mTimerStep);
+        mTimer.startTiming();
+        
+    } catch (std::exception& e) {
+        cout << "An error occurred: " << e.what() << endl;
     }
-    
-    /* Setup a root file */
-    file = new TFile (fileName.c_str(),"RECREATE");
-    if (!file) {
-        cout << "Output file could not be created." << endl;
-        return;
-    }
-    file->SetCompressionLevel(1); 
-    
-    /* Setup a root tree */
-    tree = new TTree ("HerwigTree","Herwig++ particle data.");
-    if (!tree) {
-        cout << "A tree could not be created." << endl;
-        return;
-    }
-    tree->SetAutoSave(100000000);  /* 0.1 GBytes */
-    tree->SetCacheSize(10000000);  /* 10 MBytes */
-    TTree::SetBranchStyle(1); /* new style */
-    
-    /* Connect an event handle with the tree */
-    pEvent = new PrtclEvent;
-    TBranch *branch = tree->Branch("event", &pEvent, 32000,4);
-    branch->SetAutoDelete(kFALSE);
-    tree->BranchRef();
-    
-    /* Timing functions */
-    timer = new Timer();
-    timer->setParams(generator()->N(),timerStep);
-    timer->startTiming();
 }
 
 void HerwigppTree::dofinish() 
 {
     AnalysisHandler::dofinish();
     
-    tree->GetCurrentFile();
-    tree->AutoSave("Overwrite");
-    file->Close();
+    mTree->GetCurrentFile();
+    mTree->AutoSave("Overwrite");
+    mFile->Close();
     
-    delete timer;
     cout << "A tree has been written into a .root file" << endl;  
 }
 

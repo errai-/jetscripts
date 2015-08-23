@@ -20,7 +20,7 @@
 //       - Ttbar production with WW -> qqbarllbar                //
 //                                                               //
 // Author: Hannu Siikonen (errai- @GitHub)                       //
-// Last modification: 20.8.2015                                  //
+// Last modification: 21.8.2015                                  //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -57,6 +57,7 @@ using std::vector;
 using std::pair;
 using std::cout;
 using std::endl;
+using std::runtime_error;
 
 class Pythia8Tree
 {
@@ -65,8 +66,8 @@ public:
     Pythia8Tree(string settings, string fileName, int mode) : mEvent(mPythia.event)
     {
         /* Initialization of the Pythia8 run */
-        mPythia.readFile(settings.c_str()); 
-        mPythia.init();
+        if (!mPythia.readFile(settings.c_str())) throw std::invalid_argument("Error while reading settings"); 
+        if (!mPythia.init()) throw runtime_error("Pythia8 initialization failed");
         mPythia.settings.listChanged();
 
         mNumEvents = mPythia.mode("Main:numberOfEvents");
@@ -74,28 +75,28 @@ public:
 
         /* Try to create a file to write */
         mFile = new TFile(fileName.c_str(), "RECREATE");
-        assert(mFile->IsOpen());
+        if(!mFile->IsOpen()) throw runtime_error("Creating an output file failed");
         mFile->SetCompressionLevel(1);
 
         /* Create a tree. Autosave every 100 Mb, cache of 10 Mb */
         mTree = new TTree("Pythia8Tree","Pythia8 particle data.");
-        assert(mTree);
-        mTree->SetAutoSave(100000000);
-        mTree->SetCacheSize(10000000);
+        if(!mTree) throw runtime_error("Creating a tree failed");
+        mTree->SetAutoSave(100000000); /* 0.1 GBytes */
+        mTree->SetCacheSize(10000000); /* 100 MBytes */
         TTree::SetBranchStyle(1); /* New branch style */
 
         /* Connect an event to the tree */
         mPrtclEvent = new PrtclEvent();
-        assert(mPrtclEvent);
+        if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
         mBranch = mTree->Branch("event", &mPrtclEvent, 32000,4);
-        assert(mBranch);
+        if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
         mBranch->SetAutoDelete(kFALSE);
         mTree->BranchRef();
         
         /* Setup a custom event timer */
         mTimerStep = 1000;
         mTimer.setParams(mNumEvents,mTimerStep);       
-        mTimer.startTiming();        
+        mTimer.startTiming();
     }
     
     ~Pythia8Tree() 

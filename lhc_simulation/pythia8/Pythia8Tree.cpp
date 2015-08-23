@@ -18,7 +18,6 @@ void Pythia8Tree::EventLoop()
                                    mEvent[add->first].id(),add->second);
         }
         mTree->Fill();
-        mPrtclEvent->Clear();
 
         /* Update progress */
         ++numEvent;
@@ -45,6 +44,7 @@ void Pythia8Tree::ParticleAdd(std::size_t prt, int saveStatus)
 /* Returns true if event is to be saved */
 bool Pythia8Tree::ParticleLoop()
 {
+    mPrtclEvent->Clear();
     mNextCand = 0;
     /* Special particle indices are saved to eliminate saving overlap. */
     mSpecialIndices.clear();
@@ -154,17 +154,15 @@ bool Pythia8Tree::LeptonAdd(std::size_t prt )
     int type = mEvent[prt].idAbs()%2;
     while (!mEvent[prt].isFinal()) {
         vector<int> leptons = mEvent[prt].daughterList();
+        bool stuck = true;
         for (int daughter : leptons) {
-            if (mEvent[daughter].idAbs()<20 && mEvent[daughter].idAbs()>10) {
-                if (mEvent[daughter].idAbs()%2==type) {
-                    prt = daughter; break;
-                }
+            int absId = mEvent[daughter].idAbs();
+            if (absId<20 && absId>10 && absId%2==type) { 
+                prt = daughter; stuck = false; break;
             }
         }
         /* Check if stuck in a loop (for instance if lepton goes to hadrons) */
-        if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)==0 ) {
-            return false;
-        }
+        if ( stuck ) return false;
     }
     mSpecialIndices.push_back(prt);
     ParticleAdd( prt, 2 );

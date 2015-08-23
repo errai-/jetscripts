@@ -23,104 +23,140 @@ using std::string;
 /* The danish number system is very complicated, so better just divide with GeV */
 void HerwigppTree::particleAdd(const tPPtr& part, int saveStatus) 
 {
-    pEvent->AddPrtcl(part->momentum().x()/GeV,part->momentum().y()/GeV,
-                     part->momentum().z()/GeV,part->momentum().t()/GeV,
-                     part->id(), saveStatus);
+    mPrtclEvent->AddPrtcl(part->momentum().x()/GeV,part->momentum().y()/GeV,
+                          part->momentum().z()/GeV,part->momentum().t()/GeV,
+                          part->id(), saveStatus);
 }
 
 void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
 {
-    if (ieve%timerStep==0&&ieve>0) timer->printTime();
+    if (ieve%mTimerStep==0&&ieve>0) mTimer.printTime();
 
     if ( loop > 0 || status != 0 || !event ) return;
 
-    pEvent->fWeight = event->weight();
-    eh = event->primaryCollision()->handler();
-    //event->printGraphviz();
-
-    vector<std::size_t> specialIndices;
-    int hardProcCount = 0;
-
-    /* The hardest subprocess */
-    if (mode==4) {
-        tPVector out = event->primaryCollision()->step(0)->getFinalState();
-        int leptons = 0;
-        for (tPVector::const_iterator part = out.begin(); part != out.end(); ++part) {
-            int absId = abs( (*part)->id() );
-            
-            if ( absId < 10 ) {
-                particleAdd(*part,3);
-                ++hardProcCount;
-            } else if ( absId > 10 && absId < 20 ) {
-                // TODO: chase the final leptons
-                particleAdd(*part,2);
-                ++leptons;
-            }
-        }
-        if (leptons==2) {
-            pEvent->Clear();
-            return;
-        }
-    } else {
-        const ParticleVector hardProc = event->primarySubProcess()->outgoing();
+    try {
+        mPrtclEvent->Clear();
+        mSpecialIndices.clear();
+        int hardProcCount = 0;
         
-        for (ParticleVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
-            bool gammaCase = (mode==2 && abs((*part)->id())==ParticleID::gamma );
-            bool ZCase = (mode==3 && abs((*part)->id())==ParticleID::muminus );
+        mPrtclEvent->fWeight = event->weight();
+        mHard = event->primaryCollision()->handler();
+        //event->printGraphviz();
+        
+        /* The hardest subprocess */
+        tPVector hardProc = event->primaryCollision()->step(0)->getFinalState();
+        int leptons = 0;
+        for (tPVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
+            int absId = abs((*part)->id());
+            
+            bool gammaCase = (mMode==2 && absId==ParticleID::gamma );
+            bool ZCase = (mMode==3 && absId==ParticleID::muminus );
             
             if (gammaCase) {
-                PPtr gamma = *part;
-                while (gamma->decayed()) {
-                    const ParticleVector children = gamma->children();
-                    /* No pair production */
-                    if (children.size()!=1) {
-                        pEvent->Clear();
-                        return;
-                    }
-                    gamma = children[0];
-                }
-                specialIndices.push_back( gamma->number() );
-                particleAdd(gamma,2);
+                gammaAdd(*part);
+                ++hardProcCount;
             } else if (ZCase) {
-                tPPtr muon = (*part);
-                while (muon->decayed() > 0) {
-                    const ParticleVector children = muon->children();
-                    for (ParticleVector::const_iterator child = children.begin(); child != children.end(); ++child) {
-                        if ( abs((*child)->id())==ParticleID::muminus ) { muon = *child; break; }
-                    }
-                }
-                specialIndices.push_back( muon->number() );
-                particleAdd(muon,2);
-            } else {
+                muonAdd(*part);
+                ++hardProcCount;
+            } else if ( absId < 10 || absId==21 ) {
                 particleAdd(*part,3);
+            } else {
+                if (absId > 10 && absId < 20 ) {
+                    leptonAdd(*part);
+                    ++leptons;
+                }
+                continue;
+            }
+            ++hardProcCount;
+        }
+        
+        /* ttbar events: seek lepton+jets (one w to leptons, one to quarks) */
+        if ( mMode==4 && mSpecialIndices.size()!=2 ) {
+            if (!generator()->repeatEvent()) throw runtime_error("Repeating events does not work.");
+            return;
+        }
+        
+        if (mMode==3) --hardProcCount;
+        
+        /* Sanity checks */
+        if (   (mMode<4 && hardProcCount !=2)
+            || (mMode==2 && mSpecialIndices.size()!=1)
+            || (mMode==3 && mSpecialIndices.size()!=2) 
+            || (mMode==4 && hardProcCount != 4) ) 
+        {
+            throw std::logic_error("Unexpected hard process structure");
+        }
+        
+        /* Final state particles */
+        tPVector finals = event->getFinalState();
+        for (tPVector::const_iterator part = finals.begin(); part != finals.end(); ++part) {
+            int finalIdx = (*part)->number();
+            
+            if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), finalIdx)>0 ) continue;
+            
+            int absId = abs( (*part)->id() );
+            
+            /* pi0 photons in a generic event have the status 2 */
+            int saveStatus = 1;
+            if ( (mMode==0) && absId==ParticleID::gamma && gammaChecker(*part) ) saveStatus = 2;
+            particleAdd( *part, saveStatus );
+        }
+        
+        mTree->Fill();
+    
+    } catch (std::exception& e) {
+        cout << "An error occurred: " << e.what() << endl;
+    }
+}
+
+bool HerwigppTree::gammaAdd(tPPtr gamma) 
+{
+    while (gamma->decayed()) {
+        const ParticleVector children = gamma->children();
+        /* No pair production */
+        if (children.size()!=1) {
+            if (!generator()->repeatEvent()) throw runtime_error("Repeating events does not work.");
+            return false;
+        }
+        gamma = children[0];
+    }
+    mSpecialIndices.push_back( gamma->number() );
+    particleAdd(gamma,2);
+    return true;
+}
+
+bool HerwigppTree::muonAdd(tPPtr muon) 
+{
+    while (muon->decayed() > 0) {
+        const ParticleVector children = muon->children();
+        for (ParticleVector::const_iterator child = children.begin(); child != children.end(); ++child) {
+            if ( abs((*child)->id())==ParticleID::muminus ) { muon = *child; break; }
+        }
+    }
+    mSpecialIndices.push_back( muon->number() );
+    particleAdd(muon,2);
+    return true;
+}
+
+bool HerwigppTree::leptonAdd(tPPtr lepton)
+{
+    int type = abs( lepton->id() )%2;
+    
+    while (lepton->decayed()) {
+        const ParticleVector children = lepton->children();
+        bool stuck = true;
+        for (ParticleVector::const_iterator child = children.begin(); child != children.end(); ++child) {
+            int absId = abs((*child)->id());
+            if ( absId<20 && absId>10 && absId%2==type ) { 
+                lepton = *child; stuck = false; break; 
             }
         }
-        
-        if (  (mode==2&&specialIndices.size()!=1) 
-           || (mode==3&&specialIndices.size()!=2)
-           || (hardProc.size() != 2 && hardProc.size() != 3) )
-        {
-            cout << "Unexpected hard process structure" << endl;
-        }
+        /* Check if stuck in a loop (for instance if lepton goes to hadrons) */
+        if ( stuck ) return false;
     }
-    
-    /* Final state particles */
-    tPVector finals = event->getFinalState();
-    for (tPVector::const_iterator part = finals.begin(); part != finals.end(); ++part) {
-        int finalIdx = (*part)->number();
-        
-        if ( std::count( specialIndices.begin(), specialIndices.end(), finalIdx)>0 ) continue;
-        
-        int absId = abs( (*part)->id() );
-        
-        /* pi0 photons in a generic event have the status 2 */
-        int saveStatus = 1;
-        if ( (mode==0) && absId==ParticleID::gamma && gammaChecker(*part) ) saveStatus = 2;
-        particleAdd( *part, saveStatus );
-    }
-    
-    tree->Fill();
-    pEvent->Clear();
+    mSpecialIndices.push_back( lepton->number() );
+    particleAdd(lepton,2);
+    return true;
 }
 
 
@@ -168,7 +204,7 @@ int HerwigppTree::getStatusCode(const tPPtr& part) const
     int status = 1;
     if ( !part->children().empty() || part->next() ) {
         tStepPtr step = part->birthStep();
-        if ((!step || (step && (!step->handler() || step->handler() == eh))) 
+        if ((!step || (step && (!step->handler() || step->handler() == mHard))) 
             && part->id() != 82)
         {
             status = 3;

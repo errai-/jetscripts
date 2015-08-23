@@ -15,14 +15,14 @@ using std::stoi;
 
 int main(int argc, char **argv)
 {
-    int choiceId = 1;
+    int mode = 1;
     string name = "";
     if (argc<2 || argc>3) {
         cout << "Usage: ./pythia8.exe (mode) (name)" << endl;
         return 0;
     }
     if (argc >= 2) {
-        choiceId = stoi(argv[1]);
+        mode = stoi(argv[1]);
     }
     if (argc >= 3) {
         name = argv[2];
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     fileName += ".root";
 
     try {
-        Pythia8Tree generatorHandle(settings, fileName, choiceId);
+        Pythia8Tree generatorHandle(settings, fileName, mode);
         generatorHandle.EventLoop();
     } catch (std::exception& e) {
         cout << "An error occurred: " << e.what() << endl;

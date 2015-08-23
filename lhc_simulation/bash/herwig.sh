@@ -3,7 +3,7 @@
 NUM_EVT=$1
 JOB_TYPE=$2
 NUM_PROC=$3
-DEBUG=0
+DEBUG=1
 
 cd herwig
 
