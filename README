@@ -28,7 +28,7 @@ simulation_analysis:
 A collection of scripts for turning simulated jet data into various plots.
 Mostly not compatible with the newest versions of the simulations, these are to
 be updated.
-Last updates in December 2014
+Flavor plotting actively developed, otherwise last updates in December 2014
 
 useful_structures:
 A collection of useful small scripts and old code versions, which may come in
