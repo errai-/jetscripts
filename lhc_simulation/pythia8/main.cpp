@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////
 // A generic main function for pythia8 event generation //
-// Hannu Siikonen 08.05.2015                            //
+// Hannu Siikonen 21.8.2015                             //
 //////////////////////////////////////////////////////////
 
 #include <iostream>

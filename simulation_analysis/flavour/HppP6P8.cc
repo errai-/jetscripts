@@ -25,9 +25,9 @@ using std::vector;
 const bool ptPlots = true;
 const bool uptPlots = false;
 const bool etaPlots = false;
-const bool debugPlots = true;
+const bool debugPlots = false;
 const bool indicatorPlots = false;
-const bool separatorPlots = false;
+const bool separatorPlots = true;
 
 const int sampleType=1;
 const bool hard=false; // Pythia6 logistics
