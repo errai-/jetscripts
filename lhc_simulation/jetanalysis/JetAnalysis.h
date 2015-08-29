@@ -15,6 +15,7 @@
 #include <vector>
 #include <fstream>
 #include <cassert>
+#include <stdexcept>
 
 // ROOT
 #include <TROOT.h>
@@ -60,7 +61,6 @@ public :
     ~JetAnalysis();
     
     virtual void     Init(TTree*); // Chain
-    virtual void     InitCI();
     virtual void     InitFP();
     
     virtual Int_t    GetEntry(Long64_t);
@@ -70,7 +70,8 @@ public :
     virtual void     EventLoop();
     virtual void     ParticlesToJetsorterInput();
     virtual void     JetLoop(Int_t);
-    virtual Bool_t   GoodEvent();
+    virtual Bool_t   SelectionParams();
+    
     virtual Bool_t   IsHadron(Int_t);
     virtual Bool_t   IsCharged(Int_t);
     virtual void     PhysicsFlavor(size_t);
@@ -158,7 +159,6 @@ private:
 // Graphs:
 //////////
     TProfile* gluonQuark;
-    vector<TH1D*> chargeIndicator;
     
     // Book histograms.
     vector<TProfile*> fractionProfilesGluon;
@@ -171,8 +171,6 @@ private:
 // Others:
 //////////
     Timer mTimer;
-
-    int mUnpaired, mDuplicate;
 
     /* Energy counters: */ 
     TLorentzVector mPiPlus, mPiMinus, mPi0Gamma, mGamma, 
@@ -189,8 +187,7 @@ private:
     vector<Int_t>   mPartonList; /* Physics definition */
  
     /* Weights etc.: */
-    double mChargSum, mChargWSum, mChargW2Sum, mW2;
-    int mQuarkJetCharge, mFlavour, mIsHadron;
+    int mQuarkJetCharge, mFlavour;
     
     JetVariables mJetVars;
 };

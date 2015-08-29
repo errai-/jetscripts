@@ -34,8 +34,10 @@ void JetData::SetParams(JetVariables& vars, int flav)
     fDR = vars.DR;
     fAlpha = vars.Alpha;
     fDPhi = vars.DPhi;
+    
     fPartonPT = vars.partonPT;
     fMatchPT = vars.matchPT;
+    fMaxDR = vars.maxDR;
 }
 
 

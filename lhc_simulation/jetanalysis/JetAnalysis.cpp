@@ -43,11 +43,13 @@ void JetAnalysis::EventLoop()
                                 abs(hiddenInputs[i].user_index()));
             }
         } else {
+            /* Jet clustering */
             fastjet::ClusterSequence clustSeq(fjInputs, jetDef);
             vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( 10. );
             sortedJets = sorted_by_pt( unsorteds );
-
-            if (!GoodEvent()) continue;
+            
+            /* Abort in some universal cases, calculate parameters for further selection */
+            if (!SelectionParams()) continue;
 
             JetLoop(jentry);
         }
@@ -59,95 +61,81 @@ void JetAnalysis::EventLoop()
     fOutFile = fOutTree->GetCurrentFile();
     fOutTree->AutoSave("Overwrite");
     delete fjEvent;  fjEvent = 0;
-
-    WriteResults();
-
-    cout << "Unpaired: " << mUnpaired << ", duplicates: " << mDuplicate << endl;
-
     fOutFile->Close();
+
+    //WriteResults();
 }
 
-bool JetAnalysis::GoodEvent()
+bool JetAnalysis::SelectionParams()
 {
-    if (sortedJets.size()==0) return false;
+    if ( sortedJets.size() == 0 ) return false;
 
     if (mMode == 0) {
         return true;
     } else if (mMode == 1) {
-        /** dijet events: for the 2 leading jets: 
+        
+        /* Dijet events: require always at least two jets */
+        if ( sortedJets.size() < 2 ) return false;
+        
+        /** Example of a selection that should be done:
           *  -Back-to-back angle of min 2.8 rad (2.5 rad)
           *  -Minimum pT of 30 GeV.
           *  -Max eta of 2.5
-          *  -A third jet has at most 30% of the average pt of the leading jets */
+          *  -A third jet has at most 30% of the average pt of the leading jets (alpha) */
         mJetVars.Alpha = (sortedJets.size() > 2) ? 2*sortedJets[2].pt()/fabs(sortedJets[0].pt()+sortedJets[1].pt()) : 0;
         mJetVars.DPhi = fabs(sortedJets[0].delta_phi_to( sortedJets[1] ));
+        mJetVars.matchPT = 0;
+
+    } else if (mMode == 2) {
         
-        if (   (sortedJets.size()<2)
-            || (mJetVars.Alpha > 0.30) 
-            || (mJetVars.DPhi < 2.8 )
-            || ( fabs(sortedJets[0].eta())>2.5 || fabs(sortedJets[1].eta())>2.5 )
-            || ( sortedJets[1].pt()<30 ))
+        /* Gammajet events: require always sufficient resolution and cuts for gamma eta and pt */
+        if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] ) < R )
+            || ( hiddenInputs[mGammaId].pt()<30 || fabs(hiddenInputs[mGammaId].eta())>2.5 ) )
         {
             return false;
         }
-    } else if (mMode == 2) {
-        /** gamma-jet events:
-          *  -Check for a sufficient resolution.
+        
+        /** Example of a selection that should be done
           *  -Back-to-back angle of min 2.8 rad
-          *  -Minimum pT of 30 GeV
-          *  -A cut for the subleading jet pT with respect to gamma pT 
-          *  -Max eta of 2.5 */
+          *  -Minimum jet pT of 30 GeV
+          *  -A cut for the subleading jet pT with respect to gamma pT (alpha)
+          *  -Max jet eta of 2.5 */
         mJetVars.Alpha = (sortedJets.size()>1) ? sortedJets[1].pt()/hiddenInputs[mGammaId].pt() : 0;
         mJetVars.DPhi = fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0]));
         mJetVars.matchPT = hiddenInputs[mGammaId].pt();
         
-        if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] )<R )
-            || ( hiddenInputs[mGammaId].pt()<30 || sortedJets[0].pt()<30 )
-            || ( mJetVars.DPhi < 2.8 )
-            || ( mJetVars.Alpha > 0.3 )
-            || ( fabs(sortedJets[0].eta()) > 2.5 || fabs(hiddenInputs[mGammaId].eta()) > 2.5 ) )
-        {
-            return false;
-        }
     } else if (mMode == 3) {
-        /** Z-jet events:
-          *  -Require sufficient resolution between the leading jet and the muon system.
-          *  -Back-to-back angle of min 2.8 rad
-          *  -The subleading jet has to have a small-enough pT compared to the muons.
-          *  -Min. muon pT 20GeV and 10GeV 
-          *  -Min. leading jet pT of 30GeV
-          *  -Subleading jet with a pT smaller than 30% of the dimuon system 
-          *  -The dimuon invariant mass is required to fall in the 70-110 GeV range 
-          *  -Max eta of 2.5 */
+        
+        /* Zjet events: require always sufficient resolution and cuts for muon pt and eta */
         if (   ( mMuonList.size()!=2 )
             || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R
             ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R )
             || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10)
-            && ( hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
-            || ( sortedJets[0].pt()<30 ))
+            &&  (hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
+            || ( fabs(hiddenInputs[mMuonList[0]].eta())>2.5 
+            ||   fabs(hiddenInputs[mMuonList[1]].eta())>2.5 ) )
         {
             return false;
         }
 
-        /* Dimuon system */
+        /* Dimuon system: require always Z0 mass cut (70-110 GeV) */
         fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
         tmpVec += hiddenInputs[mMuonList[1]];
+        if ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 ) return false;
+        
+        /** Example of a selction that should be done:
+          *  -Back-to-back angle of min 2.8 rad
+          *  -The subleading jet has smaller than 30% pT compared to the muons. (alpha)
+          *  -Min. jet pT of 30GeV
+          *  -Max jet eta of 2.5 */
         mJetVars.Alpha = (sortedJets.size() > 1 ) ? sortedJets[1].pt()/tmpVec.pt() : 0;
         mJetVars.DPhi = tmpVec.delta_phi_to( sortedJets[0] );
         mJetVars.matchPT = tmpVec.pt();
         
-        if (   ( mJetVars.Alpha > 0.3 )
-            || ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 )
-            || ( mJetVars.DPhi < 2.5 )
-            || ( fabs(sortedJets[0].eta())>2.5 ) )
-
-        {
-            return false;
-        }
     } else if (mMode == 4) {
-        return true;
+        cout << "Nothing to see here" << endl;
     } else {
-        return false;
+        throw std::runtime_error("Mode problematic");
     }
 
     return true;
@@ -232,7 +220,7 @@ void JetAnalysis::JetLoop(int jentry)
 
         TypeSort(); /* Get ready for adding the jet */
 
-        HistFill(i);
+        //HistFill(i);
 
         fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
             sortedJets[i].e(),mJetVars,fWeight,mFlavour);
@@ -240,38 +228,29 @@ void JetAnalysis::JetLoop(int jentry)
 }
 
 /* If there are conflicts, save the preferred flavour with a minus sign. 
-   Assumes a 2 -> 2 hard process () */
+   Assumes a 2 -> 2 hard process () 
+   dR_min: the smallest distance
+   dR_max: maximal search distance to give only one answer */
 void JetAnalysis::PhysicsFlavor(std::size_t i) 
 {
     mFlavour = 0;
     mJetVars.partonPT = 0;
-    double dR_min = 10; Int_t id_min = -1; 
+    double dR_min = 10, dR_max = 10; 
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( hiddenInputs[k] );
         
         if ( dR < dR_min ) {
+            if (mFlavour!=0) dR_max = dR_min;
             dR_min = dR;
-            id_min = k;
             mJetVars.partonPT = hiddenInputs[k].pt();
+            mFlavour = abs(hiddenInputs[k].user_index());
+        } else if ( dR < dR_max ) {
+            dR_max = dR;
         }
         
-        if ( dR < 0.3 ) {
-            if (mFlavour!=0) {
-                if (id_min != k) { mFlavour *= -1; }
-                else { mFlavour = -abs(hiddenInputs[k].user_index()); }
-                ++mDuplicate; 
-                break;
-            } else {
-                mFlavour = abs(hiddenInputs[k].user_index());
-            }
-        }
-    }
-    if (mFlavour==0) {
-        ++mUnpaired;
-        mFlavour = -abs(hiddenInputs[id_min].user_index());
     }
     mJetVars.DR = dR_min;
-    mIsHadron = 0;
+    mJetVars.maxDR = dR_max;
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
 
@@ -424,10 +403,8 @@ void JetAnalysis::FlavorLoop(size_t i)
         * is used separately, partonFlav tells the complete parton flavour. */
     if (hadronFlav != 0) {
         mFlavour = hadronFlav;
-        mIsHadron = 1;
     } else {
         mFlavour = hardestLightParton;
-        mIsHadron = 0;
     }
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
@@ -461,18 +438,11 @@ void JetAnalysis::ParticleLoop(size_t i){
     mLambda0 = zero; mSigma = zero; mElec = zero, mMuon = zero;
     mOthers = zero; mEtSum = zero;
     
-    mChargSum=0; mChargWSum=0; mChargW2Sum=0; mW2=0;
     for (unsigned int j = 0; j != jetParts.size(); ++j) {
         if ( jetParts[j].user_index() < 0 ) continue;
         TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
             jetParts[j].e() );
 
-        mChargSum +=  1;
-        mChargWSum += (1)
-            *jetParts[j].perp()/sortedJets[i].perp();
-        mChargW2Sum += (1)
-            *pow(jetParts[j].perp()/sortedJets[i].perp(),2);
-        mW2 += pow(jetParts[j].perp()/sortedJets[i].perp(),2);
         mEtSum += tmpP;
         int id = fPDGCode[ jetParts[j].user_index() ];
         if ( id == 211 ) { 
@@ -557,7 +527,8 @@ void JetAnalysis::TypeSort()
     mJetVars.mum = mMuon.M();
 }
 
-void JetAnalysis::HistFill(int i){
+void JetAnalysis::HistFill(int i)
+{
     FillerHandle( fractionProfilesAll, sortedJets[i].pt(), mEtSum.Et() );
     if (mFlavour==21) {
         gluonQuark->Fill( sortedJets[i].pt(), 1);
@@ -570,24 +541,6 @@ void JetAnalysis::HistFill(int i){
         gluonQuark->Fill( sortedJets[i].pt(), 0);
         FillerHandle( fractionProfilesLQuark, sortedJets[i].pt(), mEtSum.Et() );
         FillerHandle( fractionProfilesQuark, sortedJets[i].pt(), mEtSum.Et() );
-    }
-    
-    if ( abs(sortedJets[i].eta()) < 1.3 
-        && ( sortedJets[i].pt() > 80 && sortedJets[i].pt() < 120 ) )
-    {
-        if ( mFlavour==21 ){
-            chargeIndicator[0]->Fill(jetParts.size());
-            chargeIndicator[2]->Fill(mChargSum);
-            chargeIndicator[4]->Fill(mChargWSum);
-            chargeIndicator[6]->Fill(mChargW2Sum);
-            chargeIndicator[8]->Fill(mW2);
-        } else if ( mFlavour < 9 ){
-            chargeIndicator[1]->Fill(jetParts.size());
-            chargeIndicator[3]->Fill(mIsHadron ? mChargSum : mQuarkJetCharge*mChargSum);
-            chargeIndicator[5]->Fill(mIsHadron ? mChargWSum : mQuarkJetCharge*mChargWSum);
-            chargeIndicator[7]->Fill(mIsHadron ? mChargW2Sum : mQuarkJetCharge*mChargW2Sum);
-            chargeIndicator[9]->Fill(mW2);
-        }
     }
 }
 
@@ -617,7 +570,7 @@ void JetAnalysis::WriteResults()
     fOutFile2->cd();
 
     TH1D *gq = gluonQuark->ProjectionX("gluonvsquark","");
-    gq->Write();   
+    gq->Write();
     
     for (unsigned int i = 0; i != fractionProfilesGluon.size(); ++i){
         fractionProfilesGluon[i]->Write();
@@ -625,10 +578,6 @@ void JetAnalysis::WriteResults()
         fractionProfilesLQuark[i]->Write();
         fractionProfilesHQuark[i]->Write();
         fractionProfilesAll[i]->Write();
-    }
-
-    for (int i = 0; i != 10; ++i){
-        chargeIndicator[i]->Write();
     }
     
     fOutFile2->Close();
@@ -659,7 +608,6 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
 
     gluonQuark = new TProfile("gq","gq",ptBins,ptRange);
 
-    InitCI();
     InitFP();
 
     jetsPerEvent = 2;
@@ -667,8 +615,6 @@ JetAnalysis::JetAnalysis(TTree *tree, const char *outFile1, const char *outFile2
     if (mode==1) jetsPerEvent = 2;
     if (mode==2||mode==3) jetsPerEvent = 1;
     if (mode==4) jetsPerEvent = 4;
-
-    mUnpaired = 0; mDuplicate = 0;
 }
 
 JetAnalysis::~JetAnalysis()
@@ -698,20 +644,6 @@ void JetAnalysis::Init(TTree *tree)
     fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT, &b_fT);
     fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode, &b_fPDGCode);
     fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus, &b_fAnalysisStatus);
-}
-
-void JetAnalysis::InitCI(){
-    // Create file on which histogram(s) can be saved.
-    chargeIndicator.push_back(new TH1D("gluonjet amount","",150,0,150) );
-    chargeIndicator.push_back(new TH1D("quarkjet amount","",150,0,150) );
-    chargeIndicator.push_back(new TH1D("gluonjet charge","",30,-15,15) );
-    chargeIndicator.push_back(new TH1D("quarkjet charge","",30,-15,15) );
-    chargeIndicator.push_back(new TH1D("gluonjet wcharge","",200,-1,1) );
-    chargeIndicator.push_back(new TH1D("quarkjet wcharge","",200,-1,1) );
-    chargeIndicator.push_back(new TH1D("gluonjet w2charge","",200,-0.8,0.8) );
-    chargeIndicator.push_back(new TH1D("quarkjet w2charge","",200,-0.8,0.8) );
-    chargeIndicator.push_back(new TH1D("gluonjet w","",250,0,1) );
-    chargeIndicator.push_back(new TH1D("quarkjet w","",250,0,1) );        
 }
 
 void JetAnalysis::InitFP(){
@@ -748,7 +680,7 @@ Int_t JetAnalysis::GetEntry(Long64_t entry)
 Long64_t JetAnalysis::LoadTree(Long64_t entry)
 {
     /* Set the environment to read one entry */
-    if (!fChain) return -5;
+    if (!fChain) return 0;
     Long64_t centry = fChain->LoadTree(entry);
     if (centry < 0) return centry;
     if (fChain->GetTreeNumber() != fCurrent) {

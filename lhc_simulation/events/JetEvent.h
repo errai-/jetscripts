@@ -43,6 +43,8 @@ struct JetVariables
     double DR;
     double Alpha;
     double DPhi;
+
+    double maxDR;
 };
 
 
@@ -92,6 +94,7 @@ private:
     double fAlpha;
     double fDPhi;
     
+    double fMaxDR;
 public:
    ClassDef(JetData,1)
 };

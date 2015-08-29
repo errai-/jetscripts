@@ -9,18 +9,21 @@
 
 using namespace std;
 
-void AlphaProfs(Int_t generator = 0, bool partonMatch = true)
+void AlphaProfs(Int_t generator = 0, bool partonMatch = true, int mode = 1)
 {
-	TDirectory *curdir = gDirectory;
+    TDirectory *curdir = gDirectory;
 
-	string files[3];
+    string files[3];
 
-    files[0] = "../cteq6l1/pythia8_gammajet_physics_1000000.root";
-    files[1] = "../cteq6l1/pythia6_gammajet_physics_1000000.root";
-    files[2] = "../cteq6l1/herwig_gammajet_physics_1000000.root";
-    //files[0] = "../cteq6l1-cms/pythia8_dijet_physics_2000000.root";
-    //files[1] = "../cteq6l1-cms/pythia6_dijet_physics_1000000.root";
-    //files[2] = "../cteq6l1-cms/herwig_dijet_physics_2000000.root";
+    if (mode == 2) {
+        files[0] = "../cteq6l1/pythia8_gammajet_physics_1000000.root";
+        files[1] = "../cteq6l1/pythia6_gammajet_physics_1000000.root";
+        files[2] = "../cteq6l1/herwig_gammajet_physics_1000000.root";
+    } else if ( mode == 1 ) {
+        files[0] = "../cteq6l1-cms/pythia8_dijet_physics_2000000.root";
+        files[1] = "../cteq6l1-cms/pythia6_dijet_physics_1000000.root";
+        files[2] = "../cteq6l1-cms/herwig_dijet_physics_2000000.root";
+    }
 
     Int_t ptBins = 40;
     Double_t ptRange[] = {40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,520,540,560,580,600,620,640,660,680,700,720,740,760,780,800,820,840};
@@ -36,13 +39,13 @@ void AlphaProfs(Int_t generator = 0, bool partonMatch = true)
     profs.push_back(new TProfile("prof30","",ptBins,ptRange));
     weights.push_back(new TH1D("weights30","",ptBins,ptRange));
 
-	stringstream tmpString("");
-	tmpString << files[generator];
-	TFile *f = new TFile(tmpString.str().c_str(),"READ");
-	assert(f && !f->IsZombie());
-	
-	TTree *tree = (TTree*)f->Get("JetTree");
-	assert(tree && !tree->IsZombie());
+    stringstream tmpString("");
+    tmpString << files[generator];
+    TFile *f = new TFile(tmpString.str().c_str(),"READ");
+    assert(f && !f->IsZombie());
+    
+    TTree *tree = (TTree*)f->Get("JetTree");
+    assert(tree && !tree->IsZombie());
 
     static const Int_t kMaxfJets = 100;
 
@@ -61,8 +64,8 @@ void AlphaProfs(Int_t generator = 0, bool partonMatch = true)
     Double_t        fMatchPT[kMaxfJets];   //[fJets_]
 
     tree->SetMakeClass(1);
-	unsigned int N = (unsigned int)tree->GetEntries(); 
-	
+    unsigned int N = (unsigned int)tree->GetEntries(); 
+        
     tree->SetBranchAddress("fJets", &fJets_);
     tree->SetBranchAddress("fJets.fP4.fCoordinates.fX", fX);
     tree->SetBranchAddress("fJets.fP4.fCoordinates.fY", fY);
@@ -73,38 +76,48 @@ void AlphaProfs(Int_t generator = 0, bool partonMatch = true)
     tree->SetBranchAddress("fJets.fPartonPT", fPT);
     tree->SetBranchAddress("fJets.fMatchPT", fMatchPT);
 
-	for(unsigned int x=0; x != N; ++x)
-	{
-		tree->GetEntry(x);
-
+    for(unsigned int x=0; x != N; ++x)
+    {
+        tree->GetEntry(x);
         for (int i = 0; i < fJets_; ++i) {
             TLorentzVector p4(fX[i],fY[i],fZ[i],fT[i]);
 
-		    if(fPT[i]>840 || fPT[i]<40) continue;
+            if(fPT[i]>840 || fPT[i]<40) continue;
             if(abs(p4.Eta())>1.3) continue;
-            double mPT = ( (partonMatch) ? fPT[i] : fMatchPT[i] );
+            double mPT = fPT[i];
+            if ( !partonMatch ) {
+                if ( mode==2 ) {
+                    mPT = fMatchPT[i];
+                } else if ( mode==1 ) {
+                    int ci = 1;
+                    if ( i==1 ) ci = 0;
+                    if ( i>1 ) cout << "Achtung!" << endl;
+                    TLorentzVector oppP4(fX[ci],fY[ci],fZ[ci],fT[ci]);
+                    mPT = oppP4.Pt();
+                }
+            }
 
             if (fAlpha[i] < 0.1) {
-                profs[0]->Fill(fPT[i],p4.Pt()/mPT,fWeight);
-                weights[0]->Fill(fPT[i],fWeight);
+                profs[0]->Fill(mPT,p4.Pt()/mPT,fWeight);
+                weights[0]->Fill(mPT,fWeight);
             }
             if (fAlpha[i] < 0.15) {
-                profs[1]->Fill(fPT[i],p4.Pt()/mPT,fWeight);
-                weights[1]->Fill(fPT[i],fWeight);
+                profs[1]->Fill(mPT,p4.Pt()/mPT,fWeight);
+                weights[1]->Fill(mPT,fWeight);
             }
             if (fAlpha[i] < 0.2) {
-                profs[2]->Fill(fPT[i],p4.Pt()/mPT,fWeight);
-                weights[2]->Fill(fPT[i],fWeight);
+                profs[2]->Fill(mPT,p4.Pt()/mPT,fWeight);
+                weights[2]->Fill(mPT,fWeight);
             }
             if (fAlpha[i] < 0.3) {
-                profs[3]->Fill(fPT[i],p4.Pt()/mPT,fWeight);
-                weights[3]->Fill(fPT[i],fWeight);
+                profs[3]->Fill(mPT,p4.Pt()/mPT,fWeight);
+                weights[3]->Fill(mPT,fWeight);
             }
         }
-	}
+    }
     f->Close();	
-	
-	stringstream tmpString2;
+    
+    stringstream tmpString2;
     tmpString2 << "alphafracs_";
     if (generator==0) {
         tmpString2 << "p8";
