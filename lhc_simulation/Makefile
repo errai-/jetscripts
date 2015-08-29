@@ -92,9 +92,13 @@ run_pythia8:
 
 # Pythia6
 
-pythia6: pythia6/main.cpp libPrtclEvent.so pythia6/functions.h
-	cd pythia6 && $(CXX) main.cpp -w -L../lib -lPrtclEvent $(INCLUDE) \
+pythia6: pythia6/main.cpp pythia6.o libPrtclEvent.so
+	cd pythia6 && $(CXX) main.cpp pythia6.o -w -L../lib -lPrtclEvent $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(LHAPDF) $(PYTHIA6) -ldl -o pythia6.exe
+
+pythia6.o: Pythia6Tree.cpp libPrtclEvent.so
+	cd pythia6 && $(CXX) -c Pythia6Tree.cpp -L../lib -lPrtclEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(PYTHIA6) -ldl -o $@
 
 run_pythia6:
 	bash bash/pythia6.sh $(NUM_EVT) $(MODE) $(NUM_PROC)

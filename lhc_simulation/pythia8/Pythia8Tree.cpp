@@ -28,6 +28,7 @@ void Pythia8Tree::EventLoop()
     /* Cleaning up: */
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
+    mFile->Close();
 }
 
 /* A handle for adding particle information */
