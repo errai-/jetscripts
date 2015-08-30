@@ -33,8 +33,8 @@ void runDrawHistos(string readMcFile, string readDtFile)
     int etaProfile = 0;
     int ptProfile = 0;
     int ptDifference = 0;
-    int debugger = 0;
-    int angle = 1;
+    int debugger = 1;
+    int angle = 0;
 
     ProfileProjector mcProcessor(readMcFile,"mc");
     ProfileProjector dtProcessor(readDtFile,"dt"); 
@@ -44,6 +44,7 @@ void runDrawHistos(string readMcFile, string readDtFile)
     vector<TH1D*> mcPuHists = mcProcessor.GetPileUp();
     vector<TH1D*> dtPuHists = dtProcessor.GetPileUp();
 
+    string triggers[6] = {"Jet 40", "Jet 80", "Jet 140", "Jet 200", "Jet 260", "Jet 320"};
     canvas->cd();
     setTDRStyle();
     canvas->UseCurrentStyle();
@@ -74,8 +75,13 @@ void runDrawHistos(string readMcFile, string readDtFile)
             info.SetNDC();
             info.SetTextFont(43);
             info.SetTextSize(20);
+            info.DrawLatex(0.5,0.7,triggers[i].c_str());
             info.DrawLatex(0.5,0.6,textMC.str().c_str());
             info.DrawLatex(0.5,0.5,textDT.str().c_str());
+            dtPuHists[i]->GetXaxis()->SetTitle("N_{PU}/event");
+            mcPuHists[i]->GetXaxis()->SetTitle("N_{PU}/event");
+            dtPuHists[i]->GetYaxis()->SetTitle("Average events");
+            mcPuHists[i]->GetYaxis()->SetTitle("Average events");
         }
         canvas->cd(0);
         //cmsFinal();
@@ -119,13 +125,15 @@ void runDrawHistos(string readMcFile, string readDtFile)
         canvas->SetSelected(canvas);
     } else if (angle) {
         THStack *tutkain1 = mcProcessor.EnergyFractions(0,0,-1,0,1);
-        THStack *tutkain2 = dtProcessor.EnergyFractions(0,0,-1,1,1);
+        THStack *tutkain2 = dtProcessor.EnergyFractions(0,0,-1,0,1);
         canvas->cd();
-        tutkain1->Draw("");
-        tutkain2->Draw("samee1");
+        tutkain1->GetHistogram()->SetMaximum(0.95);
+        tutkain2->GetHistogram()->SetMaximum(0.95);
+        tutkain2->Draw("");
+        tutkain1->Draw("samep");
         mcProcessor.GetLeg()->Draw();
-        canvas->Modified();
-        canvas->SetSelected(canvas);
+//         canvas->Modified();
+//         canvas->SetSelected(canvas);
     }
 }
 

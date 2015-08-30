@@ -127,7 +127,7 @@ public:
             upperBin = y;
         }
         profileSlice = ptBins->ProjectionX( "ptnobins",lowerBin, upperBin );
-        profileSlice->GetXaxis()->SetTitle( "p^{T} [GeV]" );
+        profileSlice->GetXaxis()->SetTitle( "p_{T} (GeV)" );
         } else {
         if (firstBin==0 && lastBin==-1){
             lowerBin=0; upperBin=-1;
@@ -138,10 +138,10 @@ public:
             upperBin = x;
         }
         profileSlice = ptBins->ProjectionY( "etanobins",lowerBin, upperBin );
-        profileSlice->GetXaxis()->SetTitle( "#eta [1]" );
+        profileSlice->GetXaxis()->SetTitle( "#eta" );
         }
         profileSlice->SetTitle( profileTitle.c_str() );
-        profileSlice->GetYaxis()->SetTitle( "Number of jets [1]" );
+        profileSlice->GetYaxis()->SetTitle( "Number of jets" );
 
         return (TH1D*) profileSlice->Clone();
     }
@@ -163,7 +163,7 @@ public:
             upperBin = y;
         }
         profileSlice = ptBinsScaled->ProjectionX( "ptnobins",lowerBin, upperBin );
-        profileSlice->GetXaxis()->SetTitle( "p^{T} [GeV]" );
+        profileSlice->GetXaxis()->SetTitle( "p_{T} (GeV)" );
         } else {
         if (firstBin==0 && lastBin==-1){
             lowerBin=0; upperBin=-1;
@@ -174,24 +174,24 @@ public:
             upperBin = x;
         }
         profileSlice = ptBinsScaled->ProjectionY( "etanobins",lowerBin, upperBin );
-        profileSlice->GetXaxis()->SetTitle( "#eta [1]" );
+        profileSlice->GetXaxis()->SetTitle( "#eta" );
         }
         profileSlice->SetTitle( profileTitle.c_str() );
-        profileSlice->GetYaxis()->SetTitle( "Number of jets [1]" );
+        profileSlice->GetYaxis()->SetTitle( "Number of jets" );
 
         return (TH1D*) profileSlice->Clone();
     }
 
     void LegendFill( int forward ){
         if (forward){
-            leg->AddEntry( hfPhfSlice, "Forward photons" );
-            leg->AddEntry( hfHfSlice, "Forward hadrons" );
+            leg->AddEntry( hfPhfSlice, "Forward photons", "pf" );
+            leg->AddEntry( hfHfSlice, "Forward hadrons", "pf" );
         }
-        leg->AddEntry( elfMufSlice, "Electrons & Muons" );
-        leg->AddEntry( nhfSlice, "Neutral hadrons" );
-        leg->AddEntry( phfSlice, "Photons" );
-        leg->AddEntry( chfSlice, "Charged hadrons" );
-        leg->AddEntry( chfPuSlice, "Charged pile-up" );
+        leg->AddEntry( elfMufSlice, "Electrons & Muons", "pf" );
+        leg->AddEntry( nhfSlice, "Neutral hadrons", "pf" );
+        leg->AddEntry( phfSlice, "Photons", "pf" );
+        leg->AddEntry( chfSlice, "Charged hadrons", "pf" );
+        leg->AddEntry( chfPuSlice, "Charged pile-up", "pf" );
     }
 
     /* Does the desired projection; a bit clumsy in order to avoid repetitive names */
@@ -252,17 +252,19 @@ public:
         Projector( lowerBin, upperBin, ptNotEta, errors);
 
         if (ptNotEta){
-            chfPuSlice->GetXaxis()->SetTitle( "p^{T} [GeV]" );
+            chfPuSlice->GetXaxis()->SetTitle( "p_{T} (GeV)" );
         } else {
-            chfPuSlice->GetXaxis()->SetTitle( "#eta [1]" );
+            chfPuSlice->GetXaxis()->SetTitle( "#eta" );
         }
         
         chfPuSlice->SetTitle( stackName.c_str() );
         chfPuSlice->GetXaxis()->SetNoExponent();
         chfPuSlice->GetXaxis()->SetMoreLogLabels();
-        chfPuSlice->GetYaxis()->SetTitle( "Energy fractions [1]" );
+        chfPuSlice->GetYaxis()->SetTitle( "Energy fractions" );
 
-        eHistStack->SetHistogram( (TH1D*) chfPuSlice );
+        TH1D* h = (TH1D*) chfPuSlice;
+        h->SetMaximum(0.95);
+        eHistStack->SetHistogram( h );
         chfPuSlice->SetFillColor(kYellow);
         chfSlice->SetFillColor(kRed-7);
         phfSlice->SetFillColor(kBlue-7);
@@ -271,8 +273,15 @@ public:
         if (forwardInclude){
             hfHfSlice->SetFillColor(kGreen+7);
             hfPhfSlice->SetFillColor(kBlue+7);
+            hfHfSlice->SetMarkerStyle(24);
+            hfPhfSlice->SetMarkerStyle(25);
         }
-
+        chfPuSlice->SetMarkerStyle(26);
+        chfSlice->SetMarkerStyle(27);
+        phfSlice->SetMarkerStyle(28);
+        nhfSlice->SetMarkerStyle(31);
+        elfMufSlice->SetMarkerStyle(32);
+        
         eHistStack->Add( (TH1D*) chfPuSlice );
         eHistStack->Add( (TH1D*) chfSlice );
         eHistStack->Add( (TH1D*) phfSlice );
