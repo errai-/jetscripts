@@ -84,6 +84,10 @@ bool Pythia8Tree::ParticleLoop()
             }
         }
 
+        if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) {
+            ParticleAdd( prt, 9 );
+        }
+
         /* Special final-state particles have already been added */
         if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0 ) {
             continue;
