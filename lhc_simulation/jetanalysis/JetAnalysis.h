@@ -75,7 +75,8 @@ public :
     virtual Bool_t   IsHadron(Int_t);
     virtual Bool_t   IsCharged(Int_t);
     virtual void     PhysicsFlavor(size_t);
-    virtual void     FlavorLoop(size_t);
+    virtual void     HadronicFlavor(size_t);
+    virtual void     AlgorithmicFlavor(size_t);
     virtual Int_t    ChargeSign(Int_t);
     virtual void     ParticleLoop(size_t);
     virtual void     TypeSort();

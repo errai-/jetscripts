@@ -178,6 +178,10 @@ void JetAnalysis::ParticlesToJetsorterInput()
             particleTemp *= pow( 10, -18 );
             particleTemp.set_user_index( -i );
             fjInputs.push_back( particleTemp );
+        } else if (mDefinition==3 && (stat==4 || stat==6 || stat==7 ) ) {
+            mPartonList.push_back(hiddenCount++);
+            particleTemp.set_user_index( stat==4 ? fPDGCode[i] : -stat );
+            hiddenInputs.push_back( particleTemp );
         } else {
             /* Discard unknown status codes */
             continue;
@@ -207,7 +211,9 @@ void JetAnalysis::JetLoop(int jentry)
             if (mDefinition == 1) {
                 PhysicsFlavor(i);
             } else if (mDefinition == 2) {
-                FlavorLoop(i);
+                HadronicFlavor(i);
+            } else if (mDefinition == 3) {
+                AlgorithmicFlavor(i);
             }
 
             Cuts();
@@ -253,6 +259,83 @@ void JetAnalysis::PhysicsFlavor(std::size_t i)
     mJetVars.maxDR = dR_max;
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
+
+void JetAnalysis::HadronicFlavor(size_t i)
+{
+   /* Particle identification.
+    * Determine whether a jet is dominated by quarks or by gluons.
+    * Looping stops when a corresponding jet is found.
+    * Hadron flavour is used as a dominating feature.
+    * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
+    * for further information. */
+    int hadronFlav = 0, partonFlav = 0, hardestLightParton = 0;
+
+    for ( size_t k = 0; k != jetParts.size(); ++k ){
+        if (jetParts[k].user_index() > 0) continue; /* Not ghosts */
+        int idx = -jetParts[k].user_index();
+        int id = abs(fPDGCode[idx]);
+        int stat = fAnalysisStatus[idx];
+
+        // Hadrons, set the id's to correspond to the hadron flavour
+        if (stat == 7) {
+            hadronFlav = 5;
+        } else if (stat == 6 && hadronFlav!=5) {
+            hadronFlav = 4;
+        } else if (stat = 4) {
+            if (!hardestLightParton && (id==1 || id==2 || id==3 || id==21)) { 
+                hardestLightParton = abs(id);
+            }
+            if (!partonFlav && (id==4 || id==5)) {
+                partonFlav = id;
+            } else if ( id==5 ) {
+                partonFlav = id;
+            }
+        }
+    }
+    if (!partonFlav) partonFlav = hardestLightParton;
+
+    /* mFlavour is determined with the domination of hadronFlav. If parton flavour
+        * is used separately, partonFlav tells the complete parton flavour. */
+    if (hadronFlav != 0) {
+        mFlavour = hadronFlav;
+    } else {
+        mFlavour = hardestLightParton;
+    }
+    mQuarkJetCharge = ChargeSign(mFlavour);
+}
+
+void JetAnalysis::AlgorithmicFlavor(size_t i)
+{
+   /* Algorithmic flavor tagging is somewhat similar to hadronic tagging.
+    * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
+    * for further information. */
+    int hadronFlav = 0, partonFlav = 0;
+    mFlavour = 0; mJetVars.partonPT = 0;
+    
+    for ( auto k : mPartonList ) {
+        double dR = sortedJets[i].delta_R( hiddenInputs[k] );
+        
+        if (hiddenInputs[k].user_index() < 0) {
+            if (dR > R) continue;
+            
+            if (hiddenInputs[k].user_index() < hadronFlav)
+                hadronFlav = hiddenInputs[k].user_index();
+        } else {
+            if (dR > 0.3) continue;
+            
+            if (hiddenInputs[k].user_index() > partonFlav)
+                partonFlav = hiddenInputs[k].user_index();
+        }
+    }
+    
+    if (hadronFlav != 0) {
+        mFlavour = -hadronFlav;
+    } else {
+        mFlavour = partonFlav;
+    }
+    mQuarkJetCharge = ChargeSign(mFlavour);
+}
+
 
 double JetAnalysis::PTD()
 {
@@ -364,50 +447,6 @@ bool JetAnalysis::IsCharged(int pdg)
 
 
 // OLD ROUTINES:
-
-void JetAnalysis::FlavorLoop(size_t i)
-{
-   /* Particle identification.
-    * Determine whether a jet is dominated by quarks or by gluons.
-    * Looping stops when a corresponding jet is found.
-    * Hadron flavour is used as a dominating feature.
-    * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
-    * for further information. */
-    int hadronFlav = 0, partonFlav = 0, hardestLightParton = 0;
-
-    for ( size_t k = 0; k != jetParts.size(); ++k ){
-        if (jetParts[k].user_index() > 0) continue; /* Not ghosts */
-        int idx = -jetParts[k].user_index();
-        int id = abs(fPDGCode[idx]);
-        int stat = fAnalysisStatus[idx];
-
-        // Hadrons, set the id's to correspond to the hadron flavour
-        if (stat == 7) {
-            hadronFlav = 5;
-        } else if (stat == 6 && hadronFlav!=5) {
-            hadronFlav = 4;
-        } else if (stat = 4) {
-            if (!hardestLightParton && (id==1 || id==2 || id==3 || id==21)) { 
-                hardestLightParton = abs(id);
-            }
-            if (!partonFlav && (id==4 || id==5)) {
-                partonFlav = id;
-            } else if ( id==5 ) {
-                partonFlav = id;
-            }
-        }
-    }
-    if (!partonFlav) partonFlav = hardestLightParton;
-
-    /* mFlavour is determined with the domination of hadronFlav. If parton flavour
-        * is used separately, partonFlav tells the complete parton flavour. */
-    if (hadronFlav != 0) {
-        mFlavour = hadronFlav;
-    } else {
-        mFlavour = hardestLightParton;
-    }
-    mQuarkJetCharge = ChargeSign(mFlavour);
-}
 
 /* The charge sign of a quark jet */
 int JetAnalysis::ChargeSign( int id )

@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     string output = "", output2 = "hists_";   
     try {
     
-        if ( definition!=1&&definition!=2 ) throw std::runtime_error("Flavor options 1/2");
+        if ( definition!=1&&definition!=2&&definition!=3 ) throw std::runtime_error("Flavor options 1/2/3");
         
         string input = argv[1], fullPath = argv[2], tmpStr = "";
         fullPath += input;        
@@ -80,9 +80,12 @@ int main(int argc, char* argv[])
                     if (definition==1) {
                         output += "physics_";
                         output2 += "physics_";
-                    } else {
+                    } else if (definition==2) {
                         output += "hadronic_";
                         output2 += "hadronic_";
+                    } else if (definition==3) {
+                        output += "algorithmic_";
+                        output2 += "algorithmic_";
                     }
                 }
                 tmpStr = "";
