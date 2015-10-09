@@ -53,26 +53,20 @@ bool Pythia8Tree::ParticleLoop()
     /* Particle loop */
     unsigned hardProcCount = 0, partonCount = 0;
     for (std::size_t prt = 0; prt!=mEvent.size(); ++prt) {
-        /* Check for generic ghost particles (uncomment if hadronic definition is used) */
-        //GhostParticleAdd(prt);
         
         // TODO: Chase down the hard process partons on horseback, like men once did
 
-        /* Add the outgoing hard process parton (and lepton in ttbar events) */
+        /* Save partons and such */
         if ( mEvent[prt].statusAbs()==23 ) {
+            /* Add the outgoing hard process parton (and lepton in ttbar events) */
             if ( mEvent[prt].isParton() ) {
                 ParticleAdd( prt, 3 );
                 ++hardProcCount;
             } else if ( mMode==4 && mEvent[prt].idAbs() < 20 ) {
                 if (!LeptonAdd( prt )) return false;
             }
-        }
-
-        /* The first status 62 hits correspond to the hard process, use for special particles */
-        if ( mMode>1 && mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==62 ) {
-            bool gammaCase = (mMode==2 && mEvent[prt].idAbs()==22);
-            bool ZCase = (mMode==3 && mEvent[prt].idAbs()==23);
-            
+        } else if ( mMode>1 && mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==62 ) {
+            /* The first status 62 hits correspond to the hard process, use for special particles */
             if (mMode == 2) {
                 if (mEvent[prt].idAbs()==22) {
                     if (!GammaAdd( prt ) ) return false;
@@ -92,11 +86,13 @@ bool Pythia8Tree::ParticleLoop()
                     return false;
                 }
             }
+        } else if (mEvent[prt].isParton() && (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72)) {
+            /* Adding ghost partons, used by the algorithmic and the modern "ghost" flavour definition */
+            ParticleAdd( prt, 4 );
         }
-
-        if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) {
-            ParticleAdd( prt, 9 );
-        }
+        
+        if (mEvent[prt].isHadron())
+            GhostHadronAdd(prt);
 
         /* Special final-state particles have already been added */
         if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0 ) {
@@ -187,6 +183,38 @@ bool Pythia8Tree::LeptonAdd(std::size_t prt )
     return true;
 }
 
+/* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
+ * is in an excited state or not. Checks whether a hadron has a daughter of 
+ * the same flavour. Parameter quarkId is a PDG quark flavour. */
+bool Pythia8Tree::IsExcitedHadronState(std::size_t idx, int quarkId) 
+{
+    assert( mEvent.size() > idx );
+    assert( quarkId>=0 && quarkId<=6 );
+
+    vector<int> daughters = mEvent[idx].daughterList();
+    for (int& dtr : daughters) {
+        if ( HadrFuncs::StatusCheck(quarkId, mEvent[dtr].id()) ) return true;
+    }
+    return false;
+}
+
+/* Particles needed by the hadronic flavor definition */
+void Pythia8Tree::GhostHadronAdd(std::size_t prt, bool useStrange)
+{
+    int id = mEvent[prt].idAbs();
+    unsigned ghostStatus = 0;
+
+    if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5)) {
+        ghostStatus = 7; /* b Hadrons */
+    } else if (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3)) {
+        ghostStatus = 6; /* c Hadrons */
+    } else if (useStrange && (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))) {
+        ghostStatus = 5; /* s Hadrons */
+    }
+
+    if (ghostStatus) { ParticleAdd(prt,ghostStatus); }
+}
+
 /////////////////////////////////////////////////////////
 // Not in current production but kept in for reference //
 /////////////////////////////////////////////////////////
@@ -212,45 +240,4 @@ bool Pythia8Tree::GammaChecker( std::size_t prt )
     return true;
 }
 
-
-/* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
- * is in an excited state or not. Checks whether a hadron has a daughter of 
- * the same flavour. Parameter quarkId is a PDG quark flavour. */
-bool Pythia8Tree::IsExcitedHadronState(std::size_t idx, int quarkId) 
-{
-    assert( mEvent.size() > idx );
-    assert( quarkId>=0 && quarkId<=6 );
-
-    vector<int> daughters = mEvent[idx].daughterList();
-    for (int& dtr : daughters) {
-        if ( HadrFuncs::StatusCheck(quarkId, mEvent[dtr].id()) ) return true;
-    }
-    return false;
-}
-
-/* Particles needed by the hadronic flavor definition */
-void Pythia8Tree::GhostParticleAdd(std::size_t prt)
-{
-    int id = mEvent[prt].id();
-    int status = abs( mEvent[prt].status() );
-    int ghostStatus = 0;
-
-    /* Interesting ghost partons at status codes 71 and 72, ghost hadrons have an id above 100. */
-    if (status==71 || status==72) {
-        ghostStatus = 4;
-    } else if ( mEvent[prt].isHadron() ) {
-        /* A hadron may be in all categories -> no 'else' */
-        if (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3)) {
-            ghostStatus = 5; /* s Hadrons */
-        }
-        if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4)) {
-            ghostStatus = 6; /* c Hadrons */
-        }
-        if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5)) {
-            ghostStatus = 7; /* b Hadrons */
-        }
-    }
-
-    if (ghostStatus) { ParticleAdd(prt,ghostStatus); }
-}
 

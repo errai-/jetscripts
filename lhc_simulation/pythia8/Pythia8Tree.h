@@ -118,7 +118,7 @@ public:
     bool GammaChecker(std::size_t);
     
     bool IsExcitedHadronState(std::size_t, int);
-    void GhostParticleAdd(std::size_t);
+    void GhostHadronAdd(std::size_t, bool = false);
     
 protected:
     
