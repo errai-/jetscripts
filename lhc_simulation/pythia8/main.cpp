@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         Pythia8Tree generatorHandle(settings, fileName, mode);
         generatorHandle.EventLoop();
     } catch (std::exception& e) {
-        cout << "An error occurred: " << e.what() << endl;
+        std::cerr << "An error occurred: " << e.what() << endl;
     }
         
     return 0;

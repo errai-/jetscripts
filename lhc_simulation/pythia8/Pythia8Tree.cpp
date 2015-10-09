@@ -7,11 +7,9 @@ void Pythia8Tree::EventLoop()
         if (!mPythia.next()) continue;
         //mEvent.list();
 
-        /* Repeat the event is not successful. */
         if ( !ParticleLoop() ) continue; 
             
-        /* Add the chosen ones to the tree */
-        cout << mNextCand << " " << mCandidates.size() << endl;
+        /* Add the candidates to the tree */
         for (auto add = mCandidates.begin(), end = mCandidates.begin()+mNextCand; add != end; ++add) {
             mPrtclEvent->AddPrtcl( mEvent[add->first].px(),mEvent[add->first].py(),
                                    mEvent[add->first].pz(),mEvent[add->first].e(),
@@ -75,12 +73,26 @@ bool Pythia8Tree::ParticleLoop()
             bool gammaCase = (mMode==2 && mEvent[prt].idAbs()==22);
             bool ZCase = (mMode==3 && mEvent[prt].idAbs()==23);
             
-            if (gammaCase) {
-                if (!GammaAdd( prt ) ) return false;
-                ++hardProcCount;
-            } else if (ZCase) {
-                if (!MuonAdd( prt ) ) return false;
-                ++hardProcCount;
+            if (mMode == 2) {
+                if (mEvent[prt].idAbs()==22) {
+                    if (!GammaAdd( prt ) ) return false;
+                    ++hardProcCount;
+                } else if (mEvent[prt].isParton()) {
+                    continue;
+                } else {
+                    std::cerr << "Pair splitting, found " << mEvent[prt].name() << endl;
+                    return false;
+                }
+            } else if (mMode == 3) {
+                if (mEvent[prt].idAbs()==23) {
+                    if (!MuonAdd( prt ) ) return false;
+                    ++hardProcCount;
+                } else if (mEvent[prt].isParton()) {
+                    continue;
+                } else {
+                    std::cerr << "Expected Z, found " << mEvent[prt].name() << endl;
+                    return false;
+                }
             }
         }
 
@@ -124,6 +136,7 @@ bool Pythia8Tree::GammaAdd(std::size_t prt)
         ParticleAdd(prt,2);
         return true;
     }
+    std::cerr << "Unstable gamma found" << endl;
     return false;
 }
     
@@ -148,7 +161,8 @@ bool Pythia8Tree::MuonAdd(std::size_t prt)
         ParticleAdd( mSpecialIndices[i], 2 );
     }
     
-    if ( mSpecialIndices.size() != 2 ) return false;
+    if ( mSpecialIndices.size() == 2 ) return true;
+    std::cerr << "Failed to locate muon pair" << endl;
     return true;
 }
 

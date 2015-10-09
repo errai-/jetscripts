@@ -51,7 +51,7 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
             
             bool gammaCase = (mMode==2 && absId==ParticleID::gamma );
             bool ZCase = (mMode==3 && absId==ParticleID::muminus );
-            
+
             if (gammaCase) {
                 gammaAdd(*part);
                 ++hardProcCount;
@@ -101,7 +101,19 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
             if ( (mMode==0) && absId==ParticleID::gamma && gammaChecker(*part) ) saveStatus = 2;
             particleAdd( *part, saveStatus );
         }
-        
+
+        /* Loop over all particles. */ 
+        /*
+        tPVector all;
+        event->select(std::back_inserter(all),SelectAll());
+        for (tPVector::const_iterator pit = all.begin(); pit != all.end(); ++pit) {
+            int stotus = getStatusCode(*pit);
+            if (stotus == 3) {
+                cout << (*pit)->number() << " " << (*pit)->id() << endl;
+            }
+        }
+         */
+            
         mTree->Fill();
     
     } catch (std::exception& e) {
