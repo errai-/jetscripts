@@ -40,6 +40,20 @@ void Pythia8Tree::ParticleAdd(std::size_t prt, int saveStatus)
     ++mNextCand;
 }
 
+TLorentzVector Pythia8Tree::Vogel(unsigned prt)
+{
+    if (mEvent[prt].statusAbs() == 71 || mEvent[prt].statusAbs() == 72) {
+        TLorentzVector handle(mEvent[prt].px(),mEvent[prt].py(),mEvent[prt].pz(),mEvent[prt].e());
+        return handle;
+    }
+    
+    TLorentzVector cumulator(0,0,0,0);
+    for (auto &daughter : mEvent.daughterList(prt) ) {
+        cumulator += Vogel(daughter);
+    }
+    return cumulator;
+}
+
 /* Returns true if event is to be saved */
 bool Pythia8Tree::ParticleLoop()
 {
@@ -52,7 +66,7 @@ bool Pythia8Tree::ParticleLoop()
     
     /* Particle loop */
     unsigned hardProcCount = 0, partonCount = 0;
-    for (std::size_t prt = 0; prt!=mEvent.size(); ++prt) {
+    for (unsigned prt = 0; prt!=mEvent.size(); ++prt) {
         
         // TODO: Chase down the hard process partons on horseback, like men once did
 
@@ -62,6 +76,10 @@ bool Pythia8Tree::ParticleLoop()
             if ( mEvent[prt].isParton() ) {
                 ParticleAdd( prt, 3 );
                 ++hardProcCount;
+                //TLorentzVector juu = Vogel(prt);
+                //mPrtclEvent->AddPrtcl( juu.X(), juu.Y(), juu.Z(), juu.T(), mEvent[prt].idAbs(), 3 );
+                //cout << "1:" << juu.X() << " " << juu.Y() << " " << juu.Z() << " " << juu.T() << endl;
+                //cout << "2:" << mEvent[prt].px() << " " << mEvent[prt].py() << " " << mEvent[prt].pz() << " " << mEvent[prt].e() << endl;
             } else if ( mMode==4 && mEvent[prt].idAbs() < 20 ) {
                 if (!LeptonAdd( prt )) return false;
             }

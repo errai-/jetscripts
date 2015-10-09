@@ -108,6 +108,7 @@ public:
     void EventLoop();
     
     void ParticleAdd(std::size_t,int);
+    TLorentzVector Vogel(unsigned);
     
     bool ParticleLoop();
     

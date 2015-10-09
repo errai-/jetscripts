@@ -148,6 +148,7 @@ bool ReadTree(string file, HistStore& hists, TH1D* pt, TProfile* weighting)
             if (fabs(tmpVec.Eta())>etaMax) continue;
 
             //mWeight=1;
+            if (mDR[i] > 0.3) mFlav[i] *= -1;
             hists.ptFracs[0].Fill(tmpVec.Pt(), (mFlav[i] == 21)? 1:0, mWeight);
             hists.ptFracs[1].Fill(tmpVec.Pt(), (mFlav[i] == 1 || mFlav[i] == 2)? 1:0, mWeight);
             hists.ptFracs[2].Fill(tmpVec.Pt(), (mFlav[i] == 3)? 1:0, mWeight);
