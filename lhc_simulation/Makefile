@@ -17,8 +17,7 @@ NUM_EVT := 1000
 MODE := 0
 NUM_PROC := 1
 
-all:
-	@echo "No make for all objects provided."
+all: pythia8 pythia6 libHerwigppTree.so jetanalysis ptcut
 
 # Generic
 

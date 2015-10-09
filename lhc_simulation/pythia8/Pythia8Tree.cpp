@@ -51,7 +51,7 @@ bool Pythia8Tree::ParticleLoop()
     mPrtclEvent->fWeight = mPythia.info.weight();
     
     /* Particle loop */
-    int hardProcCount = 0;
+    unsigned hardProcCount = 0, partonCount = 0;
     for (std::size_t prt = 0; prt!=mEvent.size(); ++prt) {
         /* Check for generic ghost particles (uncomment if hadronic definition is used) */
         //GhostParticleAdd(prt);
@@ -77,18 +77,16 @@ bool Pythia8Tree::ParticleLoop()
                 if (mEvent[prt].idAbs()==22) {
                     if (!GammaAdd( prt ) ) return false;
                     ++hardProcCount;
-                } else if (mEvent[prt].isParton()) {
+                } else if (mEvent[prt].isParton() && partonCount++<1) {
                     continue;
                 } else {
-                    std::cerr << "Pair splitting, found " << mEvent[prt].name() << endl;
+                    std::cerr << "Pair production, " << mEvent[prt].name() << endl;
                     return false;
                 }
             } else if (mMode == 3) {
                 if (mEvent[prt].idAbs()==23) {
                     if (!MuonAdd( prt ) ) return false;
                     ++hardProcCount;
-                } else if (mEvent[prt].isParton()) {
-                    continue;
                 } else {
                     std::cerr << "Expected Z, found " << mEvent[prt].name() << endl;
                     return false;
@@ -150,7 +148,8 @@ bool Pythia8Tree::MuonAdd(std::size_t prt)
     
     /* Descend to the final muon forms */
     for ( std::size_t i = 0; i < mSpecialIndices.size(); ++i ) {
-        while (!mEvent[mSpecialIndices[i]].isFinal()) {
+        unsigned counter = 0;
+        while (!mEvent[mSpecialIndices[i]].isFinal() && counter++ < 100) {
             vector<int> mus = mEvent[mSpecialIndices[i]].daughterList();
             for (int daughter : mus) {
                 if (mEvent[daughter].idAbs()==13) {
