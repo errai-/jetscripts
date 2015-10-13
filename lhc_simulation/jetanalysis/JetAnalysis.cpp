@@ -180,7 +180,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
             fjInputs.push_back( particleTemp );
         } else if (mDefinition==3 && (stat==4 || stat==6 || stat==7 ) ) {
             mPartonList.push_back(hiddenCount++);
-            particleTemp.set_user_index( stat==4 ? fPDGCode[i] : -stat );
+            particleTemp.set_user_index( stat==4 ? abs(fPDGCode[i]) : -stat+2 );
             hiddenInputs.push_back( particleTemp );
         } else {
             /* Discard unknown status codes */
