@@ -68,17 +68,21 @@ public :
     virtual void     Show(Long64_t = -1);
     
     virtual void     EventLoop();
-    virtual void     ParticlesToJetsorterInput();
     virtual void     JetLoop(Int_t);
+    virtual void     ParticleLoop(unsigned);
+    
+    virtual void     ParticlesToJetsorterInput();
     virtual Bool_t   SelectionParams();
     
     virtual Bool_t   IsHadron(Int_t);
     virtual Bool_t   IsCharged(Int_t);
-    virtual void     PhysicsFlavor(size_t);
-    virtual void     HadronicFlavor(size_t);
-    virtual void     AlgorithmicFlavor(size_t);
+    
+    virtual void     PhysicsFlavor(unsigned);
+    virtual void     HadronicFlavor(unsigned);
+    virtual void     AlgorithmicFlavor(unsigned);
+    virtual void     PhysClusterFlavor(unsigned);
+    
     virtual Int_t    ChargeSign(Int_t);
-    virtual void     ParticleLoop(size_t);
     virtual void     TypeSort();
     virtual void     FillerHandle( vector<TProfile*> &, Double_t, Double_t );
     virtual void     HistFill(int);    
@@ -98,7 +102,7 @@ private:
 
     /* PseudoJet storages */
     vector<fastjet::PseudoJet> sortedJets, jetParts, cutJetParts, 
-                               fjInputs, hiddenInputs;
+                               fjInputs, auxInputs;
 ////////
 // Root:
 ////////

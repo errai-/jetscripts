@@ -2,13 +2,15 @@
 #include "Pythia8Plugins/FastJet3.h"
 #include "fastjet/tools/GridMedianBackgroundEstimator.hh"
 
+#define HARDSTUDY (0)
+
 //////////////////////////////////
 // Loop over events and particles:
 //////////////////////////////////
 
+/* Do jet clustering on an event level */
 void JetAnalysis::EventLoop()
 {
-    bool hardStudy = false;
     if (fChain == 0) return;
 
     Long64_t nentries = fChain->GetEntries();
@@ -17,8 +19,6 @@ void JetAnalysis::EventLoop()
     /* Fastjet algorithm */
     fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, R, fastjet::E_scheme, fastjet::Best); 
     //(fastjet::genkt_algorithm, R, power);
-    
-    int good=0,bad=0;
 
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
         if (jentry!=0&&jentry%2000==0) mTimer.printTime();
@@ -30,17 +30,12 @@ void JetAnalysis::EventLoop()
 
         ParticlesToJetsorterInput();
 
-        if ( hardStudy ) {
-            mJetVars.Alpha = 0; mJetVars.DR = 0; mJetVars.DPhi = 0;
-            mJetVars.PTD = 0; mJetVars.Sigma2 = 0; mJetVars.constituents = 0;
-            mJetVars.matchPT = 0; mJetVars.partonPT = 0;
-            mJetVars.chf = 0; mJetVars.nhf = 0; mJetVars.phf = 0; mJetVars.elf = 0; mJetVars.muf = 0;
-            mJetVars.chm = 0; mJetVars.nhm = 0; mJetVars.phm = 0; mJetVars.elm = 0; mJetVars.mum = 0;
-            
+        if ( HARDSTUDY && mDefinition == 1 ) {
+            /* Save only the hard process */
             for ( auto i : mPartonList ) {
-                fjEvent->AddJet(hiddenInputs[i].px(),hiddenInputs[i].py(),hiddenInputs[i].pz(),
-                                hiddenInputs[i].e(),mJetVars,fWeight,
-                                abs(hiddenInputs[i].user_index()));
+                fjEvent->AddJet(auxInputs[i].px(),auxInputs[i].py(),auxInputs[i].pz(),
+                                auxInputs[i].e(),mJetVars,fWeight,
+                                abs(auxInputs[i].user_index()));
             }
         } else {
             /* Jet clustering */
@@ -62,10 +57,167 @@ void JetAnalysis::EventLoop()
     fOutTree->AutoSave("Overwrite");
     delete fjEvent;  fjEvent = 0;
     fOutFile->Close();
-
-    //WriteResults();
 }
 
+/* Calculate variables for the newly clustered jets */
+void JetAnalysis::JetLoop(int jentry)
+{
+    for (size_t i = 0; i < sortedJets.size(); ++i) {
+        if ( i == jetsPerEvent ) break;
+
+        jetParts = sorted_by_pt(sortedJets[i].constituents());
+
+        /* Check the jet flavour if not a generic case */
+        if (mMode!=0) {
+            if (mDefinition == 1)
+                PhysicsFlavor(i);
+            else if (mDefinition == 2)
+                HadronicFlavor(i);
+            else if (mDefinition == 3)
+                AlgorithmicFlavor(i);
+            else if (mDefinition == 4)
+                PhysClusterFlavor(i);
+
+            Cuts();
+            mJetVars.constituents = cutJetParts.size();
+            mJetVars.PTD = PTD();
+            mJetVars.Sigma2 = Sigma2();
+        }
+
+        ParticleLoop(i); /* Operations on jet particles */
+
+        TypeSort(); /* Get ready for adding the jet */
+
+        //HistFill(i); /* Information histograms (redundant) */
+
+        fjEvent->AddJet(sortedJets[i].px(),
+                        sortedJets[i].py(),
+                        sortedJets[i].pz(),
+                        sortedJets[i].e(),
+                        mJetVars,fWeight,mFlavour);
+    }
+}
+
+/* Study particle types in the clustered jets */
+void JetAnalysis::ParticleLoop(unsigned i)
+{  
+    TLorentzVector zero(0,0,0,0);
+
+    mPiPlus = zero; mPiMinus = zero;  mPi0Gamma = zero; mGamma = zero; 
+    mKaPlus = zero; mKaMinus = zero; mKSZero = zero; mKLZero = zero; 
+    mProton = zero; mAproton = zero; mNeutron = zero; mAneutron = zero;
+    mLambda0 = zero; mSigma = zero; mElec = zero, mMuon = zero;
+    mOthers = zero; mEtSum = zero;
+    
+    for (unsigned int j = 0; j != jetParts.size(); ++j) {
+        if ( jetParts[j].user_index() < 0 ) continue;
+        TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
+            jetParts[j].e() );
+
+        mEtSum += tmpP;
+        int id = fPDGCode[ jetParts[j].user_index() ];
+        if ( id == 211 ) { 
+            mPiPlus += tmpP;
+        } else if ( id == -211 ) { 
+            mPiMinus+= tmpP;
+        } else if ( id == 22 ) {
+            if ( fAnalysisStatus[ jetParts[j].user_index() ] == 2 ) {
+                mPi0Gamma += tmpP;
+            } else {
+                mGamma += tmpP;
+            }
+        } else if ( id == 20 ) { // pi0 gamma
+            mPi0Gamma += tmpP;
+        } else if ( id == 321 ) { 
+            mKaPlus += tmpP;
+        } else if ( id == -321 ) { 
+            mKaMinus += tmpP;
+        } else if ( abs( id ) == 310 ) { 
+            mKSZero += tmpP;
+        } else if ( abs( id ) == 130 ) { 
+            mKLZero += tmpP;
+        } else if ( id == 2212 ) { 
+            mProton += tmpP;
+        } else if ( id == -2212 ) { 
+            mAproton += tmpP;
+        } else if ( id == 2112 ) { 
+            mNeutron += tmpP;
+        } else if ( id == -2112 ) { 
+            mAneutron += tmpP;
+        } else if ( abs( id ) == 3122 ) {
+            mLambda0 += tmpP;
+        } else if ( abs( id ) == 3112 ||
+            abs( id ) == 3222 ) {
+            mSigma += tmpP;
+        } else if ( abs( id ) == 11 ) {
+            mElec += tmpP;
+        } else if ( abs( id ) == 13 ) {
+            mMuon += tmpP;
+        } else {
+            mOthers += tmpP;        
+        }
+    }
+}
+
+
+/* fjInputs for jet clustering, other lists for additional event information */
+void JetAnalysis::ParticlesToJetsorterInput()
+{
+    fjInputs.clear();
+    auxInputs.clear();
+    mPartonList.clear();
+    mMuonList.clear();
+    int hiddenCount = 0;
+
+    for (unsigned i = 0; i != fPrtcls_; ++i) {
+        fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
+        int stat = fAnalysisStatus[i];
+
+        /* Ghost partons, hadrons and normal particles */
+        if (stat==1) {
+            particleTemp.set_user_index( i ); /* Save particle index */
+            fjInputs.push_back( particleTemp );
+        } else if (stat==2) {
+            /* Gammajet gammas and Zjet muons are excluded from jet clustering */
+            if (mMode==2) {
+                mGammaId = hiddenCount++;
+                auxInputs.push_back( particleTemp );
+            } else if (mMode==3) {
+                mMuonList.push_back(hiddenCount++);
+                auxInputs.push_back( particleTemp );
+            } else if (mMode==0) {
+                particleTemp.set_user_index( i );
+                fjInputs.push_back( particleTemp );
+            }
+        } else if (mDefinition==1 && stat==3) {
+            /* Physics definition: the hard process */
+            mPartonList.push_back(hiddenCount++);
+            particleTemp.set_user_index( abs(fPDGCode[i]) );
+            auxInputs.push_back(particleTemp);
+        } else if (mDefinition==2 && (stat==4 ||/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)) {
+            /* Hadronic definition: Ghost partons==4, hadrons: (strange==5), charm==6, bottom==7, (top==8) */
+            particleTemp *= pow( 10, -18 );
+            particleTemp.set_user_index( -i );
+            fjInputs.push_back( particleTemp );
+        } else if (mDefinition==3 && (stat==4 || stat==6 || stat==7 ) ) {
+            /* Algorithmic definition: see hadronic definition */
+            mPartonList.push_back(hiddenCount++);
+            particleTemp.set_user_index( stat==4 ? abs(fPDGCode[i]) : -stat+2 );
+            auxInputs.push_back( particleTemp );
+        } else if (mDefinition==4 && stat==3) {
+            /* Physics clustering definition: ghost partons from the hard process */
+            particleTemp *= pow( 10, -18 );
+            particleTemp.set_user_index( -abs(fPDGCode[i]) );
+            fjInputs.push_back( particleTemp );
+        } else {
+            /* Discard unknown status codes */
+            continue;
+        }
+    }
+    assert( fjInputs.size() ); /* The input should not be empty */
+}
+
+/* Event type specific cuts */
 bool JetAnalysis::SelectionParams()
 {
     if ( sortedJets.size() == 0 ) return false;
@@ -89,8 +241,8 @@ bool JetAnalysis::SelectionParams()
     } else if (mMode == 2) {
         
         /* Gammajet events: require always sufficient resolution and cuts for gamma eta and pt */
-        if (   ( hiddenInputs[mGammaId].delta_R( sortedJets[0] ) < R )
-            || ( hiddenInputs[mGammaId].pt()<30 || fabs(hiddenInputs[mGammaId].eta())>2.5 ) )
+        if (   ( auxInputs[mGammaId].delta_R( sortedJets[0] ) < R )
+            || ( auxInputs[mGammaId].pt()<30 || fabs(auxInputs[mGammaId].eta())>2.5 ) )
         {
             return false;
         }
@@ -100,27 +252,27 @@ bool JetAnalysis::SelectionParams()
           *  -Minimum jet pT of 30 GeV
           *  -A cut for the subleading jet pT with respect to gamma pT (alpha)
           *  -Max jet eta of 2.5 */
-        mJetVars.Alpha = (sortedJets.size()>1) ? sortedJets[1].pt()/hiddenInputs[mGammaId].pt() : 0;
-        mJetVars.DPhi = fabs(hiddenInputs[mGammaId].delta_phi_to(sortedJets[0]));
-        mJetVars.matchPT = hiddenInputs[mGammaId].pt();
+        mJetVars.Alpha = (sortedJets.size()>1) ? sortedJets[1].pt()/auxInputs[mGammaId].pt() : 0;
+        mJetVars.DPhi = fabs(auxInputs[mGammaId].delta_phi_to(sortedJets[0]));
+        mJetVars.matchPT = auxInputs[mGammaId].pt();
         
     } else if (mMode == 3) {
         
         /* Zjet events: require always sufficient resolution and cuts for muon pt and eta */
         if (   ( mMuonList.size()!=2 )
-            || ( hiddenInputs[mMuonList[0]].delta_R(sortedJets[0])<R
-            ||   hiddenInputs[mMuonList[1]].delta_R(sortedJets[0])<R )
-            || ((hiddenInputs[mMuonList[0]].pt()<20 || hiddenInputs[mMuonList[1]].pt()<10)
-            &&  (hiddenInputs[mMuonList[1]].pt()<20 || hiddenInputs[mMuonList[0]].pt()<10))
-            || ( fabs(hiddenInputs[mMuonList[0]].eta())>2.5 
-            ||   fabs(hiddenInputs[mMuonList[1]].eta())>2.5 ) )
+            || ( auxInputs[mMuonList[0]].delta_R(sortedJets[0])<R
+            ||   auxInputs[mMuonList[1]].delta_R(sortedJets[0])<R )
+            || ((auxInputs[mMuonList[0]].pt()<20 || auxInputs[mMuonList[1]].pt()<10)
+            &&  (auxInputs[mMuonList[1]].pt()<20 || auxInputs[mMuonList[0]].pt()<10))
+            || ( fabs(auxInputs[mMuonList[0]].eta())>2.5 
+            ||   fabs(auxInputs[mMuonList[1]].eta())>2.5 ) )
         {
             return false;
         }
 
         /* Dimuon system: require always Z0 mass cut (70-110 GeV) */
-        fastjet::PseudoJet tmpVec = hiddenInputs[mMuonList[0]]; 
-        tmpVec += hiddenInputs[mMuonList[1]];
+        fastjet::PseudoJet tmpVec = auxInputs[mMuonList[0]]; 
+        tmpVec += auxInputs[mMuonList[1]];
         if ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 ) return false;
         
         /** Example of a selction that should be done:
@@ -141,133 +293,41 @@ bool JetAnalysis::SelectionParams()
     return true;
 }
 
-void JetAnalysis::ParticlesToJetsorterInput()
-{
-    fjInputs.clear();
-    hiddenInputs.clear();
-    mPartonList.clear();
-    mMuonList.clear();
-    int hiddenCount = 0;
-
-    for (size_t i = 0; i != fPrtcls_; ++i) {
-        fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
-        int stat = fAnalysisStatus[i];
-
-        /* Ghost partons, hadrons and normal particles */
-        if (stat==1) {
-            particleTemp.set_user_index( i ); /* Save particle index */
-            fjInputs.push_back( particleTemp );
-        } else if (stat==2) {
-            /* Gammajet gammas and Zjet muons are excluded from jet clustering */
-            if (mMode==2) {
-                mGammaId = hiddenCount++;
-                hiddenInputs.push_back( particleTemp );
-            } else if (mMode==3) {
-                mMuonList.push_back(hiddenCount++);
-                hiddenInputs.push_back( particleTemp );
-            } else if (mMode==0) {
-                particleTemp.set_user_index( i );
-                fjInputs.push_back( particleTemp );
-            }
-        } else if (stat==3 && mDefinition==1) {
-            mPartonList.push_back(hiddenCount++);
-            particleTemp.set_user_index( fPDGCode[i] );
-            hiddenInputs.push_back(particleTemp);
-        } else if (mDefinition==2 && (stat==4 ||/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)) {
-            /* Ghost partons==4, hadrons: (strange==5), charm==6, bottom==7, (top==8) */
-            particleTemp *= pow( 10, -18 );
-            particleTemp.set_user_index( -i );
-            fjInputs.push_back( particleTemp );
-        } else if (mDefinition==3 && (stat==4 || stat==6 || stat==7 ) ) {
-            mPartonList.push_back(hiddenCount++);
-            particleTemp.set_user_index( stat==4 ? abs(fPDGCode[i]) : -stat+2 );
-            hiddenInputs.push_back( particleTemp );
-        } else {
-            /* Discard unknown status codes */
-            continue;
-        }
-    }
-    assert( fjInputs.size() ); /* The input should not be empty */
-}
-
-void JetAnalysis::JetLoop(int jentry)
-{
-    for (size_t i = 0; i < sortedJets.size(); ++i) {
-        if ( i == jetsPerEvent ) break;
-
-        jetParts = sorted_by_pt(sortedJets[i].constituents());
-
-        /* Check the jet flavour if not a generic case */
-        int multiplicity = 0;
-        if (mMode==0) {
-            mFlavour = 0;
-            mJetVars.DR = 0;
-            mJetVars.Alpha = 0;
-            mJetVars.DPhi = 0;
-            mJetVars.constituents = 0;
-            mJetVars.PTD = 0;
-            mJetVars.Sigma2 = 0;
-        } else {
-            if (mDefinition == 1) {
-                PhysicsFlavor(i);
-            } else if (mDefinition == 2) {
-                HadronicFlavor(i);
-            } else if (mDefinition == 3) {
-                AlgorithmicFlavor(i);
-            }
-
-            Cuts();
-            mJetVars.constituents = cutJetParts.size();
-            mJetVars.PTD = PTD();
-            mJetVars.Sigma2 = Sigma2();
-        }
-
-        ParticleLoop(i); /* Operations on jet particles */
-
-        TypeSort(); /* Get ready for adding the jet */
-
-        //HistFill(i);
-
-        fjEvent->AddJet(sortedJets[i].px(),sortedJets[i].py(),sortedJets[i].pz(),
-            sortedJets[i].e(),mJetVars,fWeight,mFlavour);
-    }
-}
 
 /* If there are conflicts, save the preferred flavour with a minus sign. 
    Assumes a 2 -> 2 hard process () 
-   dR_min: the smallest distance
-   dR_max: maximal search distance to give only one answer */
-void JetAnalysis::PhysicsFlavor(std::size_t i) 
+   dR_min: the smallest jet axis - parton distance
+   dR_nextmin: the next smallest jet axis - parton distance */
+void JetAnalysis::PhysicsFlavor(unsigned i) 
 {
     mFlavour = 0;
     mJetVars.partonPT = 0;
-    double dR_min = 10, dR_max = 10; 
+    double dR_min = 10, dR_nextmin = 10; 
     for ( auto k : mPartonList ) {
-        double dR = sortedJets[i].delta_R( hiddenInputs[k] );
+        double dR = sortedJets[i].delta_R( auxInputs[k] );
         
         if ( dR < dR_min ) {
-            if (mFlavour!=0) dR_max = dR_min;
+            if (mFlavour!=0) dR_nextmin = dR_min;
             dR_min = dR;
-            mJetVars.partonPT = hiddenInputs[k].pt();
-            mFlavour = abs(hiddenInputs[k].user_index());
-        } else if ( dR < dR_max ) {
-            dR_max = dR;
+            mJetVars.partonPT = auxInputs[k].pt();
+            mFlavour = abs(auxInputs[k].user_index());
+        } else if ( dR < dR_nextmin ) {
+            dR_nextmin = dR;
         }
-        
     }
     mJetVars.DR = dR_min;
-    mJetVars.maxDR = dR_max;
+    mJetVars.maxDR = dR_nextmin;
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
 
-void JetAnalysis::HadronicFlavor(size_t i)
+/* Particle identification the modern "Hadronic definition".
+ * Determine whether a jet is dominated by quarks or by gluons.
+ * Looping stops when a corresponding jet is found.
+ * Hadron flavour is used as a dominating feature.
+ * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
+ * for further information. */
+void JetAnalysis::HadronicFlavor(unsigned i)
 {
-   /* Particle identification.
-    * Determine whether a jet is dominated by quarks or by gluons.
-    * Looping stops when a corresponding jet is found.
-    * Hadron flavour is used as a dominating feature.
-    * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
-    * for further information. */
     int hadronFlav = 0, partonFlav = 0, hardestLightParton = 0;
 
     for ( size_t k = 0; k != jetParts.size(); ++k ){
@@ -304,27 +364,27 @@ void JetAnalysis::HadronicFlavor(size_t i)
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
 
-void JetAnalysis::AlgorithmicFlavor(size_t i)
+/* Algorithmic flavor tagging is somewhat similar to hadronic tagging.
+ * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
+ * for further information. */
+void JetAnalysis::AlgorithmicFlavor(unsigned i)
 {
-   /* Algorithmic flavor tagging is somewhat similar to hadronic tagging.
-    * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
-    * for further information. */
     int hadronFlav = 0, partonFlav = 0;
     mFlavour = 0; mJetVars.partonPT = 0;
     
     for ( auto k : mPartonList ) {
-        double dR = sortedJets[i].delta_R( hiddenInputs[k] );
+        double dR = sortedJets[i].delta_R( auxInputs[k] );
         
-        if (hiddenInputs[k].user_index() < 0) {
+        if (auxInputs[k].user_index() < 0) {
             if (dR > R) continue;
             
-            if (hiddenInputs[k].user_index() < hadronFlav)
-                hadronFlav = hiddenInputs[k].user_index();
+            if (auxInputs[k].user_index() < hadronFlav)
+                hadronFlav = auxInputs[k].user_index();
         } else {
             if (dR > 0.3) continue;
             
-            if (hiddenInputs[k].user_index() > partonFlav)
-                partonFlav = hiddenInputs[k].user_index();
+            if (auxInputs[k].user_index() > partonFlav)
+                partonFlav = auxInputs[k].user_index();
         }
     }
     
@@ -334,6 +394,24 @@ void JetAnalysis::AlgorithmicFlavor(size_t i)
         mFlavour = partonFlav;
     }
     mQuarkJetCharge = ChargeSign(mFlavour);
+}
+
+/* A variant of the physics definition:
+ * use ghost particle clustering for the hard process partons. */
+void JetAnalysis::PhysClusterFlavor(unsigned i)
+{
+    mFlavour = 0;
+    
+    for ( auto part : jetParts ){
+        if (part.user_index() > 0) continue; /* Not ghosts */
+        
+        /* If there are more than one hard process parton within a jet, mark no flavour */
+        if (mFlavour != 0) {
+            mFlavour = 0;
+            break;
+        }
+        mFlavour = -part.user_index();
+    }
 }
 
 
@@ -465,68 +543,6 @@ int JetAnalysis::ChargeSign( int id )
     if ( id == -6 ) return -1;
     return 1;
 }
-
-
-void JetAnalysis::ParticleLoop(size_t i){
-  
-    TLorentzVector zero(0,0,0,0);
-
-    mPiPlus = zero; mPiMinus = zero;  mPi0Gamma = zero; mGamma = zero; 
-    mKaPlus = zero; mKaMinus = zero; mKSZero = zero; mKLZero = zero; 
-    mProton = zero; mAproton = zero; mNeutron = zero; mAneutron = zero;
-    mLambda0 = zero; mSigma = zero; mElec = zero, mMuon = zero;
-    mOthers = zero; mEtSum = zero;
-    
-    for (unsigned int j = 0; j != jetParts.size(); ++j) {
-        if ( jetParts[j].user_index() < 0 ) continue;
-        TLorentzVector tmpP( jetParts[j].px(), jetParts[j].py(), jetParts[j].pz(), 
-            jetParts[j].e() );
-
-        mEtSum += tmpP;
-        int id = fPDGCode[ jetParts[j].user_index() ];
-        if ( id == 211 ) { 
-            mPiPlus += tmpP;
-        } else if ( id == -211 ) { 
-            mPiMinus+= tmpP;
-        } else if ( id == 22 ) {
-            if ( fAnalysisStatus[ jetParts[j].user_index() ] == 2 ) {
-                mPi0Gamma += tmpP;
-            } else {
-                mGamma += tmpP;
-            }
-        } else if ( id == 20 ) { // pi0 gamma
-            mPi0Gamma += tmpP;
-        } else if ( id == 321 ) { 
-            mKaPlus += tmpP;
-        } else if ( id == -321 ) { 
-            mKaMinus += tmpP;
-        } else if ( abs( id ) == 310 ) { 
-            mKSZero += tmpP;
-        } else if ( abs( id ) == 130 ) { 
-            mKLZero += tmpP;
-        } else if ( id == 2212 ) { 
-            mProton += tmpP;
-        } else if ( id == -2212 ) { 
-            mAproton += tmpP;
-        } else if ( id == 2112 ) { 
-            mNeutron += tmpP;
-        } else if ( id == -2112 ) { 
-            mAneutron += tmpP;
-        } else if ( abs( id ) == 3122 ) {
-            mLambda0 += tmpP;
-        } else if ( abs( id ) == 3112 ||
-            abs( id ) == 3222 ) {
-            mSigma += tmpP;
-        } else if ( abs( id ) == 11 ) {
-            mElec += tmpP;
-        } else if ( abs( id ) == 13 ) {
-            mMuon += tmpP;
-        } else {
-            mOthers += tmpP;        
-        }
-    }
-}
-
 
 /* Throw the obtained values in temporary containers */
 void JetAnalysis::TypeSort()

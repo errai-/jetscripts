@@ -67,8 +67,6 @@ bool Pythia8Tree::ParticleLoop()
     /* Particle loop */
     unsigned hardProcCount = 0, partonCount = 0;
     for (unsigned prt = 0; prt!=mEvent.size(); ++prt) {
-        
-        // TODO: Chase down the hard process partons on horseback, like men once did
 
         /* Save partons and such */
         if ( mEvent[prt].statusAbs()==23 ) {
@@ -224,9 +222,9 @@ void Pythia8Tree::GhostHadronAdd(std::size_t prt, bool useStrange)
 
     if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5)) {
         ghostStatus = 7; /* b Hadrons */
-    } else if (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3)) {
+    } else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4)) {
         ghostStatus = 6; /* c Hadrons */
-    } else if (useStrange && (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))) {
+    } else if (useStrange && (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3))) {
         ghostStatus = 5; /* s Hadrons */
     }
 

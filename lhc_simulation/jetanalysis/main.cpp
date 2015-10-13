@@ -29,22 +29,25 @@ using std::vector;
 
 int main(int argc, char* argv[]) 
 {
-    if (argc != 4) {
-        cout << "Usage: ./jetanalysis.exe [Standard form input file name] [path - e.g. './'] [Flavour def.]" << endl;
-        cout << "Flavour options:" << endl << "1: Physics definition" << endl;
-        cout << "2: Hadronic definition" << endl;
-        return 0;
-    }
-    
-    int definition = std::stoi(argv[3]);
-    int generator = -1, mode = -1;
-    bool beginning = false;
-    TFile *f;
-    TTree *tree;
-    string output = "", output2 = "hists_";   
     try {
-    
-        if ( definition!=1&&definition!=2&&definition!=3 ) throw std::runtime_error("Flavor options 1/2/3");
+        if (argc != 4) {
+            cout << "Usage: ./jetanalysis.exe [Standard form input file name] [path - e.g. './'] [Flavour def.]" << endl;
+            cout << "Flavour options:" << endl;
+            cout << "1: Physics definition" << endl;
+            cout << "2: Hadronic definition" << endl;
+            cout << "3: Algorithmic definition" << endl;
+            cout << "4: Physics cluster definition" << endl;
+            return 0;
+        }
+        
+        int definition = std::stoi(argv[3]);
+        int generator = -1, mode = -1;
+        bool beginning = false;
+        TFile *f;
+        TTree *tree;
+        string output = "", output2 = "hists_";
+        
+        if ( definition<1||definition>4 ) throw std::runtime_error("Flavor options 1/2/3/4");
         
         string input = argv[1], fullPath = argv[2], tmpStr = "";
         fullPath += input;        
@@ -86,6 +89,9 @@ int main(int argc, char* argv[])
                     } else if (definition==3) {
                         output += "algorithmic_";
                         output2 += "algorithmic_";
+                    } else if (definition==4) {
+                        output += "physcluster_";
+                        output2 += "physcluster_";
                     }
                 }
                 tmpStr = "";
@@ -117,17 +123,12 @@ int main(int argc, char* argv[])
             
         if (!(tree->GetEntries())) throw std::runtime_error("Zero events found");
         
-    } catch (std::exception& e) {
-        cout << "An error occurred: " << e.what() << endl;
-    }
-
-    /* Analysis process */
-    try {
+        /* Analysis process */
         JetAnalysis treeHandle(tree, output.c_str(), output2.c_str(), mode, definition);
         treeHandle.EventLoop();
         delete tree;
     } catch (std::exception& e) {
-        cout << "An error occurred: " << e.what() << endl;
+        std::cerr << "Error: " << e.what() << endl;
     }
     
     return 0;
