@@ -330,6 +330,7 @@ void JetAnalysis::HadronicFlavor(unsigned i)
 {
     int hadronFlav = 0, partonFlav = 0, hardestLightParton = 0;
 
+    // Jetparts is sorted from the greatest to the smallest pt
     for ( size_t k = 0; k != jetParts.size(); ++k ){
         if (jetParts[k].user_index() > 0) continue; /* Not ghosts */
         int idx = -jetParts[k].user_index();
@@ -359,7 +360,7 @@ void JetAnalysis::HadronicFlavor(unsigned i)
     if (hadronFlav != 0) {
         mFlavour = hadronFlav;
     } else {
-        mFlavour = hardestLightParton;
+        mFlavour = partonFlav;
     }
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
@@ -375,16 +376,11 @@ void JetAnalysis::AlgorithmicFlavor(unsigned i)
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( auxInputs[k] );
         
-        if (auxInputs[k].user_index() < 0) {
-            if (dR > R) continue;
-            
+        if (auxInputs[k].user_index() < 0 && dR < R) {
             if (auxInputs[k].user_index() < hadronFlav)
                 hadronFlav = auxInputs[k].user_index();
-        } else {
-            if (dR > 0.3) continue;
-            
-            if (auxInputs[k].user_index() > partonFlav)
-                partonFlav = auxInputs[k].user_index();
+        } else if (!partonFlav && dR < 0.3) {
+            partonFlav = auxInputs[k].user_index();
         }
     }
     
