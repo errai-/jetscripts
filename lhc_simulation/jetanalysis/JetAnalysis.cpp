@@ -167,7 +167,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
     auxInputs.clear();
     mPartonList.clear();
     mMuonList.clear();
-    int hiddenCount = 0;
+    int auxCount = 0;
 
     for (unsigned i = 0; i != fPrtcls_; ++i) {
         fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
@@ -180,10 +180,10 @@ void JetAnalysis::ParticlesToJetsorterInput()
         } else if (stat==2) {
             /* Gammajet gammas and Zjet muons are excluded from jet clustering */
             if (mMode==2) {
-                mGammaId = hiddenCount++;
+                mGammaId = auxCount++;
                 auxInputs.push_back( particleTemp );
             } else if (mMode==3) {
-                mMuonList.push_back(hiddenCount++);
+                mMuonList.push_back(auxCount++);
                 auxInputs.push_back( particleTemp );
             } else if (mMode==0) {
                 particleTemp.set_user_index( i );
@@ -191,7 +191,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
             }
         } else if (mDefinition==1 && stat==3) {
             /* Physics definition: the hard process */
-            mPartonList.push_back(hiddenCount++);
+            mPartonList.push_back(auxCount++);
             particleTemp.set_user_index( abs(fPDGCode[i]) );
             auxInputs.push_back(particleTemp);
         } else if (mDefinition==2 && (stat==4 ||/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)) {
@@ -199,10 +199,10 @@ void JetAnalysis::ParticlesToJetsorterInput()
             particleTemp *= pow( 10, -18 );
             particleTemp.set_user_index( -i );
             fjInputs.push_back( particleTemp );
-        } else if (mDefinition==3 && (stat==4 || stat==6 || stat==7 ) ) {
+        } else if (mDefinition==3 && (stat==4 ) ) {
             /* Algorithmic definition: see hadronic definition */
-            mPartonList.push_back(hiddenCount++);
-            particleTemp.set_user_index( stat==4 ? abs(fPDGCode[i]) : -stat+2 );
+            mPartonList.push_back(auxCount++);
+            particleTemp.set_user_index( abs(fPDGCode[i]) );
             auxInputs.push_back( particleTemp );
         } else if (mDefinition==4 && stat==3) {
             /* Physics clustering definition: ghost partons from the hard process */
@@ -370,25 +370,26 @@ void JetAnalysis::HadronicFlavor(unsigned i)
  * for further information. */
 void JetAnalysis::AlgorithmicFlavor(unsigned i)
 {
-    int hadronFlav = 0, partonFlav = 0;
+    int hardestLightParton = 0;
     mFlavour = 0; mJetVars.partonPT = 0;
     
     for ( auto k : mPartonList ) {
         double dR = sortedJets[i].delta_R( auxInputs[k] );
-        
-        if (auxInputs[k].user_index() < 0 && dR < R) {
-            if (auxInputs[k].user_index() < hadronFlav)
-                hadronFlav = auxInputs[k].user_index();
-        } else if (!partonFlav && dR < 0.3) {
-            partonFlav = auxInputs[k].user_index();
+        int status = auxInputs[k].user_index();
+
+        if (dR > 0.3) continue;
+            
+        if (status == 4 || status == 5) {
+            mFlavour = status > mFlavour ? status : mFlavour;
+        } else if (auxInputs[k].pt() > mJetVars.partonPT) {
+            hardestLightParton = status;
+            mJetVars.partonPT = auxInputs[k].pt();
         }
     }
     
-    if (hadronFlav != 0) {
-        mFlavour = -hadronFlav;
-    } else {
-        mFlavour = partonFlav;
-    }
+    if (!mFlavour)
+        mFlavour = hardestLightParton;
+    
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
 

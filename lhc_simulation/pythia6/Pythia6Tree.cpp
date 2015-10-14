@@ -200,7 +200,12 @@ bool Pythia6Tree::ParticleLoop()
             continue;
         }
         
-        // Stable particles
+        /* Algorithmic partons (corresp. to CMSSW status 2) */
+        if (mPythia->GetK(prt,1) == 11) {
+            ParticleAdd(prt,4);
+        }
+        
+        /* Stable particles */
         if (mPythia->GetK(prt,1) <= 10) {
             ParticleAdd(prt,1);
         }
