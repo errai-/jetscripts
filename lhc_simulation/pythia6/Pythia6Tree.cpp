@@ -184,12 +184,15 @@ bool Pythia6Tree::ParticleLoop()
     mPrtclEvent->fWeight = 1./mPythia->GetVINT(99);
     
     for (Int_t prt = 1; prt <= mPythia->GetN(); ++prt) {
+        int status = mPythia->GetK(prt,1);
+        int id = mPythia->GetK(prt,2);
+        
         // prt == 7,8: outgoing particles in the hardest subprocess
         if (prt==7 || prt==8) {
-            if (mMode==2 && mPythia->GetK(prt,2)==22) continue;
-            if (mMode==3 && mPythia->GetK(prt,2)==23) continue;
+            if (mMode==2 && id==22) continue;
+            if (mMode==3 && id==23) continue;
 
-            if ( mPythia->GetK(prt,1) != 21 ) throw std::runtime_error("False functionality in hardest subprocess");
+            if ( status != 21 ) throw std::runtime_error("False functionality in hardest subprocess");
             
             ParticleAdd(prt,3);
             continue;
@@ -200,13 +203,18 @@ bool Pythia6Tree::ParticleLoop()
             continue;
         }
         
-        /* Algorithmic partons (corresp. to CMSSW status 2) */
-        if (mPythia->GetK(prt,1) == 11) {
-            ParticleAdd(prt,4);
+        /* Hadronic and algorithmic definition */
+        if (status >= 11 && status <= 20) {
+            if (abs(id) <= 6 || id == 21)
+                ParticleAdd(prt,4);
+            else if (HadrFuncs::HasCharm(id))
+                ParticleAdd(prt,6);
+            else if (HadrFuncs::HasBottom(id))
+                ParticleAdd(prt,7);
         }
         
         /* Stable particles */
-        if (mPythia->GetK(prt,1) <= 10) {
+        if (status <= 10) {
             ParticleAdd(prt,1);
         }
     }

@@ -172,6 +172,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
     for (unsigned i = 0; i != fPrtcls_; ++i) {
         fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
         int stat = fAnalysisStatus[i];
+        int pdgID = abs(fPDGCode[i]);
 
         /* Ghost partons, hadrons and normal particles */
         if (stat==1) {
@@ -192,7 +193,7 @@ void JetAnalysis::ParticlesToJetsorterInput()
         } else if (mDefinition==1 && stat==3) {
             /* Physics definition: the hard process */
             mPartonList.push_back(auxCount++);
-            particleTemp.set_user_index( abs(fPDGCode[i]) );
+            particleTemp.set_user_index( pdgID );
             auxInputs.push_back(particleTemp);
         } else if (mDefinition==2 && (stat==4 ||/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */)) {
             /* Hadronic definition: Ghost partons==4, hadrons: (strange==5), charm==6, bottom==7, (top==8) */
@@ -201,13 +202,14 @@ void JetAnalysis::ParticlesToJetsorterInput()
             fjInputs.push_back( particleTemp );
         } else if (mDefinition==3 && (stat==4 ) ) {
             /* Algorithmic definition: see hadronic definition */
+            if (pdgID > 6 && pdgID!=21) continue;
             mPartonList.push_back(auxCount++);
-            particleTemp.set_user_index( abs(fPDGCode[i]) );
+            particleTemp.set_user_index( pdgID );
             auxInputs.push_back( particleTemp );
         } else if (mDefinition==4 && stat==3) {
             /* Physics clustering definition: ghost partons from the hard process */
             particleTemp *= pow( 10, -18 );
-            particleTemp.set_user_index( -abs(fPDGCode[i]) );
+            particleTemp.set_user_index( -pdgID );
             fjInputs.push_back( particleTemp );
         } else {
             /* Discard unknown status codes */
@@ -275,7 +277,7 @@ bool JetAnalysis::SelectionParams()
         tmpVec += auxInputs[mMuonList[1]];
         if ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 ) return false;
         
-        /** Example of a selction that should be done:
+        /** Example of a selection that should be done:
           *  -Back-to-back angle of min 2.8 rad
           *  -The subleading jet has smaller than 30% pT compared to the muons. (alpha)
           *  -Min. jet pT of 30GeV
@@ -342,15 +344,10 @@ void JetAnalysis::HadronicFlavor(unsigned i)
             hadronFlav = 5;
         } else if (stat == 6 && hadronFlav!=5) {
             hadronFlav = 4;
-        } else if (stat = 4) {
-            if (!hardestLightParton && (id==1 || id==2 || id==3 || id==21)) { 
+        } else if (stat == 4) {
+            if (!hardestLightParton && (id==1 || id==2 || id==3 || id==21))
                 hardestLightParton = abs(id);
-            }
-            if (!partonFlav && (id==4 || id==5)) {
-                partonFlav = id;
-            } else if ( id==5 ) {
-                partonFlav = id;
-            }
+            partonFlav = (id==4 || id==5) && id > partonFlav ? id : partonFlav;
         }
     }
     if (!partonFlav) partonFlav = hardestLightParton;
@@ -371,6 +368,7 @@ void JetAnalysis::HadronicFlavor(unsigned i)
 void JetAnalysis::AlgorithmicFlavor(unsigned i)
 {
     int hardestLightParton = 0;
+    double lightDR = 0, lightPT = 0;
     mFlavour = 0; mJetVars.partonPT = 0;
     
     for ( auto k : mPartonList ) {
@@ -380,15 +378,24 @@ void JetAnalysis::AlgorithmicFlavor(unsigned i)
         if (dR > 0.3) continue;
             
         if (status == 4 || status == 5) {
-            mFlavour = status > mFlavour ? status : mFlavour;
+            if (status > mFlavour) {
+                mFlavour = status;
+                mJetVars.DR = dR;
+                mJetVars.partonPT = auxInputs[k].pt();
+            }
         } else if (auxInputs[k].pt() > mJetVars.partonPT) {
             hardestLightParton = status;
-            mJetVars.partonPT = auxInputs[k].pt();
+            lightDR = dR;
+            lightPT = auxInputs[k].pt();
         }
     }
     
-    if (!mFlavour)
+    
+    if (!mFlavour) {
         mFlavour = hardestLightParton;
+        mJetVars.DR = lightDR;
+        mJetVars.partonPT = lightPT;
+    }
     
     mQuarkJetCharge = ChargeSign(mFlavour);
 }
@@ -405,10 +412,15 @@ void JetAnalysis::PhysClusterFlavor(unsigned i)
         /* If there are more than one hard process parton within a jet, mark no flavour */
         if (mFlavour != 0) {
             mFlavour = 0;
+            mJetVars.partonPT = 0;
             break;
         }
         mFlavour = -part.user_index();
+        mJetVars.partonPT = part.pt()*pow(10,18);
     }
+    
+    // DR is used mainly for cuts, so set this to zero to avoid unwanted pruning
+    mJetVars.DR = 0;
 }
 
 
