@@ -97,48 +97,48 @@ namespace HadrFuncs
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
-        if ( code1 == 6 || code2 == 6) return true;
-        return false;
+        if ( code1 == 6 || code2 == 6) return 1;
+        return 0;
     }
 
     static int HasBottom(int id) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
-        if ( code1 == 5 || code2 == 5) return true;
-        return false;
+        if ( code1 == 5 || code2 == 5) return 1;
+        return 0;
     }
 
     static int HasCharm(int id) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
-        if ( code1 == 4 || code2 == 4) return true;
-        return false;
+        if ( code1 == 4 || code2 == 4) return 1;
+        return 0;
     }
 
     static int HasStrange( int id ) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
-        if ( code1 == 3 || code2 == 3) return true;
-        return false;
+        if ( code1 == 3 || code2 == 3) return 1;
+        return 0;
     }
 
     static int HasDown( int id ) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
-        if ( code1 == 2 || code2 == 2) return true;
-        return false;
+        if ( code1 == 2 || code2 == 2) return 1;
+        return 0;
     }
 
     static int HasUp( int id ) 
     {
         int code1 = ( abs( id ) / 100)%10;
         int code2 = ( abs( id ) /1000)%10;
-        if ( code1 == 1 || code2 == 1) return true;
-        return false;
+        if ( code1 == 1 || code2 == 1) return 1;
+        return 0;
     }
 
 

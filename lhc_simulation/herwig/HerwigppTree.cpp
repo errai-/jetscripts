@@ -52,11 +52,11 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
             
             bool gammaCase = (mMode==2 && absId==ParticleID::gamma );
             bool ZCase = (mMode==3 && absId==ParticleID::muminus );
-//             cout << (*part)->number() << " " << getStatusCode(*part) << " " << (*part)->id() << " ";
-//             const tParticleVector parents = (*part)->parents();
-//             for (unsigned i = 0u; i < parents.size(); ++i)
-//                 cout << parents[i]->number() << " ";
-//             cout << endl;
+        //             cout << (*part)->number() << " " << getStatusCode(*part) << " " << (*part)->id() << " ";
+        //             const tParticleVector parents = (*part)->parents();
+        //             for (unsigned i = 0u; i < parents.size(); ++i)
+        //                 cout << parents[i]->number() << " ";
+        //             cout << endl;
 
             if (gammaCase) {
                 gammaAdd(*part);
