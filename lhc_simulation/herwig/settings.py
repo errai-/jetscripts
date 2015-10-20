@@ -189,11 +189,16 @@ elif mode==4:
     f.write('set MEHeavyQuark:Process Pair\n')
     f.write('insert SimpleQCD:MatrixElements[0] MEHeavyQuark\n')
 f.write('insert SimpleQCD:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
+#f.write('set /Herwig/UnderlyingEvent/MPIHandler:IdenticalToUE 0\n')
 
 f.write('# Save final particles and hardest subprocess particles\n')
 f.write('cd /Herwig/Analysis\n')
 f.write('create jetanalysis::HerwigppTree jetAnalysis libHerwigppTree.so\n')
 f.write('insert /Herwig/Generators/LHCGenerator:AnalysisHandlers 0 jetAnalysis\n\n')
+#f.write('insert /Herwig/Generators/LHCGenerator:AnalysisHandlers 1 HepMCFile\n')
+#f.write('set /Herwig/Analysis/HepMCFile:PrintEvent 10\n')
+#f.write('set /Herwig/Analysis/HepMCFile:Format GenEvent\n')
+#f.write('set /Herwig/Analysis/HepMCFile:Units GeV_mm\n')
 
 #f.write("set /Herwig/Shower/SplittingGenerator:ISR No\n")
 #f.write("set /Herwig/Shower/SplittingGenerator:FSR No\n")

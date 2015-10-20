@@ -46,11 +46,17 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
         /* The hardest subprocess */
         tPVector hardProc = event->primaryCollision()->step(0)->getFinalState();
         int leptons = 0;
+//         cout << "Hard process: " << endl;
         for (tPVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
             int absId = abs((*part)->id());
             
             bool gammaCase = (mMode==2 && absId==ParticleID::gamma );
             bool ZCase = (mMode==3 && absId==ParticleID::muminus );
+//             cout << (*part)->number() << " " << getStatusCode(*part) << " " << (*part)->id() << " ";
+//             const tParticleVector parents = (*part)->parents();
+//             for (unsigned i = 0u; i < parents.size(); ++i)
+//                 cout << parents[i]->number() << " ";
+//             cout << endl;
 
             if (gammaCase) {
                 gammaAdd(*part);
@@ -103,16 +109,21 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
         }
 
         /* Loop over all particles. */ 
-        /*
+/*        
+        cout << "Total process: " << endl;
         tPVector all;
         event->select(std::back_inserter(all),SelectAll());
         for (tPVector::const_iterator pit = all.begin(); pit != all.end(); ++pit) {
             int stotus = getStatusCode(*pit);
-            if (stotus == 3) {
-                cout << (*pit)->number() << " " << (*pit)->id() << endl;
-            }
+            cout << (*pit)->number() << " " << stotus << " " << (*pit)->id() << " ";
+            cout << (*pit)->momentum().x()/GeV << " " << (*pit)->momentum().y()/GeV << " ";
+            cout << (*pit)->momentum().z()/GeV << " " << (*pit)->momentum().t()/GeV << " "; 
+            const tParticleVector parents = (*pit)->parents();
+            for (unsigned i = 0u; i < parents.size(); ++i)
+                cout << parents[i]->number() << " ";
+            cout << endl;
         }
-         */
+          */
             
         mTree->Fill();
     
