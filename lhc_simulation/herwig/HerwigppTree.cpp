@@ -28,6 +28,16 @@ void HerwigppTree::particleAdd(const tPPtr& part, int saveStatus)
                           part->id(), saveStatus);
 }
 
+void HerwigppTree::print_parents(const tPPtr& part) {
+    cout << " " << part->number() << " " << part->id() << "  ";
+    const tParticleVector parents = part->parents();
+    for (unsigned i = 0u; i < parents.size(); ++i)
+        cout << parents[i]->number() << "-" << getStatusCode(parents[i]) << " ";
+    cout << endl;
+    for (unsigned i = 0u; i < parents.size(); ++i)
+        print_parents(parents[i]);
+}
+
 void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
 {
     if (ieve%mTimerStep==0&&ieve>0) mTimer.printTime();
@@ -41,22 +51,46 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
         
         mPrtclEvent->fWeight = event->weight();
         mHard = event->primaryCollision()->handler();
+
         //event->printGraphviz();
+
+        /* Loop over all particles. */ 
+/*        
+        cout << "Total process: " << endl;
+        tPVector all;
+        event->select(std::back_inserter(all),SelectAll());
+        for (tPVector::const_iterator pit = all.begin(); pit != all.end(); ++pit) {
+            int stotus = getStatusCode(*pit);
+            cout << (*pit)->number() << " " << stotus << " " << (*pit)->id() << " ";
+            cout << (*pit)->momentum().x()/GeV << " " << (*pit)->momentum().y()/GeV << " ";
+            cout << (*pit)->momentum().z()/GeV << " " << (*pit)->momentum().t()/GeV << " "; 
+            const tParticleVector parents = (*pit)->parents();
+            for (unsigned i = 0u; i < parents.size(); ++i)
+                cout << parents[i]->number() << " ";
+            cout << endl;
+        }
+          */
+        
+        // Hard process method 1: brings also the id 82 collimations
+//         cout << "Hard process 1: " << endl;
+//         const ParticleVector hordProk = event->primarySubProcess()->outgoing(); 
+//         for (ParticleVector::const_iterator part = hordProk.begin(); part != hordProk.end(); ++part) {
+//             cout << (*part)->number() << " " << getStatusCode(*part) << " " << (*part)->id() << " ";
+//             cout << endl;
+//             print_parents(*part);
+//         } 
         
         /* The hardest subprocess */
         tPVector hardProc = event->primaryCollision()->step(0)->getFinalState();
         int leptons = 0;
-//         cout << "Hard process: " << endl;
+//         cout << "Hard process 2: " << endl;
         for (tPVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
             int absId = abs((*part)->id());
-            
             bool gammaCase = (mMode==2 && absId==ParticleID::gamma );
             bool ZCase = (mMode==3 && absId==ParticleID::muminus );
-        //             cout << (*part)->number() << " " << getStatusCode(*part) << " " << (*part)->id() << " ";
-        //             const tParticleVector parents = (*part)->parents();
-        //             for (unsigned i = 0u; i < parents.size(); ++i)
-        //                 cout << parents[i]->number() << " ";
-        //             cout << endl;
+            
+//             cout << (*part)->number() << " " << getStatusCode(*part) << " " << (*part)->id() << " ";
+//             cout << endl;
 
             if (gammaCase) {
                 gammaAdd(*part);
@@ -108,22 +142,6 @@ void HerwigppTree::analyze(tEventPtr event, long ieve, int loop, int status)
             particleAdd( *part, saveStatus );
         }
 
-        /* Loop over all particles. */ 
-/*        
-        cout << "Total process: " << endl;
-        tPVector all;
-        event->select(std::back_inserter(all),SelectAll());
-        for (tPVector::const_iterator pit = all.begin(); pit != all.end(); ++pit) {
-            int stotus = getStatusCode(*pit);
-            cout << (*pit)->number() << " " << stotus << " " << (*pit)->id() << " ";
-            cout << (*pit)->momentum().x()/GeV << " " << (*pit)->momentum().y()/GeV << " ";
-            cout << (*pit)->momentum().z()/GeV << " " << (*pit)->momentum().t()/GeV << " "; 
-            const tParticleVector parents = (*pit)->parents();
-            for (unsigned i = 0u; i < parents.size(); ++i)
-                cout << parents[i]->number() << " ";
-            cout << endl;
-        }
-          */
             
         mTree->Fill();
     

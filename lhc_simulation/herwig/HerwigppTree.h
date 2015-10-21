@@ -105,6 +105,8 @@ protected:
     bool leptonAdd(tPPtr);
     //@}
     
+    void print_parents(const tPPtr&);
+    
     /** @name Help methods for the analysis */
     //@{
     /** ThePEG does not provide useful status codes and the status has to be studied manually.
