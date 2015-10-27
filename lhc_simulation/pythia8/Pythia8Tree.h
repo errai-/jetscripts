@@ -20,7 +20,7 @@
 //       - Ttbar production with WW -> qqbarllbar                //
 //                                                               //
 // Author: Hannu Siikonen (errai- @GitHub)                       //
-// Last modification: 21.8.2015                                  //
+// Last modification: 27.10.2015                                 //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -57,87 +57,152 @@ using std::vector;
 using std::pair;
 using std::cout;
 using std::endl;
+using std::cerr;
 using std::runtime_error;
 
 class Pythia8Tree
 {
 public:
+    /* The event loop should be called once after a proper initialization */
+    void EventLoop();    
 
-    /* The run settings should be provided in the initializer */
-    Pythia8Tree(string settings, string fileName, int mode) : mEvent(mPythia.event)
+    /* No copying or constructing with another instance */
+    Pythia8Tree( const Pythia8Tree& other ) = delete;
+    Pythia8Tree& operator=( const Pythia8Tree& ) = delete;
+    
+    /* Run settings are provided through the initializer */
+    Pythia8Tree(string settings, string fileName, int mode);
+    Pythia8Tree() : mEvent(mPythia.event), mProcess(mPythia.process)
     {
-        /* Initialization of the Pythia8 run */
-        if (!mPythia.readFile(settings.c_str())) throw std::invalid_argument("Error while reading settings"); 
-        if (!mPythia.init()) throw runtime_error("Pythia8 initialization failed");
-        mPythia.settings.listChanged();
-
-        mNumEvents = mPythia.mode("Main:numberOfEvents");
-        mMode = mode;
-
-        /* Try to create a file to write */
-        mFile = new TFile(fileName.c_str(), "RECREATE");
-        if(!mFile->IsOpen()) throw runtime_error("Creating an output file failed");
-        mFile->SetCompressionLevel(1);
-
-        /* Create a tree. Autosave every 100 Mb, cache of 10 Mb */
-        mTree = new TTree("Pythia8Tree","Pythia8 particle data.");
-        if(!mTree) throw runtime_error("Creating a tree failed");
-        mTree->SetAutoSave(100000000); /* 0.1 GBytes */
-        mTree->SetCacheSize(10000000); /* 100 MBytes */
-        TTree::SetBranchStyle(1); /* New branch style */
-
-        /* Connect an event to the tree */
-        mPrtclEvent = new PrtclEvent();
-        if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
-        mPrtclEvent->SetBit(kCanDelete);
-        mPrtclEvent->SetBit(kMustCleanup);
-        mBranch = mTree->Branch("event", &mPrtclEvent, 32000,4);
-        if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
-        mBranch->SetAutoDelete(kFALSE);
-        mTree->BranchRef();
-        
-        /* Setup a custom event timer */
-        mTimerStep = 1000;
-        mTimer.setParams(mNumEvents,mTimerStep);       
-        mTimer.startTiming();
+        cerr << "Pythia8Tree is intended to be used only with the non-default initializer" << endl;
+        mInitialized = false;
     }
+    /* ROOT has an awful behaviour with pointers. It should do the cleaning-up
+       and such stuff well, but there is a ton of memory leaks that result
+       already from ROOT 'being there'. At least the software runs - but the
+       memory leaks and ROOT style pointer handling are regrettable.
+       PrtclEvent is defined in the local software and thus deleting it
+       seemed like a good idea. */
+    ~Pythia8Tree() { delete mPrtclEvent; mPrtclEvent = 0; }
+
+protected:
     
-    ~Pythia8Tree() {}
-    
-    void EventLoop();
-    
-    void ParticleAdd(std::size_t,int);
-    TLorentzVector LastParton(unsigned);
-    
+    /* Loop over particles within an event: returns true if event is to be saved */
     bool ParticleLoop();
+    /* The logic within particleloop. */
+    virtual bool ProcessParticle(unsigned prt);
     
-    bool GammaAdd(std::size_t);
-    bool MuonAdd(std::size_t);
-    bool LeptonAdd(std::size_t);
+    /* A handle for adding particle information */
+    void ParticleAdd(unsigned prt, int status);
+    /* Particles needed by the hadronic flavor definition */
+    void GhostHadronAdd(unsigned prt, bool useStrange = false);
     
-    bool GammaChecker(std::size_t);
+    /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
+     * is in an excited state or not. Checks whether a hadron has a daughter of 
+     * the same flavour. Parameter quarkId is a PDG quark flavour. */
+    bool IsExcitedHadronState(unsigned prt, int quarkID);
     
-    bool IsExcitedHadronState(std::size_t, int);
-    void GhostHadronAdd(std::size_t, bool = false);
+    /* A function that checks whether a photon is originated from a pi0 and that
+     * the energy of the photon-pair corresponds to the pion. returns 0 if
+     * the origin is not a pion with good energy and 1 if it is */
+    bool GammaChecker(unsigned prt);
+    /* For a given parton goes to the last step before hadronization */
+    TLorentzVector LastParton(unsigned prt);
     
 protected:
     
+    /* Indicator that the event loop can be run */
+    bool mInitialized;
+    
+    unsigned mHardProcCount, mPartonCount;
+    
     Pythia mPythia;
     Event& mEvent;
+    Event& mProcess;
     
     TFile *mFile;
     TTree *mTree;
     TBranch *mBranch;
     PrtclEvent *mPrtclEvent;
-    vector< pair<std::size_t,int> > mCandidates;
-    std::size_t mNextCand;
     
     int mNumEvents;
     int mMode;
     int mTimerStep;
     Timer mTimer;
     
-    vector<std::size_t> mSpecialIndices;
+    vector<unsigned> mSpecialIndices;
 };
+
+
+class P8GenericTree : public Pythia8Tree
+{
+public:    
+    P8GenericTree(string settings, string fileName, int mode) : 
+        Pythia8Tree(settings, fileName, mode) {}
+    ~P8GenericTree() {}
+
+protected:
+    /* Dijet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+
+class P8DijetTree : public Pythia8Tree
+{
+public:    
+    P8DijetTree(string settings, string fileName, int mode) : 
+        Pythia8Tree(settings, fileName, mode) {}
+    ~P8DijetTree() {}
+
+protected:
+    /* Dijet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+
+class P8GammajetTree : public Pythia8Tree
+{
+public:    
+    P8GammajetTree(string settings, string fileName, int mode) : 
+        Pythia8Tree(settings, fileName, mode) {}
+    ~P8GammajetTree() {}
+
+protected:
+    /* A handle for adding a hard process photon descended from prt */
+    bool GammaAdd(unsigned prt);
+    /* Gammajet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+
+class P8ZmumujetTree : public Pythia8Tree
+{
+public:    
+    P8ZmumujetTree(string settings, string fileName, int mode) : 
+        Pythia8Tree(settings, fileName, mode) {}
+    ~P8ZmumujetTree() {}
+
+protected:
+    /* A handle for adding the two muons originating from a hard process Z prt */
+    bool MuonAdd(unsigned prt);
+    /* Zmumujet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+
+class P8ttbarjetTree : public Pythia8Tree
+{
+public:    
+    P8ttbarjetTree(string settings, string fileName, int mode) : 
+        Pythia8Tree(settings, fileName, mode) {}
+    ~P8ttbarjetTree() {}
+
+protected:
+    /* A handle for adding the produced leptons in ttbar events */
+    bool LeptonAdd(unsigned prt);
+    /* Zmumujet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
 
 #endif // PYTHIA8TREE
