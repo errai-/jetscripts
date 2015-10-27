@@ -63,6 +63,7 @@ class Pythia8Tree
 {
 public:
 
+    /* The run settings should be provided in the initializer */
     Pythia8Tree(string settings, string fileName, int mode) : mEvent(mPythia.event)
     {
         /* Initialization of the Pythia8 run */
@@ -88,6 +89,8 @@ public:
         /* Connect an event to the tree */
         mPrtclEvent = new PrtclEvent();
         if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
+        mPrtclEvent->SetBit(kCanDelete);
+        mPrtclEvent->SetBit(kMustCleanup);
         mBranch = mTree->Branch("event", &mPrtclEvent, 32000,4);
         if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
         mBranch->SetAutoDelete(kFALSE);
@@ -99,16 +102,12 @@ public:
         mTimer.startTiming();
     }
     
-    ~Pythia8Tree() 
-    {
-        delete mPrtclEvent; mPrtclEvent = 0;
-        mFile->Close();
-    };
+    ~Pythia8Tree() {}
     
     void EventLoop();
     
     void ParticleAdd(std::size_t,int);
-    TLorentzVector Vogel(unsigned);
+    TLorentzVector LastParton(unsigned);
     
     bool ParticleLoop();
     

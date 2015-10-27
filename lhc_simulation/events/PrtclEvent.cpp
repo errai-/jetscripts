@@ -42,6 +42,8 @@ void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id, int
     part = InitPrtcl();
     part->SetPxPyPzE(px,py,pz,e);
     part->SetParams(id,status);
+    part->SetBit(kCanDelete);
+    part->SetBit(kMustCleanup);
     
     TProcessID::SetObjectCount(ObjectNumber);
 }

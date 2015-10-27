@@ -5,6 +5,7 @@ void Pythia8Tree::EventLoop()
     std::size_t numEvent = 0;
     while (numEvent != mNumEvents) {
         if (!mPythia.next()) continue;
+        /* Print event listing */
         //mEvent.list();
 
         if ( !ParticleLoop() ) continue; 
@@ -21,6 +22,7 @@ void Pythia8Tree::EventLoop()
         ++numEvent;
         if (numEvent%mTimerStep==0) mTimer.printTime();
     }
+    /* Print event statistics */
     //mPythia.stat();
 
     /* Cleaning up: */
@@ -40,7 +42,7 @@ void Pythia8Tree::ParticleAdd(std::size_t prt, int saveStatus)
     ++mNextCand;
 }
 
-TLorentzVector Pythia8Tree::Vogel(unsigned prt)
+TLorentzVector Pythia8Tree::LastParton(unsigned prt)
 {
     if (mEvent[prt].statusAbs() == 71 || mEvent[prt].statusAbs() == 72) {
         TLorentzVector handle(mEvent[prt].px(),mEvent[prt].py(),mEvent[prt].pz(),mEvent[prt].e());
@@ -49,7 +51,7 @@ TLorentzVector Pythia8Tree::Vogel(unsigned prt)
     
     TLorentzVector cumulator(0,0,0,0);
     for (auto &daughter : mEvent.daughterList(prt) ) {
-        cumulator += Vogel(daughter);
+        cumulator += LastParton(daughter);
     }
     return cumulator;
 }
