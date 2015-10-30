@@ -3,13 +3,15 @@
 
 Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) : mEvent(mPythia.event), mProcess(mPythia.process)
 {
+    mMode = mode;
+    
     /* Initialization of the Pythia8 run */
+    if (mMode == 4) mPythia.setUserHooksPtr(&mTTBarSelector);
     if (!mPythia.readFile(settings.c_str())) throw std::invalid_argument("Error while reading settings"); 
     if (!mPythia.init()) throw runtime_error("Pythia8 initialization failed");
     mPythia.settings.listChanged();
 
     mNumEvents = mPythia.mode("Main:numberOfEvents");
-    mMode = mode;
 
     /* Try to create a file to write */
     mFile = new TFile(fileName.c_str(), "RECREATE");
@@ -83,19 +85,6 @@ bool Pythia8Tree::ParticleLoop()
     
     mPrtclEvent->fWeight = mPythia.info.weight();
     
-    /* ttbar events: seek lepton+jets (one w to leptons, one to quarks) */
-    if (mMode == 4) {
-        unsigned leptons = 0;
-        for (unsigned prt = 0; prt!=mProcess.size(); ++prt) {
-            if (mProcess[prt].statusAbs() == 23 && mProcess[prt].isLepton())
-                ++leptons;
-        }
-        if (leptons != 2)
-            return false;
-    }
-    mEvent.list();
-    cout << "Tempo!" << endl;
-    
     /* Particle loop */
     mHardProcCount = 0, mPartonCount = 0;
     for (unsigned prt = 0; prt!=mEvent.size(); ++prt) {
@@ -111,7 +100,6 @@ bool Pythia8Tree::ParticleLoop()
     {
         throw std::logic_error("Unexpected hard process structure");
     }
-    cout << mHardProcCount << endl;
     return true;
 } // ParticleLoop
 
@@ -167,7 +155,6 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
             /* Save hard process outgoing partons */
             ParticleAdd( prt, 3 );
             ++mHardProcCount;
-            cout << "Parton: " << prt << " " << mEvent[prt].id() << endl;
             return true;
         } else if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) {
             /* Adding ghost partons, used by the algorithmic and the modern "ghost" flavour definition */
@@ -242,7 +229,7 @@ bool P8GammajetTree::GammaAdd(unsigned prt)
         return true;
     }
     
-    cerr << "Pair production, found " << mEvent[prt].name() << endl;
+    cerr << "Pair production, no final-state gamma!" << endl;
     return false;
 } // GammaAdd
 
@@ -264,7 +251,7 @@ bool P8ZmumujetTree::ProcessParticle(unsigned prt)
     if ( mEvent[prt].isFinal() )
         ParticleAdd( prt, 1 );
     
-    return 1;
+    return true;
 } // ProcessParticle : Zmumujet
 
 
@@ -300,7 +287,7 @@ bool P8ZmumujetTree::MuonAdd(unsigned prt)
         return true;
     }
     
-    std::cerr << "Failed to locate muon pair" << endl;
+    cerr << "Failed to locate muon pair" << endl;
     return true;
 } // MuonAdd
 
@@ -316,7 +303,7 @@ bool P8ttbarjetTree::ProcessParticle(unsigned prt)
 
     /* Special final-state particles have already been added */
     if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0 )
-        return 0;
+        return true;
 
     /* pi0 photons in a generic event have the status 2 */
     if ( mEvent[prt].isFinal() )
@@ -328,22 +315,36 @@ bool P8ttbarjetTree::ProcessParticle(unsigned prt)
 
 bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
 {
-    /* For a given neutrino expect neutrino and for a charged lepton
-     * expect a charged lepton (indicated by type) */
+    /* Charged lepton input: find a final-state charged lepton
+     * neutrino input: add the parent W */
     int type = mEvent[prt].idAbs()%2;
-    while (!mEvent[prt].isFinal()) {
-        vector<int> leptons = mEvent[prt].daughterList();
-        bool stuck = true;
-        for (int daughter : leptons) {
-            int absId = mEvent[daughter].idAbs();
-            if (absId<20 && absId>10 && absId%2==type) { 
-                prt = daughter; stuck = false; break;
+    if (type) {
+        /* Charged leptons */
+        while (!mEvent[prt].isFinal()) {
+            vector<int> leptons = mEvent[prt].daughterList();
+            prt = 0;
+            for (int daughter : leptons) {
+                int dType = mEvent[daughter].idAbs()%2;
+                if (mEvent[daughter].isLepton() && dType==1) {
+                    if (prt != 0) 
+                        cerr << "Multiple ch leptons available." << endl;
+                    prt = daughter;
+                }
+            }
+            
+            if (prt == 0) {
+                cerr << "Ch lepton -> qqbar neutrino." << endl;
+                return false; /* Charged lepton decays to partons and a neutrino */
             }
         }
-        /* Check if stuck in a loop (for instance if lepton goes to hadrons) */
-        if ( stuck ) return false;
+    } else {
+        /* Neutrinos */
+        prt = mEvent[prt].mother1();
+        if (prt == 0) {
+            cerr << "No W parent for neutrino" << endl;
+            return false;
+        }
     }
-    cout << "Lepton: " << prt << " " << mEvent[prt].id() << endl;
     mSpecialIndices.push_back(prt);
     ParticleAdd( prt, 2 );
     return true;

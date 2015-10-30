@@ -60,6 +60,28 @@ using std::endl;
 using std::cerr;
 using std::runtime_error;
 
+/* A selector class to speed up lepton+ selection in ttbar */
+class TTBarSelector : public UserHooks
+{
+public:
+    TTBarSelector() {}
+    virtual ~TTBarSelector() {}
+    
+    virtual bool canVetoProcessLevel() { return true; }
+    
+    virtual bool doVetoProcessLevel(Event& process) 
+    {
+        unsigned leptons = 0;
+        for (unsigned prt = 0; prt!=process.size(); ++prt) {
+            if (process[prt].statusAbs() == 23 && process[prt].isLepton())
+                ++leptons;
+        }
+        if (leptons != 2)
+            return true;
+        return false;
+    }
+};
+
 class Pythia8Tree
 {
 public:
@@ -124,6 +146,8 @@ protected:
     TTree *mTree;
     TBranch *mBranch;
     PrtclEvent *mPrtclEvent;
+    
+    TTBarSelector mTTBarSelector;
     
     int mNumEvents;
     int mMode;
