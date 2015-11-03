@@ -239,6 +239,7 @@ bool P8GammajetTree::GammaAdd(unsigned prt)
         if (!mEvent[prt].isFinal())
             throw std::runtime_error("Unstable gamma!");
         ParticleAdd(prt,2);
+        mSpecialIndices.push_back(prt);
         ++mHardProcCount;
         return true;
     } else if (mPartonCount++ < 1) {
