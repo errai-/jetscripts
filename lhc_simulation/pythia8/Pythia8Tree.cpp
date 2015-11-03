@@ -1,5 +1,17 @@
 #include "Pythia8Tree.h"
 
+bool TTBarSelector::doVetoProcessLevel(Event& process)
+{
+    unsigned leptons = 0;
+    for (unsigned prt = 0; prt!=process.size(); ++prt) {
+        if (process[prt].statusAbs() == 23 && process[prt].isLepton())
+            ++leptons;
+    }
+    if (leptons != 2)
+        return true;
+    return false;
+}
+
 
 Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) : mEvent(mPythia.event), mProcess(mPythia.process)
 {
@@ -12,6 +24,7 @@ Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) : mEvent(mP
     mPythia.settings.listChanged();
 
     mNumEvents = mPythia.mode("Main:numberOfEvents");
+    mCounter = 0;
 
     /* Try to create a file to write */
     mFile = new TFile(fileName.c_str(), "RECREATE");
@@ -72,6 +85,9 @@ void Pythia8Tree::EventLoop()
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
     mFile->Close();
+    
+    if (mCounter != 0)
+        cerr << "Non-zero counter value: " << mCounter << endl;
     
     mInitialized = false;
 } // EventLoop
@@ -325,20 +341,19 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
             prt = 0;
             for (int daughter : leptons) {
                 int dType = mEvent[daughter].idAbs()%2;
-                if (mEvent[daughter].isLepton() && dType==1) {
-                    if (prt != 0) 
-                        cerr << "Multiple ch leptons available." << endl;
+                if (mEvent[daughter].isLepton() && dType==1)
                     prt = daughter;
-                }
             }
             
             if (prt == 0) {
-                cerr << "Ch lepton -> qqbar neutrino." << endl;
+                // This occurs around 25-30% of the time - use information for debugging purposes
+                // cerr << "Ch lepton -> qqbar neutrino. " << endl;
                 return false; /* Charged lepton decays to partons and a neutrino */
             }
         }
     } else {
         /* Neutrinos */
+        
         prt = mEvent[prt].mother1();
         if (prt == 0) {
             cerr << "No W parent for neutrino" << endl;

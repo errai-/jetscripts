@@ -17,7 +17,7 @@ pdf = 0
 # CMS energy
 # 0: 8  TeV
 # 1: 13 TeV
-eScale = 0
+eScale = 1
 
 # Read run settings from command line parameters
 if len(sys.argv) != 5:

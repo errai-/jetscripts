@@ -67,19 +67,11 @@ public:
     TTBarSelector() {}
     virtual ~TTBarSelector() {}
     
+    /* In UserHooks this returns false */
     virtual bool canVetoProcessLevel() { return true; }
     
-    virtual bool doVetoProcessLevel(Event& process) 
-    {
-        unsigned leptons = 0;
-        for (unsigned prt = 0; prt!=process.size(); ++prt) {
-            if (process[prt].statusAbs() == 23 && process[prt].isLepton())
-                ++leptons;
-        }
-        if (leptons != 2)
-            return true;
-        return false;
-    }
+    /* Returns true, if the event is vetoed (i.e. amount of hard proc leptons != 2) */
+    virtual bool doVetoProcessLevel(Event& process); 
 };
 
 class Pythia8Tree
@@ -135,6 +127,8 @@ protected:
     
     /* Indicator that the event loop can be run */
     bool mInitialized;
+    /* A general-purpose counter for physics debugging */
+    unsigned mCounter;
     
     unsigned mHardProcCount, mPartonCount;
     
@@ -155,6 +149,7 @@ protected:
     Timer mTimer;
     
     vector<unsigned> mSpecialIndices;
+    
 };
 
 
