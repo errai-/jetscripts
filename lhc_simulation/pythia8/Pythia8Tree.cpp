@@ -346,12 +346,13 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
                     prt = daughter;
             }
             
-            if (prt == 0) {
-                // This occurs around 25-30% of the time - use information for debugging purposes
-                // cerr << "Ch lepton -> qqbar neutrino. " << endl;
+            /* This occurs around 25-30% of the time originating from tau decay */
+            if (prt == 0)
                 return false; /* Charged lepton decays to partons and a neutrino */
-            }
         }
+        /* Make sure that no taus are allowed through */
+        if (mEvent[prt].idAbs()==15)
+            return false;
     } else {
         /* Neutrinos */
         
