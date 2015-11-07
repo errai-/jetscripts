@@ -68,7 +68,7 @@ void Pythia8Tree::EventLoop()
     while (numEvent != mNumEvents) {
         if (!mPythia.next()) continue;
 
-        if ( !ParticleLoop() ) continue; 
+        if ( !ParticleLoop() ) continue;
         /* Print event listing */
         //mEvent.list();
         
@@ -326,7 +326,7 @@ bool P8ttbarjetTree::ProcessParticle(unsigned prt)
     if ( mEvent[prt].isFinal() )
         ParticleAdd( prt, 1 );
 
-    return 1;
+    return true;
 } // ProcessParticle : ttbarjet
 
 
@@ -354,13 +354,10 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
         if (mEvent[prt].idAbs()==15)
             return false;
     } else {
-        /* Neutrinos */
-        
-        prt = mEvent[prt].mother1();
-        if (prt == 0) {
-            cerr << "No W parent for neutrino" << endl;
-            return false;
-        }
+        /* Neutrinos - ignored */
+        if (mEvent[prt].isFinal())
+            ParticleAdd( prt, 1 );
+        return true;
     }
     mSpecialIndices.push_back(prt);
     ParticleAdd( prt, 2 );

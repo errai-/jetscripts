@@ -159,6 +159,49 @@ void JetAnalysis::ParticleLoop(unsigned i)
     }
 }
 
+/* Throw the obtained values in temporary containers */
+void JetAnalysis::TypeSort()
+{
+    TLorentzVector zero(0,0,0,0);
+    TLorentzVector tmpLorentz = zero;
+    
+    tmpLorentz += mPiPlus;
+    tmpLorentz += mPiMinus;
+    tmpLorentz += mKaPlus;
+    tmpLorentz += mKaMinus;
+    tmpLorentz += mProton;
+    tmpLorentz += mAproton;
+    tmpLorentz += mSigma;
+    mJetVars.chf = tmpLorentz.Et()/mEtSum.Et();
+    mJetVars.chm = tmpLorentz.M();
+    tmpLorentz = zero;
+    
+    tmpLorentz += mKSZero;
+    tmpLorentz += mKLZero;
+    tmpLorentz += mNeutron;
+    tmpLorentz += mAneutron;
+    tmpLorentz += mLambda0;
+    mJetVars.nhf = tmpLorentz.Et()/mEtSum.Et();
+    mJetVars.nhm = tmpLorentz.M();
+    tmpLorentz = zero;
+    
+    tmpLorentz += mPi0Gamma;
+    tmpLorentz += mGamma;
+    mJetVars.phf = tmpLorentz.Et()/mEtSum.Et();
+    mJetVars.phm = tmpLorentz.M();
+    
+    mJetVars.elf = mElec.Et()/mEtSum.Et();
+    mJetVars.elm = mElec.M();
+    
+    mJetVars.muf = mMuon.Et()/mEtSum.Et();
+    mJetVars.mum = mMuon.M();
+}
+
+
+//////////////////////////////////////////////
+// Particle addition and selection procedures:
+//////////////////////////////////////////////
+
 
 /* fjInputs for jet clustering, other lists for additional event information */
 void JetAnalysis::ParticlesToJetsorterInput()
@@ -186,6 +229,10 @@ void JetAnalysis::ParticlesToJetsorterInput()
             } else if (mMode==3) {
                 mMuonList.push_back(auxCount++);
                 auxInputs.push_back( particleTemp );
+            } else if (mMode==4) {
+                mJetVars.SetZero();
+                fjEvent->AddJet(particleTemp.px(),particleTemp.py(),particleTemp.pz(),
+                                particleTemp.e(),mJetVars,fWeight,pdgID);
             } else if (mMode==0) {
                 particleTemp.set_user_index( i );
                 fjInputs.push_back( particleTemp );
@@ -208,6 +255,11 @@ void JetAnalysis::ParticlesToJetsorterInput()
             auxInputs.push_back( particleTemp );
         } else if (mDefinition==4 && stat==3) {
             /* Physics clustering definition: ghost partons from the hard process */
+            if (mMode==4) {
+                mJetVars.SetZero();
+                fjEvent->AddJet(particleTemp.px(),particleTemp.py(),particleTemp.pz(),
+                                particleTemp.e(),mJetVars,fWeight,pdgID+30);
+            }
             particleTemp *= pow( 10, -18 );
             particleTemp.set_user_index( -pdgID );
             fjInputs.push_back( particleTemp );
@@ -287,13 +339,18 @@ bool JetAnalysis::SelectionParams()
         mJetVars.matchPT = tmpVec.pt();
         
     } else if (mMode == 4) {
-        cout << "Nothing to see here" << endl;
+        cerr << "Nothing to see here" << endl;
     } else {
         throw std::runtime_error("Mode problematic");
     }
 
     return true;
 }
+
+
+///////////////////////
+// Flavour definitions:
+///////////////////////
 
 
 /* If there are conflicts, save the preferred flavour with a minus sign. 
@@ -424,6 +481,11 @@ void JetAnalysis::PhysClusterFlavor(unsigned i)
 }
 
 
+///////////////
+// qgl-studies:
+///////////////
+
+
 double JetAnalysis::PTD()
 {
     if (mMode==0) return 0;
@@ -533,7 +595,10 @@ bool JetAnalysis::IsCharged(int pdg)
 }
 
 
+////////////////
 // OLD ROUTINES:
+////////////////
+
 
 /* The charge sign of a quark jet */
 int JetAnalysis::ChargeSign( int id )
@@ -551,44 +616,6 @@ int JetAnalysis::ChargeSign( int id )
     if ( id == 5 ) return -1;
     if ( id == -6 ) return -1;
     return 1;
-}
-
-/* Throw the obtained values in temporary containers */
-void JetAnalysis::TypeSort()
-{
-    TLorentzVector zero(0,0,0,0);
-    TLorentzVector tmpLorentz = zero;
-    
-    tmpLorentz += mPiPlus;
-    tmpLorentz += mPiMinus;
-    tmpLorentz += mKaPlus;
-    tmpLorentz += mKaMinus;
-    tmpLorentz += mProton;
-    tmpLorentz += mAproton;
-    tmpLorentz += mSigma;
-    mJetVars.chf = tmpLorentz.Et()/mEtSum.Et();
-    mJetVars.chm = tmpLorentz.M();
-    tmpLorentz = zero;
-    
-    tmpLorentz += mKSZero;
-    tmpLorentz += mKLZero;
-    tmpLorentz += mNeutron;
-    tmpLorentz += mAneutron;
-    tmpLorentz += mLambda0;
-    mJetVars.nhf = tmpLorentz.Et()/mEtSum.Et();
-    mJetVars.nhm = tmpLorentz.M();
-    tmpLorentz = zero;
-    
-    tmpLorentz += mPi0Gamma;
-    tmpLorentz += mGamma;
-    mJetVars.phf = tmpLorentz.Et()/mEtSum.Et();
-    mJetVars.phm = tmpLorentz.M();
-    
-    mJetVars.elf = mElec.Et()/mEtSum.Et();
-    mJetVars.elm = mElec.M();
-    
-    mJetVars.muf = mMuon.Et()/mEtSum.Et();
-    mJetVars.mum = mMuon.M();
 }
 
 void JetAnalysis::HistFill(int i)

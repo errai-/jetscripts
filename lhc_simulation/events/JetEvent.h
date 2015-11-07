@@ -21,30 +21,51 @@
 
 struct JetVariables
 {
-    double chf;
-    double nhf;
-    double phf;
-    double elf;
-    double muf;
+    float chf;
+    float nhf;
+    float phf;
+    float elf;
+    float muf;
     
-    double chm;
-    double nhm;
-    double phm;
-    double elm;
-    double mum;
-    
-    double partonPT;
-    double matchPT;
+    float chm;
+    float nhm;
+    float phm;
+    float elm;
+    float mum;
+
+    float nextDR;
+    float partonPT;
+    float matchPT;
     
     int constituents;
-    double PTD;
-    double Sigma2;
+    float PTD;
+    float Sigma2;
     
-    double DR;
-    double Alpha;
-    double DPhi;
-
-    double maxDR;
+    float DR;
+    float Alpha;
+    float DPhi;
+    
+    void SetZero() {
+        chf = 0;
+        nhf = 0;
+        phf = 0;
+        elf = 0;
+        muf = 0;
+        chm = 0;
+        nhm = 0;
+        phm = 0;
+        elm = 0;
+        mum = 0;
+        partonPT = 0;
+        matchPT = 0;
+        constituents = 0;
+        PTD = 0;
+        Sigma2 = 0;
+        DR = 0;
+        Alpha = 0;
+        DPhi = 0;
+        nextDR = 0;
+    }
 };
 
 
@@ -69,32 +90,33 @@ private:
     * format than TLorentzVector and is in use for instance in the KKousouris 
     * scripts (indirectly, through CMSSW). */ 
     ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
+    
+    int   fFlav;
 
-    double fChf;
-    double fNhf;
-    double fPhf;
-    double fElf;
-    double fMuf;
+    float fChf;
+    float fNhf;
+    float fPhf;
+    float fElf;
+    float fMuf;
     
-    double fChm;
-    double fNhm;
-    double fPhm;
-    double fElm;
-    double fMum;
+    float fChm;
+    float fNhm;
+    float fPhm;
+    float fElm;
+    float fMum;
     
-    int fFlav;
-    double fPartonPT;
-    double fMatchPT;
+    float fPartonPT;
+    float fMatchPT;
     
-    int fConstituents;
-    double fPTD;
-    double fSigma2;
+    int   fConstituents;
+    float fPTD;
+    float fSigma2;
     
-    double fDR;
-    double fAlpha;
-    double fDPhi;
+    float fDR;
+    float fDR_Next;
+    float fAlpha;
+    float fDPhi;
     
-    double fMaxDR;
 public:
    ClassDef(JetData,1)
 };

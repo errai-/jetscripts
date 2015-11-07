@@ -126,30 +126,30 @@ protected:
 protected:
     
     /* Indicator that the event loop can be run */
-    bool mInitialized;
+    bool                mInitialized;
     /* A general-purpose counter for physics debugging */
-    unsigned mCounter;
+    unsigned            mCounter;
     
-    unsigned mHardProcCount, mPartonCount;
+    unsigned            mHardProcCount; 
+    unsigned            mPartonCount;
     
-    Pythia mPythia;
-    Event& mEvent;
-    Event& mProcess;
+    Pythia              mPythia;
+    Event&              mEvent;
+    Event&              mProcess;
     
-    TFile *mFile;
-    TTree *mTree;
-    TBranch *mBranch;
-    PrtclEvent *mPrtclEvent;
+    TFile              *mFile;
+    TTree              *mTree;
+    TBranch            *mBranch;
+    PrtclEvent         *mPrtclEvent;
     
-    TTBarSelector mTTBarSelector;
+    TTBarSelector       mTTBarSelector;
     
-    int mNumEvents;
-    int mMode;
-    int mTimerStep;
-    Timer mTimer;
+    int                 mNumEvents;
+    int                 mMode;
+    int                 mTimerStep;
+    Timer               mTimer;
     
-    vector<unsigned> mSpecialIndices;
-    
+    vector<unsigned>    mSpecialIndices;
 };
 
 

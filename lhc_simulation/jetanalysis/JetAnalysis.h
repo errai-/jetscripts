@@ -52,6 +52,7 @@
 using std::cout;
 using std::endl;
 using std::vector;
+using std::cerr;
 
 class JetAnalysis 
 {
@@ -97,7 +98,7 @@ private:
 ///////////
 // Fastjet:
 ///////////
-    double R      = 0.5;    /* Jet size. */
+    double R      = 0.4;    /* Jet size. */
     int jetsPerEvent;   /* How many leading jets are stored in a run /
 
     /* PseudoJet storages */
