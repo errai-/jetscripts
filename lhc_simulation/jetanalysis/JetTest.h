@@ -1,11 +1,10 @@
-/////////////////////////////////////////////////
-// The general class for turning particle data //
-// into analyzed jet data.                     //
-// Hannu Siikonen 12.3.2015                    //
-/////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// A base class for various kinds of jet analysis //
+// 5.11.2015 Hannu Siikonen                       //
+////////////////////////////////////////////////////
 
-#ifndef JETANALYSIS_H
-#define JETANALYSIS_H
+#ifndef JETBASE_H
+#define JETBASE_H
 
 // General
 #include <iostream>
@@ -62,7 +61,6 @@ public :
     ~JetAnalysis();
     
     virtual void     Init(TTree*); // Chain
-    virtual void     InitFP();
     
     virtual Int_t    GetEntry(Long64_t);
     virtual Long64_t LoadTree(Long64_t);
@@ -75,25 +73,11 @@ public :
     virtual void     ParticlesToJetsorterInput();
     virtual Bool_t   SelectionParams();
     
-    virtual Bool_t   IsHadron(Int_t);
-    virtual Bool_t   IsCharged(Int_t);
-    
     virtual void     PhysicsFlavor(unsigned);
     virtual void     HadronicFlavor(unsigned);
     virtual void     AlgorithmicFlavor(unsigned);
     virtual void     PhysClusterFlavor(unsigned);
     
-    virtual Int_t    ChargeSign(Int_t);
-    virtual void     TypeSort();
-    virtual void     FillerHandle( vector<TProfile*> &, Double_t, Double_t );
-    virtual void     HistFill(int);    
-    
-    virtual void     Cuts();
-    virtual Double_t PTD();
-    virtual Double_t Sigma2();
-    
-    virtual void WriteResults();
-
 private: 
 ///////////
 // Fastjet:
@@ -104,6 +88,7 @@ private:
     /* PseudoJet storages */
     vector<fastjet::PseudoJet> sortedJets, jetParts, cutJetParts, 
                                fjInputs, auxInputs;
+    fastjet::PseudoJet mMET;
 ////////
 // Root:
 ////////
@@ -155,41 +140,21 @@ private:
 // Output:
 //////////
     TFile          *fOutFile;
-    TFile          *fOutFile2;
     string         fOutFileName;
-    TTree          *fOutTree;
-    TBranch        *fJetBranch;
-    JetEvent       *fjEvent;
-
-//////////
-// Graphs:
-//////////
-    TProfile* gluonQuark;
-    
-    // Book histograms.
-    vector<TProfile*> fractionProfilesGluon;
-    vector<TProfile*> fractionProfilesQuark;
-    vector<TProfile*> fractionProfilesLQuark;
-    vector<TProfile*> fractionProfilesHQuark;
-    vector<TProfile*> fractionProfilesAll;
     
 //////////
 // Others:
 //////////
     Timer mTimer;
-
-    /* Energy counters: */ 
-    TLorentzVector mPiPlus, mPiMinus, mPi0Gamma, mGamma, 
-        mKaPlus, mKaMinus, mKSZero, mKLZero, 
-        mProton, mAproton, mNeutron, mAneutron,
-        mLambda0, mSigma, mElec, mMuon, mOthers, mEtSum;
     
+    Int_t           mAccepted;
     Int_t           mMode;       /* Event type */
     Int_t           mDefinition; /* Flavour definition */
     Int_t           mBookedParton; /* Monitor partons that are paired with jets */
     
-    vector<Int_t>   mMuonList; /* Z-jets */
+    vector<Int_t>   mLeptonList; /* Z-jets */
     Int_t           mGammaId;    /* gamma-jets */
+    Int_t           mLeptonId;   /* ttbar events */
     vector<Int_t>   mPartonList; /* Physics definition */
  
     /* Weights etc.: */
@@ -198,4 +163,4 @@ private:
     JetVariables mJetVars;
 };
 
-#endif // JETANALYSIS_H
+#endif // JETBASE_H
