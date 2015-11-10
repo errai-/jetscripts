@@ -57,6 +57,7 @@ public :
     
     /* Initializes the tree that is read */
     virtual void        Init(TTree*);
+    virtual void        Finalize();
     
     virtual Int_t       GetEntry(Long64_t);
     virtual Long64_t    LoadTree(Long64_t);
@@ -64,7 +65,7 @@ public :
     
     virtual void        EventLoop();
     /* Calculate variables for the newly clustered jets */
-    virtual void        JetLoop(Int_t);
+    virtual bool        JetLoop();
     /* Study particle types in the clustered jets */
     virtual void        ParticleLoop();
     virtual inline void EventProcessing(Long64_t);
@@ -176,6 +177,7 @@ protected:
     bool            fParamCuts;
     bool            fParticleStudy;
     bool            fInitialized;
+    bool            fAddNonJet;
     double          fFlavour;
     
     Int_t           fMode;       /* Event type */

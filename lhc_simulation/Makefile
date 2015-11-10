@@ -1,6 +1,6 @@
 ###################################################################
-## Makefile for building ROOT-fastjet analysis of simulated data ## 
-## Hannu Siikonen, 20.8.2015                                     ##  
+## Makefile for building ROOT-fastjet analysis of simulated data ##
+## Hannu Siikonen, 10.11.2015                                    ##
 ###################################################################
 
 include config.mk
@@ -59,30 +59,47 @@ JetDct.cc: JetEvent.h JetLinkDef.h
 
 # Jet analysis
 
-analysis: jetanalysis/main_standard.cpp jetbase.o analysis.o libPrtclEvent.so libJetEvent.so
+analysis_vanilla: jetanalysis/main_vanilla.cpp jetbase.o libPrtclEvent.so libJetEvent.so
+	cd jetanalysis && $(CXX) main_vanilla.cpp jetbase.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
+
+analysis_standard: jetanalysis/main_standard.cpp jetbase.o analysis.o libPrtclEvent.so libJetEvent.so
 	cd jetanalysis && $(CXX) main_standard.cpp jetbase.o analysis.o -L../lib -lPrtclEvent -lJetEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
 
-jetanalysis.o: JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
-	cd jetanalysis && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
-	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
+analysis_hard: jetanalysis/main_hard.cpp jetbase.o hardproc.o libPrtclEvent.so libJetEvent.so
+	cd jetanalysis && $(CXX) main_hard.cpp jetbase.o hardproc.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
+
+analysis_graphs: jetanalysis/main_histos.cpp jetbase.o histos.o libPrtclEvent.so libJetEvent.so
+	cd jetanalysis && $(CXX) main_histos.cpp jetbase.o histos.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
+
+analysis_test: jetanalysis/main_test.cpp jetbase.o test.o libPrtclEvent.so libJetEvent.so
+	cd jetanalysis && $(CXX) main_test.cpp jetbase.o test.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
 
 analysis.o: Analysis.cpp jetbase.o
 	cd jetanalysis && $(CXX) -c Analysis.cpp jetbase.o -L../lib -lPrtclEvent -lJetEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
+
+hardproc.o: HardProc.cpp jetbase.o
+	cd jetanalysis && $(CXX) -c HardProc.cpp jetbase.o -L../lib -lPrtclEvent-lJetEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
+
+histos.o: Histograms.cpp jetbase.o
+	cd jetanalysis && $(CXX) -c Histograms.cpp jetbase.o -L../lib -lPrtclEvent-lJetEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
+
+test.o: Test.cpp jetbase.o
+	cd jetanalysis && $(CXX) -c Test.cpp jetbase.o -L../lib -lPrtclEvent-lJetEvent \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
 jetbase.o: JetBase.cpp libJetEvent.so libPrtclEvent.so
 	cd jetanalysis && $(CXX) -c JetBase.cpp -L../lib -lPrtclEvent -lJetEvent \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
-testjet: jetanalysis/main.cpp testanalysis.o libPrtclEvent.so libJetEvent.so
-	cd jetanalysis && $(CXX) main.cpp testanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
-	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../testjet.exe
-
-testanalysis.o: JetTest.cpp libJetEvent.so libPrtclEvent.so
-	cd jetanalysis && $(CXX) -c JetTest.cpp -L../lib -lPrtclEvent -lJetEvent \
-	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
-
+# Detector simulation
 
 ptcut: ptcut/main.cpp ptcut.o libPrtclEvent.so
 	cd ptcut && $(CXX) main.cpp ptcut.o -L../lib -lPrtclEvent -w \

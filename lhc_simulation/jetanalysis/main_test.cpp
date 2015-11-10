@@ -19,7 +19,7 @@
 #include "TFile.h"
 
 // scripts
-#include "JetAnalysis.h"
+#include "Test.h"
 
 using std::cout;
 using std::endl;
@@ -120,11 +120,11 @@ int main(int argc, char* argv[])
         
         tree = (TTree*)f->Get(treePath.c_str());
         if (!tree || tree->IsZombie()) throw std::runtime_error("Tree could not be opened");
-            
+
         if (!(tree->GetEntries())) throw std::runtime_error("Zero events found");
-        
+
         /* Analysis process */
-        JetAnalysis treeHandle(tree, output.c_str(), output2.c_str(), mode, definition);
+        Test treeHandle(tree, output.c_str(), output2.c_str(), mode, definition);
         treeHandle.EventLoop();
         delete tree;
     } catch (std::exception& e) {

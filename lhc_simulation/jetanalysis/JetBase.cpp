@@ -5,15 +5,16 @@ JetBase::JetBase(TTree *tree,
                  const char *outFile1, 
                  const char *outFile2, 
                  int mode, 
-                 int definition )
-                 : 
+                 int definition ) :
+                 
                  fChain         (0), 
                  fMode          (mode), 
                  fDefinition    (definition),
                  fJetCuts       (true),
                  fParamCuts     (true),
-                 fParticleStudy (false),
                  fInitialized   (true),
+                 fAddNonJet     (true),
+                 fParticleStudy (false),
                  fR             (0.4),
                  fMinPT         (10.)
 {
@@ -93,7 +94,12 @@ void JetBase::EventLoop()
         EventProcessing(jentry);
         fJetEvent->Clear();
     }
+    
+    Finalize();
+}
 
+void JetBase::Finalize()
+{
     fOutFile = fOutTree->GetCurrentFile();
     fOutTree->AutoSave("Overwrite");
     
@@ -112,13 +118,14 @@ void JetBase::EventProcessing(Long64_t jentry) {
     if (!SelectionParams())
         return;
     
-    JetLoop(jentry);
+    if (!JetLoop())
+        return;
 
     fOutTree->Fill();
 }
 
 
-void JetBase::JetLoop(int jentry)
+bool JetBase::JetLoop()
 {
     for (size_t i = 0; i < fSortedJets.size(); ++i) {
         if ( i == fJetsPerEvent ) break;
@@ -148,6 +155,7 @@ void JetBase::JetLoop(int jentry)
                           fWeight,
                           fFlavour);
     }
+    return true;
 }
 
 
@@ -222,6 +230,7 @@ void JetBase::ParticlesToJetsorterInput()
     fAuxInputs.clear();
     fPartonList.clear();
     fLeptonList.clear();
+    fMET = PseudoJet();
     int auxCount = 0;
 
     for (unsigned i = 0; i != fPrtcls_; ++i) {
@@ -261,16 +270,17 @@ void JetBase::ParticlesToJetsorterInput()
                 fAuxInputs.push_back( particleTemp );
             } else if (fMode==4) {
                 /* charged lepton from W stored to output */
-                fJetVars.SetZero();
-                fJetEvent->AddJet(particleTemp.px(),
-                                  particleTemp.py(),
-                                  particleTemp.pz(),
-                                  particleTemp.e(),
-                                  fJetVars,
-                                  fWeight,
-                                  pdgID);
                 fLeptonId = auxCount++;
                 fAuxInputs.push_back( particleTemp );
+                if (fAddNonJet)
+                    fJetVars.SetZero();
+                    fJetEvent->AddJet(particleTemp.px(),
+                                      particleTemp.py(),
+                                      particleTemp.pz(),
+                                      particleTemp.e(),
+                                      fJetVars,
+                                      fWeight,
+                                      pdgID);
             }
         } else if (stat==3) {
             /* Outgoing hard process particles - these are used with some of the
@@ -311,13 +321,14 @@ void JetBase::ParticlesToJetsorterInput()
     }
     /* The MET-"jet" is given a status 10 */
     fJetVars.SetZero();
-    fJetEvent->AddJet(fMET.px(),
-                      fMET.py(),
-                      fMET.pz(),
-                      fMET.e(),
-                      fJetVars,
-                      fWeight,
-                      10);
+    if (fAddNonJet)
+        fJetEvent->AddJet(fMET.px(),
+                          fMET.py(),
+                          fMET.pz(),
+                          fMET.e(),
+                          fJetVars,
+                          fWeight,
+                          10);
     
     assert( fJetInputs.size() ); /* The input should not be empty */
 }
@@ -470,6 +481,7 @@ bool JetBase::SelectionParams()
    dR_nextmin: the next smallest jet axis - parton distance */
 void JetBase::PhysicsFlavor(unsigned i) 
 {
+    fFlavour = 0;
     fJetVars.partonPT = 0;
     double dR_min = 10, dR_nextmin = 10; 
     for ( auto k : fPartonList ) {
@@ -491,6 +503,7 @@ void JetBase::PhysicsFlavor(unsigned i)
 
 void JetBase::HadronicFlavor(unsigned i)
 {
+    fFlavour = 0;
     int partonFlav = 0, hardestLightParton = 0;
     double lightPT = 0, partonPT = 0;
     
@@ -534,6 +547,7 @@ void JetBase::HadronicFlavor(unsigned i)
 
 void JetBase::AlgorithmicFlavor(unsigned i)
 {
+    fFlavour = 0;
     int hardestLightParton = 0;
     double lightDR = 0, lightPT = 0; 
     
@@ -568,9 +582,11 @@ void JetBase::AlgorithmicFlavor(unsigned i)
 
 void JetBase::PhysClusterFlavor(unsigned i)
 {
-    for ( auto part : fJetParts ){
+    fFlavour = 0;
+    for ( auto part : fJetParts ) {
         if (part.user_index() > 0) continue; /* Not ghosts */
-        
+        int id = -part.user_index();
+            
         /* If there are more than one hard process parton within a jet, mark no flavour */
         if (fFlavour != 0) {
             fFlavour = 0;

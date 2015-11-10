@@ -10,6 +10,7 @@
 #include "TLine.h"
 #include "TBox.h"
 #include "TASImage.h"
+#include "TString.h"
 
 #include "TFrame.h"
 
@@ -53,11 +54,11 @@ void tdrDraw(TGraph* g, string opt,
   g->Draw((opt+"SAME").c_str());
 }
 
-TLegend *tdrLeg(double x1, double y1, double x2, double y2) {
+TLegend *tdrLeg(double x1, double y1, double x2, double y2, float size = 0.045) {
   TLegend *leg = new TLegend(x1, y1, x2, y2, "", "brNDC");
   leg->SetFillStyle(kNone);
   leg->SetBorderSize(0);
-  leg->SetTextSize(0.045);
+  leg->SetTextSize(size);
   leg->Draw();
   return leg;
 }
@@ -126,7 +127,7 @@ void setTDRStyle() {
   // tdrStyle->SetLegoInnerR(Float_t rad = 0.5);
   // tdrStyle->SetNumberContours(Int_t number = 20);
 
-  tdrStyle->SetEndErrorSize(2);
+  //tdrStyle->SetEndErrorSize(2);
   // tdrStyle->SetErrorMarker(20);
   //tdrStyle->SetErrorX(0.);
   
@@ -208,7 +209,7 @@ void setTDRStyle() {
   tdrStyle->SetPadTickY(1);
 
 // Change for log plots:
-  tdrStyle->SetOptLogx(1);
+  tdrStyle->SetOptLogx(0);
   tdrStyle->SetOptLogy(0);
   tdrStyle->SetOptLogz(0);
 
@@ -230,7 +231,6 @@ void setTDRStyle() {
   tdrStyle->SetHatchesSpacing(0.05);
 
   tdrStyle->cd();
-
 }
 
 ////////////////
@@ -241,11 +241,11 @@ void setTDRStyle() {
 // Global variables
 //
 
-TString cmsText     = "CMS";
+TString cmsText     = "Pythia8 Simulation";
 float cmsTextFont   = 61;  // default is helvetic-bold
 
 bool writeExtraText = true;//false;
-TString extraText   = "Preliminary";
+TString extraText   = "4C Tune";
 TString extraText2   = ""; // For Simulation Preliminary on two lines
 float extraTextFont = 52;  // default is helvetica-italics
 
@@ -450,6 +450,11 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
 		   int iPeriod = 2, int iPos = 11,
 		   bool square = kRectangular) {
 
+  int W = (square ? 600 : 800);
+  int H = (square ? 600 : 600);
+
+  TCanvas *canv = new TCanvas(canvName,canvName,50,50,W,H);
+  canv->cd();
   setTDRStyle();
 
   //writeExtraText = true;       // if extra text
@@ -470,9 +475,6 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
 
   //  if( iPos==0 ) relPosX = 0.12;
 
-  int W = (square ? 600 : 800);
-  int H = (square ? 600 : 600);
-
   // 
   // Simple example of macro: plot with CMS name and lumi text
   //  (this script does not pretend to work in all configurations)
@@ -491,7 +493,6 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
   float L = (square ? 0.15*W_ref : 0.12*W_ref);
   float R = (square ? 0.05*W_ref : 0.04*W_ref);
 
-  TCanvas *canv = new TCanvas(canvName,canvName,50,50,W,H);
   canv->SetFillColor(0);
   canv->SetBorderMode(0);
   canv->SetFrameFillStyle(0);
@@ -510,7 +511,7 @@ TCanvas* tdrCanvas(const char* canvName, TH1D *h,
   h->Draw("AXIS");
 
   // writing the lumi information and the CMS "logo"
-  CMS_lumi( canv, iPeriod, iPos );
+  //CMS_lumi( canv, iPeriod, iPos );
   
   canv->Update();
   canv->RedrawAxis();
@@ -562,8 +563,6 @@ TCanvas* tdrDiCanvas(const char* canvName, TH1D *hup, TH1D *hdw,
   canv->SetBorderMode(0);
   canv->SetFrameFillStyle(0);
   canv->SetFrameBorderMode(0);
-  canv->SetFrameLineColor(0); // fix from Anne-Laure Pequegnot
-  canv->SetFrameLineWidth(0); // fix from Anne-Laure Pequegnot
   // FOR JEC plots, prefer to keep ticks on both sides
   //canv->SetTickx(0);
   //canv->SetTicky(0);
@@ -592,7 +591,7 @@ TCanvas* tdrDiCanvas(const char* canvName, TH1D *hup, TH1D *hdw,
   hup->Draw("AXIS");
 
   // writing the lumi information and the CMS "logo"
-  CMS_lumi( (TCanvas*)gPad, iPeriod, iPos );
+  //CMS_lumi( (TCanvas*)gPad, iPeriod, iPos );
 
   canv->cd(2);
   gPad->SetPad(0, 0, 1, Hdw / H);
@@ -630,30 +629,3 @@ TCanvas* tdrDiCanvas(const char* canvName, TH1D *hup, TH1D *hdw,
   
   return canv;
 }
-
-void pythiaFinal(double intLumi=-1, bool wide = false) {
-
-  TLatex *latex = new TLatex();
-  latex->SetNDC();
-  latex->SetTextSize(0.045);
-  
-  latex->SetTextAlign(31); // align right
-  latex->DrawLatex(wide ? 0.98 : 0.98, 0.96, "#sqrt{s} = 7 TeV");
-  if (intLumi > 0.) {
-    latex->SetTextAlign(11); // align left
-    latex->DrawLatex(wide ? 0.06 : 0.15, 0.96,
-         Form("CMS preliminary, L = %.3g fb^{-1}",intLumi*0.001));
-  }
-  else if (intLumi==0) { // simulation
-    latex->SetTextAlign(11); // align left
-    latex->DrawLatex(wide ? 0.06 : 0.15, 0.96, "CMS simulation (Summer12)");
-  }
-  else {
-    latex->SetTextAlign(11); // align left
-    latex->DrawLatex(0.1,0.96,"Pythia 8 simulation (Winter15)");
-  }
-} // cmsPrel
-
-
-
-
