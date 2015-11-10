@@ -59,12 +59,16 @@ JetDct.cc: JetEvent.h JetLinkDef.h
 
 # Jet analysis
 
-analysis: jetanalysis/main.cpp jetanalysis.o libPrtclEvent.so libJetEvent.so
-	cd jetanalysis && $(CXX) main.cpp jetanalysis.o -L../lib -lPrtclEvent -lJetEvent -w \
+analysis: jetanalysis/main_standard.cpp jetbase.o analysis.o libPrtclEvent.so libJetEvent.so
+	cd jetanalysis && $(CXX) main_standard.cpp jetbase.o analysis.o -L../lib -lPrtclEvent -lJetEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
 
 jetanalysis.o: JetAnalysis.cpp libJetEvent.so libPrtclEvent.so
 	cd jetanalysis && $(CXX) -c JetAnalysis.cpp -L../lib -lPrtclEvent -lJetEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
+
+analysis.o: Analysis.cpp jetbase.o
+	cd jetanalysis && $(CXX) -c Analysis.cpp jetbase.o -L../lib -lPrtclEvent -lJetEvent \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
 jetbase.o: JetBase.cpp libJetEvent.so libPrtclEvent.so

@@ -26,15 +26,6 @@
 #include <TFile.h>
 #include <TLorentzVector.h>
 #include <TVector2.h>
-#include <TF1.h>
-#include <THStack.h>
-#include <TProfile.h>
-#include <TH1.h>
-#include <TH2.h>
-#include <TStyle.h>
-#include <TCanvas.h>
-#include <TLegend.h>
-#include <TStyle.h>
 
 // FastJet interface
 #include "fastjet/config.h"
@@ -54,6 +45,7 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::cerr;
+using fastjet::PseudoJet;
 
 class JetBase
 {
@@ -65,7 +57,6 @@ public :
     
     /* Initializes the tree that is read */
     virtual void        Init(TTree*);
-    virtual void        InitCustom();
     
     virtual Int_t       GetEntry(Long64_t);
     virtual Long64_t    LoadTree(Long64_t);
@@ -76,7 +67,7 @@ public :
     virtual void        JetLoop(Int_t);
     /* Study particle types in the clustered jets */
     virtual void        ParticleLoop();
-    virtual inline bool JetClustering(fastjet::JetDefinition &jetDef);
+    virtual inline void EventProcessing(Long64_t);
     virtual inline void PostProcessing() { return; };
     
     virtual void        ParticlesToJetsorterInput();
@@ -108,18 +99,19 @@ protected:
 ///////////
     
     /* IMPORTANT: jet sorting parameters */
-    const double fR     = 0.4;
-    const double fMinPT = 10.;
+    double fR;
+    double fMinPT;
     /* end of jet sorting parameters */
     
-    int jetsPerEvent;   /* How many leading jets are stored in a run /
+    int fJetsPerEvent;   /* How many leading jets are stored in a run */
+    
+    fastjet::JetDefinition   fJetDef;
 
     /* PseudoJet storages */
-    vector<fastjet::PseudoJet> fJetInputs; 
-    vector<fastjet::PseudoJet> fAuxInputs;
-    vector<fastjet::PseudoJet> fSortedJets; 
-    vector<fastjet::PseudoJet> fJetParts; 
-    vector<fastjet::PseudoJet> fCutJetParts;
+    vector<PseudoJet> fJetInputs; 
+    vector<PseudoJet> fAuxInputs;
+    vector<PseudoJet> fSortedJets; 
+    vector<PseudoJet> fJetParts; 
 
 /////////
 // Input:
@@ -129,9 +121,9 @@ protected:
     
     /* Fixed size dimensions of array or collections stored in the TTree if any.
      * If this is too small, Segfaults may follow. */
-    static const Int_t kMaxfPrtcls = 5000;
+    static const Int_t  kMaxfPrtcls = 5000;
     
-    //PrtclEvent        *event;
+    //PrtclEvent    *event;
     Double_t        fWeight;
     Int_t           fPrtcls_;
     Double_t        fX[kMaxfPrtcls];   //[fPrtcls_]
@@ -140,7 +132,6 @@ protected:
     Double_t        fT[kMaxfPrtcls];   //[fPrtcls_]
     
     Int_t           fPDGCode[kMaxfPrtcls];   //[fPrtcls_]
-    
     Int_t           fAnalysisStatus[kMaxfPrtcls];   //[fPrtcls_]
 
 //////////
@@ -157,46 +148,46 @@ protected:
 // Others:
 //////////
     /* Energy counters: */ 
-    fastjet::PseudoJet  mPiPlus; 
-    fastjet::PseudoJet  mPiMinus; 
-    fastjet::PseudoJet  mPi0Gamma; 
-    fastjet::PseudoJet  mGamma; 
-    fastjet::PseudoJet  mKaPlus; 
-    fastjet::PseudoJet  mKaMinus; 
-    fastjet::PseudoJet  mKSZero; 
-    fastjet::PseudoJet  mKLZero; 
-    fastjet::PseudoJet  mProton; 
-    fastjet::PseudoJet  mAproton; 
-    fastjet::PseudoJet  mNeutron; 
-    fastjet::PseudoJet  mAneutron;
-    fastjet::PseudoJet  mLambda0; 
-    fastjet::PseudoJet  mSigma; 
-    fastjet::PseudoJet  mElec; 
-    fastjet::PseudoJet  mMuon; 
-    fastjet::PseudoJet  mOthers; 
-    fastjet::PseudoJet  mEtSum;
+    PseudoJet       fPiPlus; 
+    PseudoJet       fPiMinus; 
+    PseudoJet       fPi0Gamma; 
+    PseudoJet       fGamma; 
+    PseudoJet       fKaPlus; 
+    PseudoJet       fKaMinus; 
+    PseudoJet       fKSZero; 
+    PseudoJet       fKLZero; 
+    PseudoJet       fProton; 
+    PseudoJet       fAproton; 
+    PseudoJet       fNeutron; 
+    PseudoJet       fAneutron;
+    PseudoJet       fLambda0; 
+    PseudoJet       fSigma; 
+    PseudoJet       fElec; 
+    PseudoJet       fMuon; 
+    PseudoJet       fOthers; 
+    PseudoJet       fEtSum;
     
-    Timer               fTimer;
+    PseudoJet       fMET;
     
-    fastjet::PseudoJet  fMET;
+    Timer           fTimer;
     
     /* The user may choose to make cuts manually in the final analysis by setting this to false */
-    const bool          fJetCuts       = true;
-    const bool          fParamCuts     = true;
-    const bool          fParticleStudy = false;
-    bool                fInitialized;
-    double              fFlavour;
+    bool            fJetCuts;
+    bool            fParamCuts;
+    bool            fParticleStudy;
+    bool            fInitialized;
+    double          fFlavour;
     
-    Int_t               fMode;       /* Event type */
-    Int_t               fDefinition; /* Flavour definition */
-    Int_t               fBookedParton; /* Monitor partons that are paired with jets */
+    Int_t           fMode;       /* Event type */
+    Int_t           fDefinition; /* Flavour definition */
+    Int_t           fBookedParton; /* Monitor partons that are paired with jets */
     
-    Int_t               fGammaId;    /* gamma-jets */
-    Int_t               fLeptonId;   /* ttbar */
-    vector<Int_t>       fLeptonList; /* Z-jets, ttbar */
-    vector<Int_t>       fPartonList; /* Physics definition */
+    Int_t           fGammaId;    /* gamma-jets */
+    Int_t           fLeptonId;   /* ttbar */
+    vector<Int_t>   fLeptonList; /* Z-jets, ttbar */
+    vector<Int_t>   fPartonList; /* Physics definition */
     
-    JetVariables        fJetVars;
+    JetVariables    fJetVars;
 };
 
 #endif // JETBASE_H

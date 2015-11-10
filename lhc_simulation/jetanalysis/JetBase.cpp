@@ -1,9 +1,21 @@
 #include "JetBase.h"
 
 
-JetBase::JetBase(TTree *tree, const char *outFile1, const char *outFile2, 
-                         int mode, int definition ) 
-                         : fChain(0), fMode(mode), fDefinition(definition)
+JetBase::JetBase(TTree *tree, 
+                 const char *outFile1, 
+                 const char *outFile2, 
+                 int mode, 
+                 int definition )
+                 : 
+                 fChain         (0), 
+                 fMode          (mode), 
+                 fDefinition    (definition),
+                 fJetCuts       (true),
+                 fParamCuts     (true),
+                 fParticleStudy (false),
+                 fInitialized   (true),
+                 fR             (0.4),
+                 fMinPT         (10.)
 {
     assert(tree);
     Init(tree);
@@ -20,13 +32,14 @@ JetBase::JetBase(TTree *tree, const char *outFile1, const char *outFile2,
     fJetBranch->SetAutoDelete(kFALSE);
     fOutTree->BranchRef();
 
-    InitCustom();
-
-    jetsPerEvent = 2;
-    if (mode==0) jetsPerEvent = 100;
-    if (mode==1) jetsPerEvent = 2;
-    if (mode==2||mode==3) jetsPerEvent = 1;
-    if (mode==4) jetsPerEvent = 4;
+    fJetsPerEvent = 2;
+    if (mode==0) fJetsPerEvent = 100;
+    if (mode==1) fJetsPerEvent = 2;
+    if (mode==2||mode==3) fJetsPerEvent = 1;
+    if (mode==4) fJetsPerEvent = 4;
+    
+    /* Fastjet algorithm (settings stated explicitly) */
+    fJetDef = fastjet::JetDefinition(fastjet::antikt_algorithm, fR, fastjet::E_scheme, fastjet::Best); 
 }
 
 
@@ -46,8 +59,6 @@ void JetBase::Init(TTree *tree)
     fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT);
     fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode);
     fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus);
-    
-    fInitialized = true;
 }
 
 
@@ -68,54 +79,49 @@ void JetBase::EventLoop()
     Long64_t nentries = fChain->GetEntries();
     fTimer.setParams(nentries,2000); fTimer.startTiming();
 
-    /* Fastjet algorithm (settings stated explicitly) */
-    fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, fR, fastjet::E_scheme, fastjet::Best); 
-
     for (Long64_t jentry=0; jentry!=nentries; ++jentry) {
+        /* Logistics */
         if (jentry!=0&&jentry%2000==0) fTimer.printTime();
 
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break;
         fChain->GetEntry(jentry);
         assert( fPrtcls_ < kMaxfPrtcls );
-
+        
+        /* Jet clusting and analysis cycle */
         ParticlesToJetsorterInput();
-
-        if (!JetClustering(jetDef))
-            continue;
-
-        JetLoop(jentry);
-
-        fOutTree->Fill();
+        EventProcessing(jentry);
         fJetEvent->Clear();
     }
 
     fOutFile = fOutTree->GetCurrentFile();
     fOutTree->AutoSave("Overwrite");
+    
     delete fJetEvent;  fJetEvent = 0;
     fOutFile->Close();
-    if (!fChain) return;
-    delete fChain->GetCurrentFile();
-    if (!fOutTree) return;
-    delete fOutTree->GetCurrentFile();
 }
 
 
-bool JetBase::JetClustering(fastjet::JetDefinition &jetDef) {
-        fastjet::ClusterSequence clustSeq(fJetInputs, jetDef);
-        vector< fastjet::PseudoJet > unsorteds = clustSeq.inclusive_jets( fMinPT );
-        fSortedJets = sorted_by_pt( unsorteds );
-        
-        /* Abort if the event does not meet quality specifications */
-        fJetVars.SetZero();
-        return SelectionParams();
+void JetBase::EventProcessing(Long64_t jentry) {
+    fastjet::ClusterSequence fClustSeq(fJetInputs, fJetDef);
+    vector< fastjet::PseudoJet > unsorteds = fClustSeq.inclusive_jets( fMinPT );
+    fSortedJets = sorted_by_pt( unsorteds );
+    
+    /* Abort if the event does not meet quality specifications */
+    fJetVars.SetZero();
+    if (!SelectionParams())
+        return;
+    
+    JetLoop(jentry);
+
+    fOutTree->Fill();
 }
 
 
 void JetBase::JetLoop(int jentry)
 {
     for (size_t i = 0; i < fSortedJets.size(); ++i) {
-        if ( i == jetsPerEvent ) break;
+        if ( i == fJetsPerEvent ) break;
 
         fJetParts = fSortedJets[i].constituents();
 
@@ -147,59 +153,59 @@ void JetBase::JetLoop(int jentry)
 
 void JetBase::ParticleLoop()
 {  
-    mPiPlus   = fastjet::PseudoJet(); mPiMinus  = fastjet::PseudoJet();
-    mPi0Gamma = fastjet::PseudoJet(); mGamma    = fastjet::PseudoJet(); 
-    mKaPlus   = fastjet::PseudoJet(); mKaMinus  = fastjet::PseudoJet(); 
-    mKSZero   = fastjet::PseudoJet(); mKLZero   = fastjet::PseudoJet(); 
-    mProton   = fastjet::PseudoJet(); mAproton  = fastjet::PseudoJet(); 
-    mNeutron  = fastjet::PseudoJet(); mAneutron = fastjet::PseudoJet();
-    mLambda0  = fastjet::PseudoJet(); mSigma    = fastjet::PseudoJet(); 
-    mElec     = fastjet::PseudoJet(); mMuon     = fastjet::PseudoJet();
-    mOthers   = fastjet::PseudoJet(); mEtSum    = fastjet::PseudoJet();
+    fPiPlus   = fastjet::PseudoJet(); fPiMinus  = fastjet::PseudoJet();
+    fPi0Gamma = fastjet::PseudoJet(); fGamma    = fastjet::PseudoJet(); 
+    fKaPlus   = fastjet::PseudoJet(); fKaMinus  = fastjet::PseudoJet(); 
+    fKSZero   = fastjet::PseudoJet(); fKLZero   = fastjet::PseudoJet(); 
+    fProton   = fastjet::PseudoJet(); fAproton  = fastjet::PseudoJet(); 
+    fNeutron  = fastjet::PseudoJet(); fAneutron = fastjet::PseudoJet();
+    fLambda0  = fastjet::PseudoJet(); fSigma    = fastjet::PseudoJet(); 
+    fElec     = fastjet::PseudoJet(); fMuon     = fastjet::PseudoJet();
+    fOthers   = fastjet::PseudoJet(); fEtSum    = fastjet::PseudoJet();
     
     for (unsigned int j = 0; j != fJetParts.size(); ++j) {
         if ( fJetParts[j].user_index() < 0 ) continue;
         int id = fPDGCode[ fJetParts[j].user_index() ];
         int status = fAnalysisStatus[ fJetParts[j].user_index() ]; 
         
-        mEtSum += fJetParts[j];
+        fEtSum += fJetParts[j];
         if ( id == 211 ) { 
-            mPiPlus += fJetParts[j];
+            fPiPlus += fJetParts[j];
         } else if ( id == -211 ) { 
-            mPiMinus+= fJetParts[j];
+            fPiMinus+= fJetParts[j];
         } else if ( id == 22 ) {
             if ( status == 2 ) {
-                mPi0Gamma += fJetParts[j];
+                fPi0Gamma += fJetParts[j];
             } else {
-                mGamma += fJetParts[j];
+                fGamma += fJetParts[j];
             }
 
         } else if ( id == 321 ) { 
-            mKaPlus += fJetParts[j];
+            fKaPlus += fJetParts[j];
         } else if ( id == -321 ) { 
-            mKaMinus += fJetParts[j];
+            fKaMinus += fJetParts[j];
         } else if ( abs( id ) == 310 ) { 
-            mKSZero += fJetParts[j];
+            fKSZero += fJetParts[j];
         } else if ( abs( id ) == 130 ) { 
-            mKLZero += fJetParts[j];
+            fKLZero += fJetParts[j];
         } else if ( id == 2212 ) { 
-            mProton += fJetParts[j];
+            fProton += fJetParts[j];
         } else if ( id == -2212 ) { 
-            mAproton += fJetParts[j];
+            fAproton += fJetParts[j];
         } else if ( id == 2112 ) { 
-            mNeutron += fJetParts[j];
+            fNeutron += fJetParts[j];
         } else if ( id == -2112 ) { 
-            mAneutron += fJetParts[j];
+            fAneutron += fJetParts[j];
         } else if ( abs( id ) == 3122 ) {
-            mLambda0 += fJetParts[j];
+            fLambda0 += fJetParts[j];
         } else if ( abs( id ) == 3112 || abs( id ) == 3222 ) {
-            mSigma += fJetParts[j];
+            fSigma += fJetParts[j];
         } else if ( abs( id ) == 11 ) {
-            mElec += fJetParts[j];
+            fElec += fJetParts[j];
         } else if ( abs( id ) == 13 ) {
-            mMuon += fJetParts[j];
+            fMuon += fJetParts[j];
         } else {
-            mOthers += fJetParts[j];   
+            fOthers += fJetParts[j];   
         }
     }
 }
