@@ -299,7 +299,7 @@ void JetBase::ParticlesToJetsorterInput()
         } else if (stat==4) {
             /* Algorithmic and hadronic definition: partons just before hadronization */
             
-            if (fDefinition==2) {
+            if (fDefinition==2 || fDefinition==5) {
                 particleTemp *= pow( 10, -18 );
                 particleTemp.set_user_index( -i );
                 fJetInputs.push_back( particleTemp );
@@ -501,7 +501,7 @@ void JetBase::PhysicsFlavor(unsigned i)
 }
 
 
-void JetBase::HadronicFlavor(unsigned i)
+void JetBase::HadronicFlavor(unsigned)
 {
     fFlavour = 0;
     int partonFlav = 0, hardestLightParton = 0;
@@ -519,16 +519,14 @@ void JetBase::HadronicFlavor(unsigned i)
                 fFlavour = status;
                 fJetVars.partonPT = PT;
             }
-        } else if (PT > lightPT) {
-            if (pdgCode == 4 || pdgCode == 5) {
-                if (pdgCode > partonFlav || PT > partonPT) {
-                    partonFlav = pdgCode;
-                    partonPT = PT;
-                }
-            } else {
-                hardestLightParton = pdgCode;
-                lightPT = PT;
+        } else if (pdgCode == 4 || pdgCode == 5) {
+            if (pdgCode > partonFlav || PT > partonPT) {
+                partonFlav = pdgCode;
+                partonPT = PT;
             }
+        } else if (PT > lightPT) {
+            hardestLightParton = pdgCode;
+            lightPT = PT;
         }
     }
     if (!partonFlav) { 
@@ -602,31 +600,27 @@ void JetBase::PhysClusterFlavor(unsigned i)
 void JetBase::AlgoClusterFlavor(unsigned i)
 {
     int hardestLightParton = 0;
-    double lightDR = 0, lightPT = 0; 
+    double lightPT = 0;
     
-    for ( auto k : fPartonList ) {
-        double dR = fSortedJets[i].delta_R( fAuxInputs[k] );
-        int status = fAnalysisStatus[fAuxInputs[k].user_index()];
-
-        if (dR > 0.3) continue;
+    for ( auto part : fJetParts ){
+        if (part.user_index() > 0) continue; /* Select ghosts */
             
-        if (status == 4 || status == 5) {
-            if (status > fFlavour) {
-                fFlavour = status;
-                fJetVars.DR = dR;
-                fJetVars.partonPT = fAuxInputs[k].pt();
+        int pdgCode = abs(fPDGCode[part.user_index()]);
+        double PT = part.pt();
+
+        if (pdgCode == 4 || pdgCode == 5) {
+            if (pdgCode > fFlavour || PT > fJetVars.partonPT) {
+                fFlavour = pdgCode;
+                fJetVars.partonPT = PT;
             }
-        } else if (fAuxInputs[k].pt() > fJetVars.partonPT) {
-            hardestLightParton = status;
-            lightDR = dR;
-            lightPT = fAuxInputs[k].pt();
+        } else if (PT > lightPT) {
+            hardestLightParton = pdgCode;
+            lightPT = PT;
         }
     }
     
-    
     if (!fFlavour) {
         fFlavour = hardestLightParton;
-        fJetVars.DR = lightDR;
         fJetVars.partonPT = lightPT;
     }
 }

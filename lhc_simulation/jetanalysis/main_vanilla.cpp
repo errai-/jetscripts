@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
             cout << "2: Hadronic definition" << endl;
             cout << "3: Algorithmic definition" << endl;
             cout << "4: Physics cluster definition" << endl;
+            cout << "5: Algotirhmic cluster definition" << endl;
             return 0;
         }
         
@@ -47,7 +48,7 @@ int main(int argc, char* argv[])
         TTree *tree;
         string output = "", output2 = "hists_";
         
-        if ( definition<1||definition>4 ) throw std::runtime_error("Flavor options 1/2/3/4");
+        if ( definition<1||definition>5 ) throw std::runtime_error("Flavor options 1/2/3/4");
         
         string input = argv[1], fullPath = argv[2], tmpStr = "";
         fullPath += input;        
@@ -92,6 +93,9 @@ int main(int argc, char* argv[])
                     } else if (definition==4) {
                         output += "physcluster_";
                         output2 += "physcluster_";
+                    } else if (definition==5) {
+                        output += "algocluster_";
+                        output2 += "algocluster_";
                     }
                 }
                 tmpStr = "";
