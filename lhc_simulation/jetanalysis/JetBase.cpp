@@ -37,7 +37,7 @@ JetBase::JetBase(TTree *tree,
     if (mode==0) fJetsPerEvent = 100;
     if (mode==1) fJetsPerEvent = 2;
     if (mode==2||mode==3) fJetsPerEvent = 1;
-    if (mode==4) fJetsPerEvent = 4;
+    if (mode==4) fJetsPerEvent = 100;
     
     /* Fastjet algorithm (settings stated explicitly) */
     fJetDef = fastjet::JetDefinition(fastjet::antikt_algorithm, fR, fastjet::E_scheme, fastjet::Best); 
@@ -141,6 +141,8 @@ bool JetBase::JetLoop()
             AlgorithmicFlavor(i);
         else if (fDefinition == 4)
             PhysClusterFlavor(i);
+        else if (fDefinition == 5)
+            AlgoClusterFlavor(i);
 
         if (fParticleStudy)
             ParticleLoop(); /* Operations on jet particles */

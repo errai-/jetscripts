@@ -9,10 +9,13 @@
 
 #include "JetBase.h"
 
+#include <utility>
+
 using std::cout;
 using std::endl;
 using std::vector;
 using std::cerr;
+using std::pair;
 
 class Test : public JetBase 
 {

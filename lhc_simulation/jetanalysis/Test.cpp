@@ -40,8 +40,7 @@ bool Test::JetLoop()
     vector<unsigned> flavours;
     for (unsigned i = 0; i < fSortedJets.size(); ++i) {
         if ( i == fJetsPerEvent ) break;
-
-        fJetParts = sorted_by_pt(fSortedJets[i].constituents());
+        fJetParts = fSortedJets[i].constituents();
 
         /* Check the jet flavour if not a generic case */
         if (fDefinition == 1)
@@ -52,6 +51,8 @@ bool Test::JetLoop()
             AlgorithmicFlavor(i);
         else if (fDefinition == 4)
             PhysClusterFlavor(i);
+        else if (fDefinition == 5)
+            AlgoClusterFlavor(i);
 
         flavours.push_back(fFlavour);
         if (fFlavour == 5) {
@@ -62,8 +63,10 @@ bool Test::JetLoop()
                 b2 = i;
         }
         
-        if (fSortedJets[i].pt() > 10)
+        if (fSortedJets[i].pt() > 30) {
             ++thirties;
+            continue;
+        }
 
         fJetEvent->AddJet(fSortedJets[i].px(),
                           fSortedJets[i].py(),
@@ -73,18 +76,16 @@ bool Test::JetLoop()
                           fWeight,
                           fFlavour);
     }
-    
-    if (bcount != 2) {
+    if (bcount != 2)
         return false;
-    }
     
-    fastjet::PseudoJet t1, t2, t3, t4, t5, t6;
+    PseudoJet t1, t2, t3, t4, t5, t6;
     t1 = fMET + fAuxInputs[fLeptonId];
-    if (t1.m() < 60 || t1.m() > 110) {
+    if (t1.m() < 60 || t1.m() > 110)
         return false;
-    }
-      
-    vector<fastjet::PseudoJet> working;
+    
+    vector<PseudoJet> working;
+    vector< pair<unsigned,unsigned> > working_idx;
     for (auto i = 0u; i < thirties-1; ++i) {
         if (i == b1 || i == b2) continue;
         if (flavours[i]==0) continue;
@@ -92,28 +93,39 @@ bool Test::JetLoop()
             if (j == b1 || j == b2) continue;
             if (flavours[j]==0) continue;
             t2 = fSortedJets[i] + fSortedJets[j];
-            if (t2.m() > 60 && t2.m() < 110)
+            if (t2.m() > 60 && t2.m() < 110) {
                 working.push_back(t2);
+                working_idx.push_back( std::make_pair(i,j) );
+            }
         }
     }
     if (working.size() == 0)
         return false;
-    if (working.size() > 1)
-        cout << "     HOX!!!!" << endl;
+    
     t3 = t1 + fSortedJets[b1];
     t4 = t1 + fSortedJets[b2];
-    t5 = t2 + fSortedJets[b1];
-    t6 = t2 + fSortedJets[b2];
-    if (!mass_study(t3.m(),t4.m(),t5.m(),t6.m(),fNoisy))
+    unsigned success = 0;
+    unsigned best;
+    for ( unsigned i = 0; i < working.size(); ++i ) {
+        t5 = working[i] + fSortedJets[b1];
+        t6 = working[i] + fSortedJets[b2];
+        if (mass_study(t3.m(),t4.m(),t5.m(),t6.m(),fNoisy)) {
+            ++success;
+            t2 = working[i];
+            best = i;
+        }
+    }
+    if (success == 0)
         return false;
+    if (success > 1)
+        cerr << "    HOX" << endl;
+    
     ++fAccepted;
     
-    if (fNoisy)
+    if (fNoisy) {
         cout << "Lepton W:" << t1.m() << " Jet W:" << t2.m() << endl;
-    for (auto i = 0u; i < thirties; ++i) {
-        if (i == b1 || i == b2) continue;
-        if (fNoisy)
-            cout << "Light flavour: " << flavours[i] << endl;
+        cout << "Light flavours: " << flavours[working_idx[best].first] << " " << flavours[working_idx[best].second] << endl << endl;
     }
+    
     return true;
 }

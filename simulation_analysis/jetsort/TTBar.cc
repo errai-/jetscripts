@@ -13,6 +13,7 @@
 #include <string>
 #include <cassert>
 #include <vector>
+#include <utility>
 
 #include "tdrstyle_mod14.C"
 
@@ -20,6 +21,7 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
+using std::pair;
 
 const int ptBins = 45.;//29.;//61.;
 const double ptRange[]=
@@ -36,7 +38,7 @@ inline bool compatibility(double mass_sum, double mass_diff) {
     return (mass_sum < 400 && mass_sum > 300 && mass_diff < 50);
 }
 
-inline bool mass_study(double m1, double m2, double n1, double n2, bool noisy) {
+inline bool mass_study(double m1, double m2, double n1, double n2, bool noisy, int& id) {
     double sum_1 = m1+n2, sum_2 = m2+n1;
     double diff_1 = fabs(m1-n2), diff_2 = fabs(m2-n1);
     
@@ -45,11 +47,13 @@ inline bool mass_study(double m1, double m2, double n1, double n2, bool noisy) {
         ++success_count;
         if (noisy)
             cout << "Lepton t " << m1 << "Jet t " << n2 << endl;
+        id = 0;
     }
     if (compatibility(sum_2,diff_2)) {
         ++success_count;
         if (noisy)
             cout << "Lepton t " << m2 << " Jet t " << n1 << endl;
+        id = 1;
     }
     
     if (success_count > 0)
@@ -62,6 +66,12 @@ void Fracs(string file) {
 
 /* Initialization */
     gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
+    TH1D *Wlepton = new TH1D("","m_W lepton",50,60.0,110.0);
+    TH1D *Wjet = new TH1D("","m_W jet",50,60.0,110.0);
+    TH1D *tlepton = new TH1D("","m_t lepton",100,140.0,240.0);
+    TH1D *tjet = new TH1D("","m_t jet",100,140.0,240.0);
+    TH1D *bboth = new TH1D("","m_b jet",100,3,23);
+    TH1D *rbq = new TH1D("","pTb/pTW",100,0,3);
     
     static const Int_t kMaxfJets = 100;
 
@@ -102,6 +112,7 @@ void Fracs(string file) {
         vector<unsigned> flavours;
         vector<TLorentzVector> bjets, ljets;
         TLorentzVector MET, lepton;
+        unsigned flav_count = 0;
         for (int i = 0; i < mJets; ++i) {
             TLorentzVector tmpVec(mX[i],mY[i],mZ[i],mT[i]);
             if (mFlav[i]==10)
@@ -115,46 +126,97 @@ void Fracs(string file) {
                 if (mFlav[i]==5)
                     bjets.push_back(tmpVec);
                 else {
+                    if (mFlav[i]!=0)
+                        ++flav_count;
                     ljets.push_back(tmpVec);
-                    flavour.push_back(mFlav[i]);
+                    flavours.push_back(mFlav[i]);
                 }
             }
         }
-
-        if (bjets.size()!=2)
+        if (bjets.size()!=2 || flav_count!=2)
             continue;
 
         TLorentzVector t1, t2, t3, t4, t5, t6;
         t1 = MET + lepton;
-        if (t1.M() < 60 || t1.M() > 110) {
-            return false;
-        }
+        if (t1.M() < 60 || t1.M() > 110)
+            continue;
 
         vector<TLorentzVector> working;
+        vector< pair<unsigned,unsigned> > working_idx;
         for (auto i = 0u; i < ljets.size()-1; ++i) {
             if (flavours[i]==0) continue;
             for (auto j = i+1; j < ljets.size(); ++j) {
                 if (flavours[j]==0) continue;
                 t2 = ljets[i] + ljets[j];
-                if (t2.M() > 60 && t2.M() < 110)
+                if (t2.M() > 60 && t2.M() < 110) {
                     working.push_back(t2);
+                    working_idx.push_back( std::make_pair(i,j) );
+                }
             }
         }
         if (working.size() == 0)
-            return false;
-        if (working.size() > 1)
-            cout << "     HOX!!!!" << endl;
+            continue;
+        
         t3 = t1 + bjets[0];
         t4 = t1 + bjets[1];
-        t5 = t2 + bjets[0];
-        t6 = t2 + bjets[1];
-        if (!mass_study(t3.M(),t4.M(),t5.M(),t6.M(),true))
-            continue
-        ++success;
-        
-        cout << "Lepton W:" << t1.m() << " Jet W:" << t2.m() << endl;
-        for (auto i = 0u; i < ljets.size(); ++i) {
-            cout << "Light flavour: " << flavours[i] << endl;
+        unsigned saccess = 0;
+        unsigned best;
+        int id;
+        for ( unsigned i = 0; i < working.size(); ++i ) {
+            t5 = working[i] + bjets[0];
+            t6 = working[i] + bjets[1];
+            if (mass_study(t3.M(),t4.M(),t5.M(),t6.M(),false,id)) {
+                ++saccess;
+                t2 = working[i];
+                best = i;
+            }
         }
+        if (saccess == 0)
+            continue;
+        if (saccess > 1)
+            cerr << "    HOX" << endl;
+            
+        ++success;
+        Wlepton->Fill(t1.M());
+        Wjet->Fill(t2.M());
+        if (id == 0) {
+            tlepton->Fill( (t1+bjets[0]).M() );
+            tjet->Fill( (t2+bjets[1]).M() );
+            rbq->Fill( bjets[1].Pt()/t2.Pt() );
+        } else {
+            tlepton->Fill( (t1+bjets[1]).M() );
+            tjet->Fill( (t2+bjets[0]).M() );
+            rbq->Fill( bjets[0].Pt()/t2.Pt() );
+        }
+        bboth->Fill( bjets[0].M() );
+        bboth->Fill( bjets[1].M() );
+        
+//         cout << "Lepton W:" << t1.M() << " Jet W:" << t2.M() << endl;
+//         cout << "Light flavours: " << flavours[working_idx[best].first] << " " << flavours[working_idx[best].second] << endl << endl;
     }
+    TCanvas *c1 = new TCanvas("c1");
+    Wlepton->SetYTitle("events");
+    Wlepton->SetXTitle("m (GeV)");
+    Wlepton->Draw();
+    TCanvas *c2 = new TCanvas("c2");
+    Wjet->SetYTitle("events");
+    Wjet->SetXTitle("m (GeV)");
+    Wjet->Draw();
+    TCanvas *c3 = new TCanvas("c3");
+    tlepton->SetYTitle("events");
+    tlepton->SetXTitle("m (GeV)");
+    tlepton->Draw();
+    TCanvas *c4 = new TCanvas("c4");
+    tjet->SetYTitle("events");
+    tjet->SetXTitle("m (GeV)");
+    tjet->Draw();
+    TCanvas *c5 = new TCanvas("c5");
+    bboth->SetYTitle("events");
+    bboth->SetXTitle("m (GeV)");
+    bboth->Draw();
+    TCanvas *c6 = new TCanvas("c6");
+    rbq->SetYTitle("events");
+    rbq->SetXTitle("rbq");
+    rbq->Draw();
+    cout << success << endl;
 }
