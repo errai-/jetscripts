@@ -76,11 +76,6 @@ public :
     Float_t         phf_[kMaxPFJets_];   //[PFJets_]
     Float_t         elf_[kMaxPFJets_];   //[PFJets_]
     Float_t         muf_[kMaxPFJets_];   //[PFJets_]
-    Double_t         chf[kMaxPFJets_];   //[PFJets_]
-    Double_t         nhf[kMaxPFJets_];   //[PFJets_]
-    Double_t         phf[kMaxPFJets_];   //[PFJets_]
-    Double_t         elf[kMaxPFJets_];   //[PFJets_]
-    Double_t         muf[kMaxPFJets_];   //[PFJets_]
     Float_t         hf_hf_[kMaxPFJets_];   //[PFJets_]
     Float_t         hf_phf_[kMaxPFJets_];   //[PFJets_]
     Float_t         betaStar_[kMaxPFJets_];   //[PFJets_]
@@ -177,11 +172,11 @@ void AnalyzeData::Init(TTree *tree)
         fChain->SetBranchAddress("fJets.fP4.fCoordinates.fY", fY);
         fChain->SetBranchAddress("fJets.fP4.fCoordinates.fZ", fZ);
         fChain->SetBranchAddress("fJets.fP4.fCoordinates.fT", fT);
-        fChain->SetBranchAddress("fJets.fChf", chf);
-        fChain->SetBranchAddress("fJets.fNhf", nhf);
-        fChain->SetBranchAddress("fJets.fPhf", phf);
-        fChain->SetBranchAddress("fJets.fElf", elf);
-        fChain->SetBranchAddress("fJets.fMuf", muf);
+        fChain->SetBranchAddress("fJets.fChf", chf_);
+        fChain->SetBranchAddress("fJets.fNhf", nhf_);
+        fChain->SetBranchAddress("fJets.fPhf", phf_);
+        fChain->SetBranchAddress("fJets.fElf", elf_);
+        fChain->SetBranchAddress("fJets.fMuf", muf_);
     }
     
     /* First disable all branches and then enable the branches in use */

@@ -29,7 +29,7 @@ using std::endl;
 
 void runDrawHistos(string readMcFile, string readDtFile)
 {
-    int puInspect = 0;
+    int puInspect = 1;
     int etaProfile = 0;
     int ptProfile = 0;
     int ptDifference = 0;
@@ -52,13 +52,13 @@ void runDrawHistos(string readMcFile, string readDtFile)
         canvas->Divide(3,2,0,0);
         for (int i=0; i<6; i++) {
             mcPuHists[i]->Scale(1./mcPuHists[i]->Integral());
-            dtPuHists[i]->Sumw2();
+            //dtPuHists[i]->Sumw2();
             dtPuHists[i]->Scale(1./dtPuHists[i]->Integral());
             canvas->cd(i+1);
             std::stringstream tmpStr("");
             tmpStr << "trigger" << i+1;
             mcPuHists[i]->SetTitle(tmpStr.str().c_str());
-            mcPuHists[i]->Draw("");
+            mcPuHists[i]->Draw("HIST");
             dtPuHists[i]->SetMarkerStyle(kCircle);
             dtPuHists[i]->SetMarkerColor(kRed);
             dtPuHists[i]->Draw("SAMEp");
@@ -75,9 +75,9 @@ void runDrawHistos(string readMcFile, string readDtFile)
             info.SetNDC();
             info.SetTextFont(43);
             info.SetTextSize(20);
-            info.DrawLatex(0.5,0.7,triggers[i].c_str());
-            info.DrawLatex(0.5,0.6,textMC.str().c_str());
-            info.DrawLatex(0.5,0.5,textDT.str().c_str());
+            info.DrawLatex(0.6,0.7,triggers[i].c_str());
+            info.DrawLatex(0.6,0.6,textMC.str().c_str());
+            info.DrawLatex(0.6,0.5,textDT.str().c_str());
             dtPuHists[i]->GetXaxis()->SetTitle("N_{PU}/event");
             mcPuHists[i]->GetXaxis()->SetTitle("N_{PU}/event");
             dtPuHists[i]->GetYaxis()->SetTitle("Average events");
@@ -89,8 +89,10 @@ void runDrawHistos(string readMcFile, string readDtFile)
         canvas->SetLogx();
         canvas->SetLogy();
         TH1D *firstHisto = mcProcessor.PtProfile(1,0,-1);
+        firstHisto->Scale(1./firstHisto->Integral());
         firstHisto->Draw("");
         TH1D* tmpHisto = dtProcessor.PtProfile(1,0,-1);
+        tmpHisto->Scale(1./tmpHisto->Integral());
         tmpHisto->SetMarkerStyle(kCircle);
         tmpHisto->SetMarkerColor(kRed);
         tmpHisto->Draw("samep");

@@ -35,7 +35,7 @@ void runSingleHistos(string readFile="mc_histos.root")
     int ptPrafile = 0;
     int ptDifference = 0;
     int debugger = 1;
-    int angle = 1;
+    int angle = 0;
 
     ProfileProjector mcProcessor(readFile,"mc");
 
@@ -89,14 +89,14 @@ void runSingleHistos(string readFile="mc_histos.root")
         firstHisto->SetName("muu");
         firstHisto->Draw("same");
     } else if (debugger) {
-        THStack *stackPlot = mcProcessor.EnergyFractions(1,0,-1,0,1);
+        THStack *stackPlot = mcProcessor.EnergyFractions(1,0,-1,0,0);
         canvas->SetLogx();
         stackPlot->Draw("");
         mcProcessor.GetLeg()->Draw();
         canvas->Modified();
         canvas->SetSelected(canvas);
     } else if (angle) {
-        THStack *stackPlot = mcProcessor.EnergyFractions(0,0,-1,0,1);
+        THStack *stackPlot = mcProcessor.EnergyFractions(0,0,-1,0,0);
         canvas->cd();
         stackPlot->Draw("");
         mcProcessor.GetLeg()->Draw();
