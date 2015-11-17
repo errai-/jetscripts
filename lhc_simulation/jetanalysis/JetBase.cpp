@@ -10,7 +10,7 @@ JetBase::JetBase(TTree *tree,
                  fChain         (0), 
                  fMode          (mode), 
                  fDefinition    (definition),
-                 fJetCuts       (true),
+                 fJetCuts       (false),
                  fParamCuts     (true),
                  fInitialized   (true),
                  fAddNonJet     (true),
@@ -163,21 +163,24 @@ bool JetBase::JetLoop()
 
 void JetBase::ParticleLoop()
 {  
-    fPiPlus   = fastjet::PseudoJet(); fPiMinus  = fastjet::PseudoJet();
-    fPi0Gamma = fastjet::PseudoJet(); fGamma    = fastjet::PseudoJet(); 
-    fKaPlus   = fastjet::PseudoJet(); fKaMinus  = fastjet::PseudoJet(); 
-    fKSZero   = fastjet::PseudoJet(); fKLZero   = fastjet::PseudoJet(); 
-    fProton   = fastjet::PseudoJet(); fAproton  = fastjet::PseudoJet(); 
-    fNeutron  = fastjet::PseudoJet(); fAneutron = fastjet::PseudoJet();
-    fLambda0  = fastjet::PseudoJet(); fSigma    = fastjet::PseudoJet(); 
-    fElec     = fastjet::PseudoJet(); fMuon     = fastjet::PseudoJet();
-    fOthers   = fastjet::PseudoJet(); fEtSum    = fastjet::PseudoJet();
+    fPiPlus   = PseudoJet(); fPiMinus  = PseudoJet();
+    fPi0Gamma = PseudoJet(); fGamma    = PseudoJet(); 
+    fKaPlus   = PseudoJet(); fKaMinus  = PseudoJet(); 
+    fKSZero   = PseudoJet(); fKLZero   = PseudoJet(); 
+    fXiMinus  = PseudoJet(); fXiZero   = PseudoJet();
+    fOmMinus  = PseudoJet();
+    fProton   = PseudoJet(); fAproton  = PseudoJet(); 
+    fNeutron  = PseudoJet(); fAneutron = PseudoJet();
+    fLambda0  = PseudoJet(); fSigma    = PseudoJet(); 
+    fElec     = PseudoJet(); fMuon     = PseudoJet();
+    fOthers   = PseudoJet(); fEtSum    = PseudoJet();
     
     for (unsigned int j = 0; j != fJetParts.size(); ++j) {
         if ( fJetParts[j].user_index() < 0 ) continue;
+        
         int id = fPDGCode[ fJetParts[j].user_index() ];
         int status = fAnalysisStatus[ fJetParts[j].user_index() ]; 
-        
+       
         fEtSum += fJetParts[j];
         if ( id == 211 ) { 
             fPiPlus += fJetParts[j];
@@ -210,11 +213,18 @@ void JetBase::ParticleLoop()
             fLambda0 += fJetParts[j];
         } else if ( abs( id ) == 3112 || abs( id ) == 3222 ) {
             fSigma += fJetParts[j];
+        } else if ( abs( id ) == 3312 ) {
+            fXiMinus += fJetParts[j];
+        } else if ( abs( id ) == 3322 ) {
+            fXiZero += fJetParts[j];
+        } else if ( abs( id ) == 3334 ) {
+            fOmMinus += fJetParts[j];
         } else if ( abs( id ) == 11 ) {
             fElec += fJetParts[j];
         } else if ( abs( id ) == 13 ) {
             fMuon += fJetParts[j];
         } else {
+            cout << id << " " << fJetParts[j].user_index() << endl;
             fOthers += fJetParts[j];   
         }
     }
@@ -295,7 +305,7 @@ void JetBase::ParticlesToJetsorterInput()
             } else if (fDefinition==4) {
                 /* Physics clustering definition: ghost partons from the hard process */
                 particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i );
+                particleTemp.set_user_index( -i-1 );
                 fJetInputs.push_back( particleTemp );
             }
         } else if (stat==4) {
@@ -303,7 +313,7 @@ void JetBase::ParticlesToJetsorterInput()
             
             if (fDefinition==2 || fDefinition==5) {
                 particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i );
+                particleTemp.set_user_index( -i-1 );
                 fJetInputs.push_back( particleTemp );
             } else if (fDefinition==3) {
                 if (pdgID > 6 && pdgID!=21) continue;
@@ -315,7 +325,7 @@ void JetBase::ParticlesToJetsorterInput()
             
             if (fDefinition==2) {
                 particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i );
+                particleTemp.set_user_index( -i-1 );
                 fJetInputs.push_back( particleTemp );
             }
         }
@@ -368,7 +378,7 @@ bool JetBase::SelectionParams()
         }
         if (fJetCuts) {
             for (auto i = 0u; i < 2; ++i) {
-                if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()))
+                if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()) > 2.5)
                     return false;
             }
         }
@@ -395,7 +405,7 @@ bool JetBase::SelectionParams()
                 return false;
         }
         if (fJetCuts) {
-            if (fSortedJets[0].pt() < 30 || fabs(fSortedJets[0].eta()))
+            if (fSortedJets[0].pt() < 30 || fabs(fSortedJets[0].eta()) > 2.5)
                 return false;
         }
     } else if (fMode == 3) {
@@ -428,7 +438,7 @@ bool JetBase::SelectionParams()
                 return false;
         }
         if (fJetCuts) {
-            if (fSortedJets[0].pt() < 30 || fabs(fSortedJets[0].eta()))
+            if (fSortedJets[0].pt() < 30 || fabs(fSortedJets[0].eta()) > 2.5)
                 return false;
         }
     } else if (fMode == 4) {
@@ -512,8 +522,8 @@ void JetBase::HadronicFlavor(unsigned)
     for ( auto part : fJetParts ){
         if (part.user_index() > 0) continue; /* Select ghosts */
             
-        int pdgCode = abs(fPDGCode[part.user_index()]);
-        int status = fAnalysisStatus[part.user_index()]-2;
+        int pdgCode = abs(fPDGCode[-part.user_index()-1]);
+        int status = fAnalysisStatus[-part.user_index()-1]-2;
         double PT = part.pt();
 
         if (status == 4 || status == 5) {
@@ -585,7 +595,7 @@ void JetBase::PhysClusterFlavor(unsigned i)
     fFlavour = 0;
     for ( auto part : fJetParts ) {
         if (part.user_index() > 0) continue; /* Not ghosts */
-        int id = -part.user_index();
+        int id = -part.user_index()-1;
             
         /* If there are more than one hard process parton within a jet, mark no flavour */
         if (fFlavour != 0) {
@@ -593,7 +603,7 @@ void JetBase::PhysClusterFlavor(unsigned i)
             fJetVars.partonPT = 0;
             break;
         }
-        fFlavour = abs(fPDGCode[-part.user_index()]);
+        fFlavour = abs(fPDGCode[id]);
         fJetVars.partonPT = part.pt()*pow(10,18);
     }
 }
@@ -607,7 +617,7 @@ void JetBase::AlgoClusterFlavor(unsigned i)
     for ( auto part : fJetParts ){
         if (part.user_index() > 0) continue; /* Select ghosts */
             
-        int pdgCode = abs(fPDGCode[part.user_index()]);
+        int pdgCode = abs(fPDGCode[-part.user_index()-1]);
         double PT = part.pt();
 
         if (pdgCode == 4 || pdgCode == 5) {

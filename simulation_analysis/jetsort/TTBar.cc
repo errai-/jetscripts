@@ -68,6 +68,7 @@ void Fracs(string file) {
     gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
     TH1D *Wlepton = new TH1D("","m_W lepton",50,60.0,110.0);
     TH1D *Wjet = new TH1D("","m_W jet",50,60.0,110.0);
+    TH1D *Wjetc = new TH1D("","m_W jet",50,60.0,110.0);
     TH1D *tlepton = new TH1D("","m_t lepton",100,140.0,240.0);
     TH1D *tjet = new TH1D("","m_t jet",100,140.0,240.0);
     TH1D *bboth = new TH1D("","m_b jet",100,3,23);
@@ -103,7 +104,7 @@ void Fracs(string file) {
     /* event loop */
     std::size_t mCount = 0;
     std::size_t mN = jetTree->GetEntries();
-    int success = 0;
+    int success = 0, nonb1 = 0, nonb0 = 0, fluu = 0;
     for(size_t x=0; x != mN; ++x) {
         jetTree->GetEntry(x);
 
@@ -133,8 +134,17 @@ void Fracs(string file) {
                 }
             }
         }
-        if (bjets.size()!=2 || flav_count!=2)
+        if (bjets.size()!=2) {
+            if (bjets.size()==1)
+                ++nonb1;
+            else
+                ++nonb0;
             continue;
+        }
+        if (flav_count!=2) {
+            ++fluu;
+            continue;
+        }
 
         TLorentzVector t1, t2, t3, t4, t5, t6;
         t1 = MET + lepton;
@@ -179,15 +189,16 @@ void Fracs(string file) {
         ++success;
         Wlepton->Fill(t1.M());
         Wjet->Fill(t2.M());
+        double rbqval = (bjets[0].Pt() + bjets[1].Pt())/t2.Pt();
+        Wjetc->Fill(rbqval*t2.M());
         if (id == 0) {
             tlepton->Fill( (t1+bjets[0]).M() );
             tjet->Fill( (t2+bjets[1]).M() );
-            rbq->Fill( bjets[1].Pt()/t2.Pt() );
         } else {
             tlepton->Fill( (t1+bjets[1]).M() );
             tjet->Fill( (t2+bjets[0]).M() );
-            rbq->Fill( bjets[0].Pt()/t2.Pt() );
         }
+        rbq->Fill( rbqval );
         bboth->Fill( bjets[0].M() );
         bboth->Fill( bjets[1].M() );
         
@@ -218,5 +229,10 @@ void Fracs(string file) {
     rbq->SetYTitle("events");
     rbq->SetXTitle("rbq");
     rbq->Draw();
+    TCanvas *c7 = new TCanvas("c7");
+    Wjetc->SetYTitle("events");
+    Wjetc->SetXTitle("m (GeV)");
+    Wjetc->Draw();
     cout << success << endl;
+    cout << nonb1 << " " << nonb0 << " " << fluu << endl;
 }

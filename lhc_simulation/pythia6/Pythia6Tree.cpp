@@ -1,7 +1,7 @@
 #include "Pythia6Tree.h"
 
 void Pythia6Tree::ModeSettings() {
-    if (mMode == 1) {
+    if (mMode == 1 || mMode == 0) {
         // Standard QCD
         mPythia->SetMSEL(1);
         // Min and max pthat

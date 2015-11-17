@@ -16,38 +16,70 @@ void Analysis::PostProcessing()
 /* Throw the obtained values in temporary containers */
 void Analysis::TypeSort()
 {
-    fastjet::PseudoJet tmpLorentz;
+    PseudoJet tmpLorentz;
+    double cumulator = 0;
     
+    cumulator += fPiPlus.Et();
     tmpLorentz += fPiPlus;
+    cumulator += fPiMinus.Et();
     tmpLorentz += fPiMinus;
+    cumulator += fKaPlus.Et();
     tmpLorentz += fKaPlus;
+    cumulator += fKaMinus.Et();
     tmpLorentz += fKaMinus;
+    cumulator += fProton.Et();
     tmpLorentz += fProton;
+    cumulator += fAproton.Et();
     tmpLorentz += fAproton;
+    cumulator += fSigma.Et();
     tmpLorentz += fSigma;
-    fJetVars.chf = tmpLorentz.Et()/fEtSum.Et();
+    cumulator += fXiMinus.Et();
+    tmpLorentz += fXiMinus;
+    cumulator += fOmMinus.Et();
+    tmpLorentz += fOmMinus;
+    fJetVars.chf = cumulator;
     fJetVars.chm = tmpLorentz.m();
-    tmpLorentz = fastjet::PseudoJet();
     
+    tmpLorentz = PseudoJet();
+    cumulator = 0;
+    
+    cumulator += fKSZero.Et();
     tmpLorentz += fKSZero;
+    cumulator += fKLZero.Et();
     tmpLorentz += fKLZero;
+    cumulator += fNeutron.Et();
     tmpLorentz += fNeutron;
+    cumulator += fAneutron.Et();
     tmpLorentz += fAneutron;
+    cumulator += fLambda0.Et();
     tmpLorentz += fLambda0;
-    fJetVars.nhf = tmpLorentz.Et()/fEtSum.Et();
+    cumulator += fXiZero.Et();
+    tmpLorentz += fXiZero;
+    fJetVars.nhf = cumulator;
     fJetVars.nhm = tmpLorentz.m();
-    tmpLorentz = fastjet::PseudoJet();
     
+    tmpLorentz = PseudoJet();
+    cumulator = 0;
+    
+    cumulator += fPi0Gamma.Et();
     tmpLorentz += fPi0Gamma;
+    cumulator += fGamma.Et();
     tmpLorentz += fGamma;
-    fJetVars.phf = tmpLorentz.Et()/fEtSum.Et();
+    fJetVars.phf = cumulator;
     fJetVars.phm = tmpLorentz.m();
     
-    fJetVars.elf = fElec.Et()/fEtSum.Et();
+    fJetVars.elf = fElec.Et();
     fJetVars.elm = fElec.m();
     
-    fJetVars.muf = fMuon.Et()/fEtSum.Et();
+    fJetVars.muf = fMuon.Et();
     fJetVars.mum = fMuon.m();
+    
+    double scale = fJetVars.chf + fJetVars.nhf + fJetVars.phf + fJetVars.elf + fJetVars.muf;
+    fJetVars.chf /= scale;
+    fJetVars.nhf /= scale;
+    fJetVars.phf /= scale;
+    fJetVars.elf /= scale;
+    fJetVars.muf /= scale;
 }
 
 

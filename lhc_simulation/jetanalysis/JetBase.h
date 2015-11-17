@@ -157,6 +157,9 @@ protected:
     PseudoJet       fKaMinus; 
     PseudoJet       fKSZero; 
     PseudoJet       fKLZero; 
+    PseudoJet       fXiZero;
+    PseudoJet       fXiMinus;
+    PseudoJet       fOmMinus;
     PseudoJet       fProton; 
     PseudoJet       fAproton; 
     PseudoJet       fNeutron; 
@@ -164,7 +167,7 @@ protected:
     PseudoJet       fLambda0; 
     PseudoJet       fSigma; 
     PseudoJet       fElec; 
-    PseudoJet       fMuon; 
+    PseudoJet       fMuon;
     PseudoJet       fOthers; 
     PseudoJet       fEtSum;
     
