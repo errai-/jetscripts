@@ -122,6 +122,8 @@ public:
     
     void ParticleAdd(std::size_t,int);
     
+    bool GammaChecker(unsigned);
+    
     bool ParticleLoop();
     
     void GammaAdd();

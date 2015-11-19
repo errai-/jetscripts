@@ -192,7 +192,6 @@ void JetBase::ParticleLoop()
             } else {
                 fGamma += fJetParts[j];
             }
-
         } else if ( id == 321 ) { 
             fKaPlus += fJetParts[j];
         } else if ( id == -321 ) { 

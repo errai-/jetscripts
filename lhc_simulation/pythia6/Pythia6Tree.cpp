@@ -5,7 +5,7 @@ void Pythia6Tree::ModeSettings() {
         // Standard QCD
         mPythia->SetMSEL(1);
         // Min and max pthat
-        mPythia->SetCKIN(3,30);
+        mPythia->SetCKIN(3,25);
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 2) {
         // photon+jets
@@ -149,8 +149,8 @@ void Pythia6Tree::EventLoop()
         if (ev%mTimerStep==0) mTimer.printTime();
     }
 
-    mPythia->Pylist(1);
-    mPythia->Pystat(1);
+    //mPythia->Pylist(1);
+    //mPythia->Pystat(1);
 
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
@@ -188,14 +188,16 @@ bool Pythia6Tree::ParticleLoop()
         int id = mPythia->GetK(prt,2);
         
         // prt == 7,8: outgoing particles in the hardest subprocess
-        if (prt==7 || prt==8) {
-            if (mMode==2 && id==22) continue;
-            if (mMode==3 && id==23) continue;
+        if (mMode > 0) {
+            if (prt==7 || prt==8) {
+                if (mMode==2 && id==22) continue;
+                if (mMode==3 && id==23) continue;
 
-            if ( status != 21 ) throw std::runtime_error("False functionality in hardest subprocess");
-            
-            ParticleAdd(prt,3);
-            continue;
+                if ( status != 21 ) throw std::runtime_error("False functionality in hardest subprocess");
+                
+                ParticleAdd(prt,3);
+                continue;
+            }
         }
 
         /* Special final-state particles have already been added */
@@ -215,7 +217,10 @@ bool Pythia6Tree::ParticleLoop()
         
         /* Stable particles */
         if (status <= 10) {
-            ParticleAdd(prt,1);
+            int saveStatus = 1;
+            if ( mMode==0 && id==22 && GammaChecker(prt))
+                saveStatus = 2;
+            ParticleAdd(prt,saveStatus);
         }
     }
 
@@ -237,7 +242,7 @@ void Pythia6Tree::GammaAdd()
 void Pythia6Tree::MuonAdd() 
 {
     mSpecialIndices.push_back(12); mSpecialIndices.push_back(13);
-    while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13) { 
+    while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13) {
         ++mSpecialIndices[0]; ++mSpecialIndices[1];
     }
     
@@ -255,3 +260,22 @@ void Pythia6Tree::MuonAdd()
         ParticleAdd(mSpecialIndices[i],2);
     }
 }
+
+bool Pythia6Tree::GammaChecker(unsigned prt)
+{
+    /* One mother, which is pi0? */
+    int mother = mPythia->GetK(prt,3);
+    if ( !mother || abs(mPythia->GetK(mother,2))!=111 ) return false;
+
+    int d1 = mPythia->GetK(mother,4);
+    int d2 = mPythia->GetK(mother,5);
+    double eDifference = mPythia->GetP(mother,4);
+    for (int daugh = mPythia->GetK(mother,4), N = mPythia->GetK(mother,5); daugh <= N; ++daugh)
+        eDifference -= mPythia->GetP(daugh,4);
+
+    if ( fabs(eDifference) > 0.001 )
+        return false;
+
+    return true;
+}
+

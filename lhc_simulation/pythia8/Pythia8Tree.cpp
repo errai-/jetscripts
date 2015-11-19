@@ -376,14 +376,16 @@ bool Pythia8Tree::GammaChecker(unsigned prt)
 
     /* One mother, which is pi0 */
     vector<int> mothers = mEvent[prt].motherList();
-    if ( mothers.size()!=1 || mEvent[mothers[0]].id()!=111 ) return false;
+    if ( mothers.size()!=1 || abs(mEvent[mothers[0]].id())!=111 ) return false;
 
     vector<int> daughters = mEvent[mothers[0]].daughterList();
-    if ( daughters.size()!=2 ) return false;
+    
+    double eDifference = mEvent[mothers[0]].e();
+    for ( auto daugh : daughters )
+        eDifference -= mEvent[daugh].e();
 
-    double eDifference = fabs( mEvent[mothers[0]].e() - 
-        mEvent[daughters[0]].e() - mEvent[daughters[1]].e() );
-    if ( eDifference > 0.001 ) return false;
+    if ( fabs(eDifference) > 0.001 )
+        return false;
 
     return true;
 }
