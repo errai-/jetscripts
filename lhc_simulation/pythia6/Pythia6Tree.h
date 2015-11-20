@@ -20,7 +20,7 @@
 //       - Ttbar production with WW -> qqbarllbar                //
 //                                                               //
 // Author: Hannu Siikonen (errai- @GitHub)                       //
-// Last modification: 21.8.2015                                  //
+// Last modification: 19.11.2015                                 //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -61,92 +61,127 @@ using std::vector;
 using std::pair;
 using std::cout;
 using std::endl;
+using std::cerr;
 using std::runtime_error;
 
 
 class Pythia6Tree
 {
 public:
-
-    Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
-        mMode(mode), mNumEvents(nEvent)
-    {
-        /* Create an instance of the Pythia event generator: */
-        mPythia = new TPythia6;
-        /* Set a seed value according to the run index and make sure it is used: */
-        mPythia->SetMRPY(1,10000*nameId);
-        mPythia->SetMRPY(2,0);
-        
-        /* Event type: */
-        ModeSettings();
-        /* Other settings: */
-        GeneralSettings();
-
-        /* Try to create a file to write */
-        mFile = TFile::Open(fileName.c_str(), "RECREATE");
-        if(!mFile->IsOpen()) throw runtime_error("Creating an output file failed");
-        mFile->SetCompressionLevel(1);
-
-        /* Output tree: */
-        mTree = new TTree("Pythia6Tree", "Pythia6 particle data.");
-        if(!mTree) throw runtime_error("Creating a tree failed");
-        mTree->SetAutoSave(100000000); /* 0.1 GBytes */
-        mTree->SetCacheSize(10000000); /* 100 MBytes */
-        TTree::SetBranchStyle(1); /* New branch style */
-
-        /* Connect an event to the tree */
-        mPrtclEvent = new PrtclEvent();
-        if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
-        mBranch = mTree->Branch("event", &mPrtclEvent, 32000,4);
-        if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
-        mBranch->SetAutoDelete(kFALSE);
-        mTree->BranchRef();
-        
-        /* Setup a custom event timer */
-        mTimerStep = 1000;
-        mTimer.setParams(mNumEvents,mTimerStep);       
-        mTimer.startTiming();
-    }
-    
-    ~Pythia6Tree() 
-    {
-        delete mPrtclEvent; mPrtclEvent = 0;
-        delete mPythia; mPythia = 0;
-        mFile->Close();
-    };
-    
-    void ModeSettings();
-    void GeneralSettings();
-    
+    /* The event loop should be called once after a proper initialization */
     void EventLoop();
+
+    /* No copying or constructing with another instance */
+    Pythia6Tree( const Pythia6Tree& other ) = delete;
+    Pythia6Tree& operator=( const Pythia6Tree& ) = delete;
     
-    void ParticleAdd(std::size_t,int);
+    /* Run settings are provided via the initializer */
+    Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int mode);
+    Pythia6Tree() :
+        mInitialized(false)
+    { 
+        cerr << "Pythia8Tree is intended to be used only with the non-default initializer" << endl;
+    } 
+    /* ROOT has an awful behaviour with pointers. It should do the cleaning-up
+       and such stuff well, but there is a ton of memory leaks that result
+       already from ROOT 'being there'. At least the software runs - but the
+       memory leaks and ROOT style pointer handling are regrettable. */
+    ~Pythia6Tree() {}
+
+protected:
     
-    bool GammaChecker(unsigned);
+    /* A handle for adding particle information */
+    void ParticleAdd(unsigned prt,int status);
+    /* Particles needed by the hadronic flavor definition */
+    void GhostHadronAdd(unsigned prt, bool useStrange = false);
     
+    /* Loop over particles within an event: return true if event is to be saved */
     bool ParticleLoop();
+    /* The logic within particleloop */
+    virtual bool ProcessParticle(unsigned prt);
     
-    void GammaAdd();
+    /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
+     * is in an excited state or not. Checks whether a hadron has a daughter of 
+     * the same flavour. Parameter quarkId is a PDG quark flavour. */
+    bool IsExcitedHadronState(unsigned prt, int quarkID);
+    
+    /* A function that checks whether a photon is originated from a pi0 and that
+     * the energy of the photon-pair corresponds to the pion. returns 0 if
+     * the origin is not a pion with good energy and 1 if it is */
+    bool GammaChecker(unsigned);
+    TLorentzVector LastParton(unsigned prt);
+
     void MuonAdd();
-    void LeptonAdd(std::size_t);
+    void LeptonAdd(unsigned prt);
+    
+    /* Settings that depend on the selected mode */
+    void ModeSettings();
+    /* General settings that are always used */
+    void GeneralSettings();
     
 protected:
     
-    TPythia6 *mPythia;
+    /* Indicator that the event loop can be run */
+    bool                            mInitialized;
+    /* A general-purpose counter for physics debugging */
+    unsigned                        mCounter;
     
-    TFile *mFile;
-    TTree *mTree;
-    TBranch *mBranch;
-    PrtclEvent *mPrtclEvent;
-    vector< pair<std::size_t,int> > mCandidates;
-    std::size_t mNextCand;
+    TPythia6                       *mPythia;
     
-    int mNumEvents;
-    int mMode;
-    int mTimerStep;
-    Timer mTimer;
+    TFile                          *mFile;
+    TTree                          *mTree;
+    TBranch                        *mBranch;
+    PrtclEvent                     *mPrtclEvent;
     
-    vector<std::size_t> mSpecialIndices;
+    vector< pair<unsigned,int> >    mCandidates;
+    unsigned                        mNextCand;
+    
+    int                             mNumEvents;
+    int                             mMode;
+    int                             mTimerStep;
+    Timer                           mTimer;
+    
+    vector<unsigned>                mSpecialIndices;
 };
 
+
+class P6GenericTree : public Pythia6Tree 
+{
+public:
+    P6GenericTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
+        Pythia6Tree(nEvent, fileName, nameId, mode) {}
+    ~P6GenericTree() {}
+    
+protected:
+    /* Dijet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+
+class P6DijetTree : public Pythia6Tree
+{
+public:
+    P6DijetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
+        Pythia6Tree(nEvent, fileName, nameId, mode) {}
+    ~P6DijetTree() {}
+    
+protected:
+    /* Dijet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+
+class P6GammajetTree : public Pythia6Tree
+{
+public:
+    P6GammajetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
+        Pythia6Tree(nEvent, fileName, nameId, mode) {}
+    ~P6GammajetTree() {}
+    
+protected:
+    /* A handle for adding a hard process photon descended from the signal event photon */
+    void GammaAdd();
+    /* Dijet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
 #endif // PYTHIA6TREE

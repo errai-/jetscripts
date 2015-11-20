@@ -89,6 +89,7 @@ void Pythia8Tree::EventLoop()
     if (mCounter != 0)
         cerr << "Non-zero counter value: " << mCounter << endl;
     
+    delete mPrtclEvent; mPrtclEvent = 0;
     mInitialized = false;
 } // EventLoop
 

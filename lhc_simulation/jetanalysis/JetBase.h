@@ -68,7 +68,7 @@ public :
     virtual bool        JetLoop();
     /* Study particle types in the clustered jets */
     virtual void        ParticleLoop();
-    virtual inline void EventProcessing(Long64_t);
+    virtual inline void EventProcessing();
     virtual inline void PostProcessing() { return; };
     
     virtual void        ParticlesToJetsorterInput();
@@ -148,7 +148,7 @@ protected:
 //////////
 // Others:
 //////////
-    /* Energy counters: */ 
+    /* Transverse energy counters: */ 
     PseudoJet       fPiPlus; 
     PseudoJet       fPiMinus; 
     PseudoJet       fPi0Gamma; 
@@ -170,7 +170,7 @@ protected:
     PseudoJet       fMuon;
     PseudoJet       fOthers; 
     PseudoJet       fEtSum;
-    
+
     PseudoJet       fMET;
     
     Timer           fTimer;

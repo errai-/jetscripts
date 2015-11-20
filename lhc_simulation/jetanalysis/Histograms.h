@@ -28,7 +28,7 @@ public :
     virtual void     InitFP();
     virtual void     Finalize();
 
-    virtual void     EventProcessing(Long64_t);
+    virtual void     EventProcessing();
         
     virtual Int_t    ChargeSign(Int_t);
     virtual void     FillerHandle( vector<TProfile*> &, Double_t, Double_t );

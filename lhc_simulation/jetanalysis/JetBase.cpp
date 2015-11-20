@@ -15,7 +15,7 @@ JetBase::JetBase(TTree *tree,
                  fInitialized   (true),
                  fAddNonJet     (true),
                  fParticleStudy (false),
-                 fR             (0.4),
+                 fR             (0.5),
                  fMinPT         (10.)
 {
     assert(tree);
@@ -91,7 +91,7 @@ void JetBase::EventLoop()
         
         /* Jet clusting and analysis cycle */
         ParticlesToJetsorterInput();
-        EventProcessing(jentry);
+        EventProcessing();
         fJetEvent->Clear();
     }
     
@@ -108,7 +108,7 @@ void JetBase::Finalize()
 }
 
 
-void JetBase::EventProcessing(Long64_t jentry) {
+void JetBase::EventProcessing() {
     fastjet::ClusterSequence fClustSeq(fJetInputs, fJetDef);
     vector< fastjet::PseudoJet > unsorteds = fClustSeq.inclusive_jets( fMinPT );
     fSortedJets = sorted_by_pt( unsorteds );
@@ -223,10 +223,10 @@ void JetBase::ParticleLoop()
         } else if ( abs( id ) == 13 ) {
             fMuon += fJetParts[j];
         } else {
-            cout << id << " " << fJetParts[j].user_index() << endl;
             fOthers += fJetParts[j];   
         }
     }
+    fOthers += fXiMinus + fXiZero + fOmMinus;
 }
 
 

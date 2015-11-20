@@ -1,5 +1,48 @@
 #include "Pythia6Tree.h"
 
+Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
+    mMode(mode),
+    mNumEvents(nEvent),
+    mInitialized(true)
+{
+    /* Create an instance of the Pythia event generator: */
+    mPythia = new TPythia6;
+    /* Set a seed value according to the run index and make sure it is used: */
+    mPythia->SetMRPY(1,10000*nameId);
+    mPythia->SetMRPY(2,0);
+    
+    /* Event type: */
+    ModeSettings();
+    /* Other settings: */
+    GeneralSettings();
+
+    /* Try to create a file to write */
+    mFile = TFile::Open(fileName.c_str(), "RECREATE");
+    if(!mFile->IsOpen()) throw runtime_error("Creating an output file failed");
+    mFile->SetCompressionLevel(1);
+
+    /* Output tree: */
+    mTree = new TTree("Pythia6Tree", "Pythia6 particle data.");
+    if(!mTree) throw runtime_error("Creating a tree failed");
+    mTree->SetAutoSave(100000000); /* 0.1 GBytes */
+    mTree->SetCacheSize(10000000); /* 100 MBytes */
+    TTree::SetBranchStyle(1); /* New branch style */
+
+    /* Connect an event to the tree */
+    mPrtclEvent = new PrtclEvent();
+    if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
+    mBranch = mTree->Branch("event", &mPrtclEvent, 32000,4);
+    if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
+    mBranch->SetAutoDelete(kFALSE);
+    mTree->BranchRef();
+    
+    /* Setup a custom event timer */
+    mTimerStep = 1000;
+    mTimer.setParams(mNumEvents,mTimerStep);       
+    mTimer.startTiming();
+}
+
+
 void Pythia6Tree::ModeSettings() {
     if (mMode == 1 || mMode == 0) {
         // Standard QCD
@@ -40,7 +83,13 @@ void Pythia6Tree::ModeSettings() {
         mPythia->SetCKIN(3,15);
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 4) {
-        cout << "sus" << endl;
+        // ttbar events
+        mPythia->SetMSEL(0);
+        mPythia->SetMSUB(81,1); // qqbar -> qqbar
+        mPythia->SetMSUB(82,1); // gg->qqbar
+        mPythia->SetPMAS(6,1,172);
+        mPythia->SetCKIN(3,25);
+        mPythia->SetCKIN(4,3000);
     } else {
         throw std::runtime_error("The selected mode is nonsense");
     }
@@ -155,6 +204,10 @@ void Pythia6Tree::EventLoop()
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
     mFile->Close();
+    delete mPythia;
+    mPythia = 0;
+    delete mPrtclEvent;
+    mPrtclEvent = 0;  
 }
 
 /* A handle for adding particle information */

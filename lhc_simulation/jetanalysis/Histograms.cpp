@@ -21,12 +21,27 @@ void Histograms::InitFP(){
     }
 }
 
-void Histograms::EventProcessing(Long64_t jentry)
+void Histograms::EventProcessing()
 {
-    JetBase::EventProcessing(jentry);
+    fastjet::ClusterSequence fClustSeq(fJetInputs, fJetDef);
+    vector< fastjet::PseudoJet > unsorteds = fClustSeq.inclusive_jets( fMinPT );
+    fSortedJets = sorted_by_pt( unsorteds );
+    
+    /* Abort if the event does not meet quality specifications */
+    fJetVars.SetZero();
+    if (!SelectionParams())
+        return;
+    
+    if (!JetLoop())
+        return;
+
     fQuarkJetCharge = ChargeSign(fFlavour);
     fOutTree->Fill();
-    HistFill(jentry);
+    for (unsigned jet = 0; jet < fSortedJets.size(); ++jet) {
+        if ( fabs(fSortedJets[jet].eta() > 1.3) )
+            continue;
+        HistFill(jet);
+    }
 }
 
 void Histograms::Finalize()
@@ -55,39 +70,39 @@ int Histograms::ChargeSign( int id )
 
 void Histograms::HistFill(int i)
 {
-    FillerHandle( fractionProfilesAll, fSortedJets[i].pt(), fEtSum.Et() );
+    FillerHandle( fractionProfilesAll, fSortedJets[i].pt(), fEtSum.E() );
     if (fFlavour==21) {
         gluonQuark->Fill( fSortedJets[i].pt(), 1);
-        FillerHandle( fractionProfilesGluon, fSortedJets[i].pt(), fEtSum.Et() );
+        FillerHandle( fractionProfilesGluon, fSortedJets[i].pt(), fEtSum.E() );
     } else if (fFlavour==4 || fFlavour==5) {
         gluonQuark->Fill( fSortedJets[i].pt(), 0);
-        FillerHandle( fractionProfilesHQuark, fSortedJets[i].pt(), fEtSum.Et() );
-        FillerHandle( fractionProfilesQuark, fSortedJets[i].pt(), fEtSum.Et() );
+        FillerHandle( fractionProfilesHQuark, fSortedJets[i].pt(), fEtSum.E() );
+        FillerHandle( fractionProfilesQuark, fSortedJets[i].pt(), fEtSum.E() );
     } else if (fFlavour==1 || fFlavour==2 || fFlavour==3 ) {
         gluonQuark->Fill( fSortedJets[i].pt(), 0);
-        FillerHandle( fractionProfilesLQuark, fSortedJets[i].pt(), fEtSum.Et() );
-        FillerHandle( fractionProfilesQuark, fSortedJets[i].pt(), fEtSum.Et() );
+        FillerHandle( fractionProfilesLQuark, fSortedJets[i].pt(), fEtSum.E() );
+        FillerHandle( fractionProfilesQuark, fSortedJets[i].pt(), fEtSum.E() );
     }
 }
 
 void Histograms::FillerHandle( vector<TProfile*> &hists, double pt, double scale)
 {
-    hists[0 ]->Fill( pt, fPiPlus.Et()  /scale ); 
-    hists[1 ]->Fill( pt, fPiMinus.Et() /scale );
-    hists[2 ]->Fill( pt, fPi0Gamma.Et()/scale ); 
-    hists[3 ]->Fill( pt, fKaPlus.Et()  /scale );
-    hists[4 ]->Fill( pt, fKaMinus.Et() /scale ); 
-    hists[5 ]->Fill( pt, fKSZero.Et()  /scale );
-    hists[6 ]->Fill( pt, fKLZero.Et()  /scale ); 
-    hists[7 ]->Fill( pt, fProton.Et()  /scale );
-    hists[8 ]->Fill( pt, fAproton.Et() /scale ); 
-    hists[9 ]->Fill( pt, fNeutron.Et() /scale );
-    hists[10]->Fill( pt, fAneutron.Et()/scale ); 
-    hists[11]->Fill( pt, fGamma.Et()   /scale );
-    hists[12]->Fill( pt, fLambda0.Et() /scale ); 
-    hists[13]->Fill( pt, fSigma.Et()   /scale );
-    hists[14]->Fill( pt, (fElec.Et()+fMuon.Et())/scale ); 
-    hists[15]->Fill( pt, fOthers.Et()  /scale );
+    hists[0 ]->Fill( pt, fPiPlus.E()  /scale ); 
+    hists[1 ]->Fill( pt, fPiMinus.E() /scale );
+    hists[2 ]->Fill( pt, fPi0Gamma.E()/scale ); 
+    hists[3 ]->Fill( pt, fKaPlus.E()  /scale );
+    hists[4 ]->Fill( pt, fKaMinus.E() /scale ); 
+    hists[5 ]->Fill( pt, fKSZero.E()  /scale );
+    hists[6 ]->Fill( pt, fKLZero.E()  /scale ); 
+    hists[7 ]->Fill( pt, fProton.E()  /scale );
+    hists[8 ]->Fill( pt, fAproton.E() /scale ); 
+    hists[9 ]->Fill( pt, fNeutron.E() /scale );
+    hists[10]->Fill( pt, fAneutron.E()/scale ); 
+    hists[11]->Fill( pt, fGamma.E()   /scale );
+    hists[12]->Fill( pt, fLambda0.E() /scale ); 
+    hists[13]->Fill( pt, fSigma.E()   /scale );
+    hists[14]->Fill( pt, (fElec+fMuon).E()/scale );
+    hists[15]->Fill( pt, fOthers.E()  /scale );
 }
 
 void Histograms::WriteResults()

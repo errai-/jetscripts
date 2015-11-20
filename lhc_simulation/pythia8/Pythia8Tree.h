@@ -21,7 +21,6 @@
 //                                                               //
 // Author: Hannu Siikonen (errai- @GitHub)                       //
 // Last modification: 27.10.2015                                 //
-//                                                               //
 ///////////////////////////////////////////////////////////////////
 
 #ifndef PYTHIA8TREE
@@ -86,30 +85,28 @@ public:
     
     /* Run settings are provided through the initializer */
     Pythia8Tree(string settings, string fileName, int mode);
-    Pythia8Tree() : mEvent(mPythia.event), mProcess(mPythia.process)
+    Pythia8Tree() :
+        mInitialized(false)
     {
         cerr << "Pythia8Tree is intended to be used only with the non-default initializer" << endl;
-        mInitialized = false;
     }
     /* ROOT has an awful behaviour with pointers. It should do the cleaning-up
        and such stuff well, but there is a ton of memory leaks that result
        already from ROOT 'being there'. At least the software runs - but the
-       memory leaks and ROOT style pointer handling are regrettable.
-       PrtclEvent is defined in the local software and thus deleting it
-       seemed like a good idea. */
-    ~Pythia8Tree() { delete mPrtclEvent; mPrtclEvent = 0; }
+       memory leaks and ROOT style pointer handling are regrettable. */
+    ~Pythia8Tree() {}
 
 protected:
-    
-    /* Loop over particles within an event: returns true if event is to be saved */
-    bool ParticleLoop();
-    /* The logic within particleloop. */
-    virtual bool ProcessParticle(unsigned prt);
     
     /* A handle for adding particle information */
     void ParticleAdd(unsigned prt, int status);
     /* Particles needed by the hadronic flavor definition */
     void GhostHadronAdd(unsigned prt, bool useStrange = false);
+    
+    /* Loop over particles within an event: returns true if event is to be saved */
+    bool ParticleLoop();
+    /* The logic within particleloop. */
+    virtual bool ProcessParticle(unsigned prt);
     
     /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
      * is in an excited state or not. Checks whether a hadron has a daughter of 
@@ -161,7 +158,6 @@ public:
     ~P8GenericTree() {}
 
 protected:
-    /* Dijet specific particle logic */
     virtual bool ProcessParticle(unsigned prt);
 };
 
