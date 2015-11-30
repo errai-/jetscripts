@@ -1,5 +1,6 @@
 #include "Pythia8Tree.h"
 
+
 bool TTBarSelector::doVetoProcessLevel(Event& process)
 {
     unsigned leptons = 0;
@@ -13,7 +14,10 @@ bool TTBarSelector::doVetoProcessLevel(Event& process)
 }
 
 
-Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) : mEvent(mPythia.event), mProcess(mPythia.process)
+Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) :
+    mEvent(mPythia.event),
+    mProcess(mPythia.process),
+    mInitialized(true)
 {
     mMode = mode;
     
@@ -52,8 +56,6 @@ Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) : mEvent(mP
     mTimerStep = 1000;
     mTimer.setParams(mNumEvents,mTimerStep);       
     mTimer.startTiming();
-    
-    mInitialized = true;
 } // Pythia8Tree
 
 

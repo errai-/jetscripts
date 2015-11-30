@@ -110,9 +110,6 @@ protected:
      * the origin is not a pion with good energy and 1 if it is */
     bool GammaChecker(unsigned);
     TLorentzVector LastParton(unsigned prt);
-
-    void MuonAdd();
-    void LeptonAdd(unsigned prt);
     
     /* Settings that depend on the selected mode */
     void ModeSettings();
@@ -132,9 +129,6 @@ protected:
     TTree                          *mTree;
     TBranch                        *mBranch;
     PrtclEvent                     *mPrtclEvent;
-    
-    vector< pair<unsigned,int> >    mCandidates;
-    unsigned                        mNextCand;
     
     int                             mNumEvents;
     int                             mMode;
@@ -180,8 +174,36 @@ public:
     
 protected:
     /* A handle for adding a hard process photon descended from the signal event photon */
-    void GammaAdd();
-    /* Dijet specific particle logic */
+    bool GammaAdd();
+    /* Gammajet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+class P6ZmumujetTree : public Pythia6Tree
+{
+public:
+    P6ZmumujetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
+        Pythia6Tree(nEvent, fileName, nameId, mode) {}
+    ~P6ZmumujetTree() {}
+    
+protected:
+    /* A handle for adding the two muons originating from a hard process Z prt */
+    bool MuonAdd();
+    /* Zmumujet specific particle logic */
+    virtual bool ProcessParticle(unsigned prt);
+};
+
+class P6ttbarjetTree : public Pythia6Tree 
+{
+public:
+    P6ttbarjetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
+        Pythia6Tree(nEvent, fileName, nameId, mode) {}
+    ~P6ttbarjetTree() {}
+    
+protected:
+    /* A handle for adding the produced leptons in ttbar events */
+    bool LeptonAdd(unsigned prt);
+    /* ttbarjet specific particle logic */
     virtual bool ProcessParticle(unsigned prt);
 };
 #endif // PYTHIA6TREE

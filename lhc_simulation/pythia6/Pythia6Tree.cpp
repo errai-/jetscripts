@@ -1,5 +1,6 @@
 #include "Pythia6Tree.h"
 
+
 Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
     mMode(mode),
     mNumEvents(nEvent),
@@ -40,7 +41,7 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     mTimerStep = 1000;
     mTimer.setParams(mNumEvents,mTimerStep);       
     mTimer.startTiming();
-}
+} // Pythia6Tree
 
 
 void Pythia6Tree::ModeSettings() {
@@ -93,7 +94,8 @@ void Pythia6Tree::ModeSettings() {
     } else {
         throw std::runtime_error("The selected mode is nonsense");
     }
-}
+} // ModeSettings
+
 
 void Pythia6Tree::GeneralSettings() {
     int tune = 1;
@@ -175,7 +177,8 @@ void Pythia6Tree::GeneralSettings() {
 
     //mPythia->Initialize("cms", "p", "p", 13000);
     mPythia->Initialize("cms", "p", "p", 8000);
-}
+} // GeneralSettings
+
 
 void Pythia6Tree::EventLoop()
 {
@@ -185,46 +188,35 @@ void Pythia6Tree::EventLoop()
         mPythia->GenerateEvent();
 
         if ( !ParticleLoop() ) continue;
+        /* Print event listing */
+        //mPythia->Pylist(1);
         
-        for (auto add = mCandidates.begin(), end = mCandidates.begin()+mNextCand; add != end; ++add) {
-            mPrtclEvent->AddPrtcl( mPythia->GetP(add->first,1), mPythia->GetP(add->first,2),
-                                   mPythia->GetP(add->first,3), mPythia->GetP(add->first,4),
-                                   mPythia->GetK(add->first,2), add->second);
-        }
         mTree->Fill();
         
         /* Update progress */
         ++ev;
         if (ev%mTimerStep==0) mTimer.printTime();
     }
-
-    //mPythia->Pylist(1);
+    /* Print event statistics */
     //mPythia->Pystat(1);
 
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
     mFile->Close();
+    
+    if (mCounter != 0)
+        cerr << "Non-zero counter value: " << mCounter << endl;
+    
     delete mPythia;
     mPythia = 0;
     delete mPrtclEvent;
     mPrtclEvent = 0;  
-}
+} // EventLoop
 
-/* A handle for adding particle information */
-void Pythia6Tree::ParticleAdd(std::size_t prt, int saveStatus)
-{
-    while ( mNextCand >= mCandidates.size() ) {
-        mCandidates.push_back( std::make_pair(0,0) );
-    }
-    mCandidates[mNextCand].first = prt;
-    mCandidates[mNextCand].second = saveStatus;
-    ++mNextCand;
-}
 
 bool Pythia6Tree::ParticleLoop()
 {
     mPrtclEvent->Clear();
-    mNextCand = 0;
     
     /* Special particle indices are saved to eliminate saving overlap */
     mSpecialIndices.clear();
@@ -279,6 +271,19 @@ bool Pythia6Tree::ParticleLoop()
 
     return true;
 }
+
+
+/* A handle for adding particle information */
+void Pythia6Tree::ParticleAdd(std::size_t prt, int saveStatus)
+{
+    mPrtclEvent->AddPrtcl( mPythia->GetP(prt,1),
+                           mPythia->GetP(prt,2),
+                           mPythia->GetP(prt,3),
+                           mPythia->GetP(prt,4),
+                           mPythia->GetK(prt,2),
+                           saveStatus);
+} // ParticleAdd
+
 
 void Pythia6Tree::GammaAdd()
 {

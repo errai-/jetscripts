@@ -215,7 +215,7 @@ public:
 protected:
     /* A handle for adding the produced leptons in ttbar events */
     bool LeptonAdd(unsigned prt);
-    /* Zmumujet specific particle logic */
+    /* ttbarjet specific particle logic */
     virtual bool ProcessParticle(unsigned prt);
 };
 

@@ -106,22 +106,22 @@ int runPFSortedJets(std::string fileName) {
   //partFracs->SetFillStyle(4000);
 
   TLegend *leg = tdrLeg(0.83,0.1,0.98,0.93);
-  leg->AddEntry( fractionHists[15], "rest" );
-  leg->AddEntry( fractionHists[14], "e,#mu" );
-  leg->AddEntry( fractionHists[11], "#gamma (rest)" );
-  leg->AddEntry( fractionHists[2], "#gamma (#pi^{0})" );
-  leg->AddEntry( fractionHists[12], "#Lambda^{0}" );
-  leg->AddEntry( fractionHists[6], "K_{L}^{0}" );
-  leg->AddEntry( fractionHists[5], "K_{S}^{0}" );
-  leg->AddEntry( fractionHists[10], "#bar{n}^{0}" );
-  leg->AddEntry( fractionHists[9], "n^{0}" );
-  leg->AddEntry( fractionHists[8], "#bar{p}^{-}" );
-  leg->AddEntry( fractionHists[7], "p^{+}" );
-  leg->AddEntry( fractionHists[13], "#Sigma^{#pm}" );
-  leg->AddEntry( fractionHists[4], "K^{-}" );
-  leg->AddEntry( fractionHists[3], "K^{+}" );
-  leg->AddEntry( fractionHists[1], "#pi^{-}" );
-  leg->AddEntry( fractionHists[0], "#pi^{+}" );
+  leg->AddEntry( fractionHists[15], "rest", "f" );
+  leg->AddEntry( fractionHists[14], "e,#mu", "f" );
+  leg->AddEntry( fractionHists[11], "#gamma (rest)", "f" );
+  leg->AddEntry( fractionHists[2], "#gamma (#pi^{0})", "f" );
+  leg->AddEntry( fractionHists[12], "#Lambda", "f" );
+  leg->AddEntry( fractionHists[6], "K_{L}", "f" );
+  leg->AddEntry( fractionHists[5], "K_{S}", "f" );
+  leg->AddEntry( fractionHists[10], "#bar{n}", "f" );
+  leg->AddEntry( fractionHists[9], "n", "f" );
+  leg->AddEntry( fractionHists[8], "#bar{p}", "f" );
+  leg->AddEntry( fractionHists[7], "p", "f" );
+  leg->AddEntry( fractionHists[13], "#Sigma^{#pm}", "f" );
+  leg->AddEntry( fractionHists[4], "K^{-}", "f" );
+  leg->AddEntry( fractionHists[3], "K^{+}", "f" );
+  leg->AddEntry( fractionHists[1], "#pi^{-}", "f" );
+  leg->AddEntry( fractionHists[0], "#pi^{+}", "f" );
   leg->SetTextSize(0.045);
  
   TLatex latex;
@@ -134,7 +134,7 @@ int runPFSortedJets(std::string fileName) {
   latex.SetTextSize(0.6*0.07);    
 
   partFracs->Draw("same");
-  latex.DrawLatex(0.8,0.85,"Pythia 8");
+  latex.DrawLatex(0.77,0.85,"Pythia 6 Z2*");
   //errorFracs->Draw("same");
   
   fixOverlay();

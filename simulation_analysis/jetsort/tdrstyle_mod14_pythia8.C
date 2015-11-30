@@ -245,7 +245,7 @@ TString cmsText     = "CMS";
 float cmsTextFont   = 61;  // default is helvetic-bold
 
 bool writeExtraText = true;//false;
-TString extraText   = "Simulation Preliminary";
+TString extraText   = "Simulation";
 TString extraText2   = ""; // For Simulation Preliminary on two lines
 float extraTextFont = 52;  // default is helvetica-italics
 
@@ -347,7 +347,7 @@ CMS_lumi( TPad* pad, int iPeriod, int iPosX )
     }
   else if ( iPeriod==12 )
     {
-      lumiText += "8 TeV";
+      lumiText += " (8 TeV)";
     }
 
   cout << lumiText << endl;

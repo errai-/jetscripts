@@ -87,22 +87,22 @@ void Histograms::HistFill(int i)
 
 void Histograms::FillerHandle( vector<TProfile*> &hists, double pt, double scale)
 {
-    hists[0 ]->Fill( pt, fPiPlus.E()  /scale ); 
-    hists[1 ]->Fill( pt, fPiMinus.E() /scale );
-    hists[2 ]->Fill( pt, fPi0Gamma.E()/scale ); 
-    hists[3 ]->Fill( pt, fKaPlus.E()  /scale );
-    hists[4 ]->Fill( pt, fKaMinus.E() /scale ); 
-    hists[5 ]->Fill( pt, fKSZero.E()  /scale );
-    hists[6 ]->Fill( pt, fKLZero.E()  /scale ); 
-    hists[7 ]->Fill( pt, fProton.E()  /scale );
-    hists[8 ]->Fill( pt, fAproton.E() /scale ); 
-    hists[9 ]->Fill( pt, fNeutron.E() /scale );
-    hists[10]->Fill( pt, fAneutron.E()/scale ); 
-    hists[11]->Fill( pt, fGamma.E()   /scale );
-    hists[12]->Fill( pt, fLambda0.E() /scale ); 
-    hists[13]->Fill( pt, fSigma.E()   /scale );
-    hists[14]->Fill( pt, (fElec+fMuon).E()/scale );
-    hists[15]->Fill( pt, fOthers.E()  /scale );
+    hists[0 ]->Fill( pt, fPiPlus.E()  /scale, fWeight );
+    hists[1 ]->Fill( pt, fPiMinus.E() /scale, fWeight );
+    hists[2 ]->Fill( pt, fPi0Gamma.E()/scale, fWeight );
+    hists[3 ]->Fill( pt, fKaPlus.E()  /scale, fWeight );
+    hists[4 ]->Fill( pt, fKaMinus.E() /scale, fWeight );
+    hists[5 ]->Fill( pt, fKSZero.E()  /scale, fWeight );
+    hists[6 ]->Fill( pt, fKLZero.E()  /scale, fWeight );
+    hists[7 ]->Fill( pt, fProton.E()  /scale, fWeight );
+    hists[8 ]->Fill( pt, fAproton.E() /scale, fWeight );
+    hists[9 ]->Fill( pt, fNeutron.E() /scale, fWeight );
+    hists[10]->Fill( pt, fAneutron.E()/scale, fWeight );
+    hists[11]->Fill( pt, fGamma.E()   /scale, fWeight );
+    hists[12]->Fill( pt, fLambda0.E() /scale, fWeight );
+    hists[13]->Fill( pt, fSigma.E()   /scale, fWeight );
+    hists[14]->Fill( pt, (fElec+fMuon).E()/scale, fWeight );
+    hists[15]->Fill( pt, fOthers.E()  /scale, fWeight );
 }
 
 void Histograms::WriteResults()
