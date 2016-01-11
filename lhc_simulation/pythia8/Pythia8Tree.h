@@ -33,8 +33,10 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <stdexcept>
+#include <iterator>
 
 /* Header file to access Pythia 8 program elements. */
 #include "Pythia8/Pythia.h"
@@ -54,6 +56,7 @@ using namespace Pythia8;
 using std::string;
 using std::vector;
 using std::pair;
+using std::map;
 using std::cout;
 using std::endl;
 using std::cerr;
@@ -86,6 +89,8 @@ public:
     /* Run settings are provided through the initializer */
     Pythia8Tree(string settings, string fileName, int mode);
     Pythia8Tree() :
+        mEvent(mPythia.event),
+        mProcess(mPythia.process),
         mInitialized(false)
     {
         cerr << "Pythia8Tree is intended to be used only with the non-default initializer" << endl;
@@ -120,6 +125,9 @@ protected:
     /* For a given parton goes to the last step before hadronization */
     TLorentzVector LastParton(unsigned prt);
     
+    /* A function for indicating the flavour history */
+    void PropagateHistory(unsigned prt, int hard_prt);
+    
 protected:
     
     /* Indicator that the event loop can be run */
@@ -141,12 +149,15 @@ protected:
     
     TTBarSelector       mTTBarSelector;
     
+    int                 mNumErrs;
     int                 mNumEvents;
     int                 mMode;
     int                 mTimerStep;
     Timer               mTimer;
     
-    vector<unsigned>    mSpecialIndices;
+    vector<unsigned>             mSpecialIndices;
+    map<unsigned,int>            mHistory;
+    map<unsigned,TLorentzVector> mPartonHistory;
 };
 
 
