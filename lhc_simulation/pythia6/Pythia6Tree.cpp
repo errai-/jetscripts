@@ -43,6 +43,25 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     mTimer.startTiming();
 } // Pythia6Tree
 
+void Pythia6Tree::GhostHadronAdd(unsigned int prt, bool useStrange)
+{
+    return;
+}
+
+bool Pythia6Tree::IsExcitedHadronState(unsigned int prt, int quarkID)
+{
+    return false;
+}
+
+TLorentzVector Pythia6Tree::LastParton(unsigned int prt)
+{
+    return TLorentzVector();
+}
+
+bool Pythia6Tree::ProcessParticle(unsigned int prt)
+{
+    return true;
+}
 
 void Pythia6Tree::ModeSettings() {
     if (mMode == 1 || mMode == 0) {
@@ -189,7 +208,7 @@ void Pythia6Tree::EventLoop()
 
         if ( !ParticleLoop() ) continue;
         /* Print event listing */
-        //mPythia->Pylist(1);
+        mPythia->Pylist(2 );
         
         mTree->Fill();
         
@@ -274,7 +293,7 @@ bool Pythia6Tree::ParticleLoop()
 
 
 /* A handle for adding particle information */
-void Pythia6Tree::ParticleAdd(std::size_t prt, int saveStatus)
+void Pythia6Tree::ParticleAdd(unsigned prt, int saveStatus)
 {
     mPrtclEvent->AddPrtcl( mPythia->GetP(prt,1),
                            mPythia->GetP(prt,2),
@@ -285,7 +304,7 @@ void Pythia6Tree::ParticleAdd(std::size_t prt, int saveStatus)
 } // ParticleAdd
 
 
-void Pythia6Tree::GammaAdd()
+bool Pythia6Tree::GammaAdd()
 {
     mSpecialIndices.push_back(9);
     
@@ -297,7 +316,7 @@ void Pythia6Tree::GammaAdd()
     ParticleAdd(mSpecialIndices[0],2);
 }
 
-void Pythia6Tree::MuonAdd() 
+bool Pythia6Tree::MuonAdd() 
 {
     mSpecialIndices.push_back(12); mSpecialIndices.push_back(13);
     while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13) {
@@ -317,7 +336,15 @@ void Pythia6Tree::MuonAdd()
         }
         ParticleAdd(mSpecialIndices[i],2);
     }
+    return true;
 }
+
+
+bool Pythia6Tree::LeptonAdd(unsigned int prt)
+{
+    return true;
+}
+
 
 bool Pythia6Tree::GammaChecker(unsigned prt)
 {

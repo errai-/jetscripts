@@ -98,7 +98,7 @@ protected:
     /* Loop over particles within an event: return true if event is to be saved */
     bool ParticleLoop();
     /* The logic within particleloop */
-    virtual bool ProcessParticle(unsigned prt);
+    bool ProcessParticle(unsigned prt);
     
     /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
      * is in an excited state or not. Checks whether a hadron has a daughter of 
@@ -115,6 +115,13 @@ protected:
     void ModeSettings();
     /* General settings that are always used */
     void GeneralSettings();
+
+    /* A handle for adding a hard process photon descended from the signal event photon */
+    bool GammaAdd();
+    /* A handle for adding the two muons originating from a hard process Z prt */
+    bool MuonAdd();
+    /* A handle for adding the produced leptons in ttbar events */
+    bool LeptonAdd(unsigned prt);
     
 protected:
     
@@ -138,72 +145,4 @@ protected:
     vector<unsigned>                mSpecialIndices;
 };
 
-
-class P6GenericTree : public Pythia6Tree 
-{
-public:
-    P6GenericTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
-        Pythia6Tree(nEvent, fileName, nameId, mode) {}
-    ~P6GenericTree() {}
-    
-protected:
-    /* Dijet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
-};
-
-
-class P6DijetTree : public Pythia6Tree
-{
-public:
-    P6DijetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
-        Pythia6Tree(nEvent, fileName, nameId, mode) {}
-    ~P6DijetTree() {}
-    
-protected:
-    /* Dijet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
-};
-
-
-class P6GammajetTree : public Pythia6Tree
-{
-public:
-    P6GammajetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
-        Pythia6Tree(nEvent, fileName, nameId, mode) {}
-    ~P6GammajetTree() {}
-    
-protected:
-    /* A handle for adding a hard process photon descended from the signal event photon */
-    bool GammaAdd();
-    /* Gammajet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
-};
-
-class P6ZmumujetTree : public Pythia6Tree
-{
-public:
-    P6ZmumujetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
-        Pythia6Tree(nEvent, fileName, nameId, mode) {}
-    ~P6ZmumujetTree() {}
-    
-protected:
-    /* A handle for adding the two muons originating from a hard process Z prt */
-    bool MuonAdd();
-    /* Zmumujet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
-};
-
-class P6ttbarjetTree : public Pythia6Tree 
-{
-public:
-    P6ttbarjetTree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
-        Pythia6Tree(nEvent, fileName, nameId, mode) {}
-    ~P6ttbarjetTree() {}
-    
-protected:
-    /* A handle for adding the produced leptons in ttbar events */
-    bool LeptonAdd(unsigned prt);
-    /* ttbarjet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
-};
 #endif // PYTHIA6TREE

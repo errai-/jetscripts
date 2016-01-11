@@ -60,7 +60,7 @@ struct HistStore
     TH1D* dR;
     TH1D* alpha;
     TH1D* dPhi;
-    
+
     vector<TH1D*> mult;
     vector<TH1D*> ptd;
     vector<TH1D*> s2;
