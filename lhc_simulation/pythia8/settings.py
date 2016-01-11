@@ -17,7 +17,7 @@ pdf = 0
 # CMS energy
 # 0: 8  TeV
 # 1: 13 TeV
-eScale = 1
+eScale = 0
 
 # Read run settings from command line parameters
 if len(sys.argv) != 5:
@@ -68,7 +68,7 @@ f.write("Next:numberShowProcess = 0\n")
 f.write("Next:numberShowEvent = 0\n")
 f.write("Next:numberCount = 0\n\n")
 
-f.write("! Set particles with long enough lifetimes to stable and photon radiation\n")
+f.write("! Set particles with long enough lifetimes to stable + photon radiation in lepton-pair decays\n")
 f.write("ParticleDecays:allowPhotonRadiation = on\n");
 f.write("ParticleDecays:limitTau0=on\n")
 f.write("ParticleDecays:tau0Max=10.\n\n")
@@ -96,8 +96,8 @@ if mode==2:
     f.write("PromptPhoton:gg2ggamma = on\n");
     f.write("PhaseSpace:pTHatMin = 10.\n\n");
 if mode==3:
-    f.write("! Produce both Z0's and gammas\n");
-    f.write("WeakZ0:gmZmode = 0\n");
+    f.write("! Produce only Z0's\n");
+    f.write("WeakZ0:gmZmode = 2\n");
     f.write("WeakBosonAndParton:qqbar2gmZg = on\n");
     f.write("WeakBosonAndParton:qg2gmZq  = on\n");
     f.write("23:onMode = off\n");

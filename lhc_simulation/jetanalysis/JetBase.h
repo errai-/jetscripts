@@ -118,10 +118,15 @@ protected:
     fastjet::JetDefinition   fJetDef;
 
     /* PseudoJet storages */
-    vector<PseudoJet> fJetInputs; 
-    vector<PseudoJet> fAuxInputs;
-    vector<PseudoJet> fSortedJets; 
-    vector<PseudoJet> fJetParts; 
+    vector<PseudoJet> fJetInputs;   /* Raw final-state particle data */
+    vector<PseudoJet> fSortedJets;  /* Post jet clustering */
+    vector<PseudoJet> fJetParts;    /* Jet constituents */
+    vector<PseudoJet> fHardPartons; /* Outgoing hard process partons */
+    vector<PseudoJet> fPartons;     /* Other partons */
+    vector<PseudoJet> fLeptons;     /* Z+jets, ttbarlepton+jets */
+    
+    PseudoJet         fTheGamma;       /* gamma+jets */
+    PseudoJet         fTheLepton;   /* ttbar */
 
 /////////
 // Input:
@@ -196,11 +201,6 @@ protected:
     Int_t           fMode;       /* Event type */
     Int_t           fDefinition; /* Flavour definition */
     Int_t           fBookedParton; /* Monitor partons that are paired with jets */
-    
-    Int_t           fGammaId;    /* gamma-jets */
-    Int_t           fLeptonId;   /* ttbar */
-    vector<Int_t>   fLeptonList; /* Z-jets, ttbar */
-    vector<Int_t>   fPartonList; /* Physics definition */
     
     JetVariables    fJetVars;
 };

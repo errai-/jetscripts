@@ -243,11 +243,12 @@ void JetBase::ParticleLoop()
 void JetBase::ParticlesToJetsorterInput()
 {
     fJetInputs.clear();
-    fAuxInputs.clear();
-    fPartonList.clear();
-    fLeptonList.clear();
+    fLeptons.clear();
+    fHardPartons.clear();
+    fPartons.clear();
+    fTheGamma = PseudoJet();
+    fTheLepton = PseudoJet();
     fMET = PseudoJet();
-    int auxCount = 0;
 
     for (unsigned i = 0; i != fPrtcls_; ++i) {
         fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
@@ -262,12 +263,12 @@ void JetBase::ParticlesToJetsorterInput()
             if (pdgID == 12 || pdgID == 14 || pdgID == 16)
                 fMET += particleTemp;
             else
-                fJetInputs.push_back( particleTemp );
+                fJetInputs.push_back(particleTemp);
             
-            if (fMode==4 && (pdgID == 11 || pdgID == 13)) {
-                fLeptonList.push_back(auxCount++);
-                fAuxInputs.push_back(particleTemp);
-            }
+            /* Ttbar lepton+jet events: save leptons */
+            if (fMode==4 && (pdgID == 11 || pdgID == 13))
+                fLeptons.push_back(particleTemp);
+            
         } else if (stat==2) {
             /* Special final-state particles, e.g. muons in Zmumu+jet cases
              * Depending on the event type these can be exlucded from jet
@@ -275,19 +276,17 @@ void JetBase::ParticlesToJetsorterInput()
             
             if (fMode==0) {
                 /* pi0 photons in generic events */
-                fJetInputs.push_back( particleTemp );
+                fJetInputs.push_back(particleTemp);
             } else if (fMode==2) {
                 /* outgoing photons in gamma+jet events */
-                fGammaId = auxCount++;
-                fAuxInputs.push_back( particleTemp );
+                fTheGamma = particleTemp;
             } else if (fMode==3) {
                 /* outgoing muons in Zmumu events */
-                fLeptonList.push_back(auxCount++);
-                fAuxInputs.push_back( particleTemp );
+                fLeptons.push_back(particleTemp);
             } else if (fMode==4) {
                 /* charged lepton from W stored to output */
-                fLeptonId = auxCount++;
-                fAuxInputs.push_back( particleTemp );
+                fTheLepton = particleTemp;
+                
                 if (fAddNonJet)
                     fJetVars.SetZero();
                     fJetEvent->AddJet(particleTemp.px(),
@@ -302,11 +301,10 @@ void JetBase::ParticlesToJetsorterInput()
             /* Outgoing hard process particles - these are used with some of the
              * jet flavour definitions */
             
-            if (fDefinition==1) {
-                /* Physics definition: the hard process */
-                fPartonList.push_back(auxCount++);
-                fAuxInputs.push_back(particleTemp);
-            } else if (fDefinition==2) {
+            /* Always set the hard process partons */
+            fHardPartons.push_back(particleTemp);
+                
+            if (fDefinition==2) {
                 /* Physics clustering definition: ghost partons from the hard process */
                 particleTemp *= pow( 10, -18 );
                 particleTemp.set_user_index( -i-1 );
@@ -330,8 +328,7 @@ void JetBase::ParticlesToJetsorterInput()
                 fJetInputs.push_back( particleTemp );
             } else if (fDefinition==6) {
                 if (pdgID > 6 && pdgID!=21) continue;
-                fPartonList.push_back(auxCount++);
-                fAuxInputs.push_back( particleTemp );
+                fPartons.push_back(particleTemp);
             }
         } else if (/*stat == 5 ||*/ stat == 6 || stat == 7 ) {
             /* Hadronic definition hadrons: charm and top omitted for now */
@@ -397,16 +394,16 @@ bool JetBase::SelectionParams()
          *  -Back-to-back angle of min 2.8 rad
          *  -A cut for the subleading jet pT with respect to gamma pT (alpha) */
         
-        bool gammaInJet = fAuxInputs[fGammaId].delta_R( fSortedJets[0] ) < fR;
-        bool gammaPT = fAuxInputs[fGammaId].pt()<30;
-        bool gammaEta = fabs(fAuxInputs[fGammaId].eta())>2.5;
+        bool gammaInJet = fTheGamma.delta_R( fSortedJets[0] ) < fR;
+        bool gammaPT = fTheGamma.pt()<30;
+        bool gammaEta = fabs(fTheGamma.eta())>2.5;
         
         if ( gammaInJet || gammaPT || gammaEta )
             return false;
         
-        fJetVars.Alpha   = (fSortedJets.size()>1) ? fSortedJets[1].pt()/fAuxInputs[fGammaId].pt() : 0;
-        fJetVars.DPhi    = fabs(fAuxInputs[fGammaId].delta_phi_to(fSortedJets[0]));
-        fJetVars.matchPT = fAuxInputs[fGammaId].pt();
+        fJetVars.Alpha   = (fSortedJets.size()>1) ? fSortedJets[1].pt()/fTheGamma.pt() : 0;
+        fJetVars.DPhi    = fabs(fTheGamma.delta_phi_to(fSortedJets[0]));
+        fJetVars.matchPT = fTheGamma.pt();
         
     } else if (fMode == 3) {
         /* Zjet events: require always sufficient resolution and cuts for muon pt and eta
@@ -417,18 +414,21 @@ bool JetBase::SelectionParams()
          *  -Min. jet pT of 30GeV
          *  -Max jet eta of 2.5 */
         
-        bool muonInJet =    fAuxInputs[fLeptonList[0]].delta_R(fSortedJets[0])<fR
-                         || fAuxInputs[fLeptonList[1]].delta_R(fSortedJets[0])<fR; 
-        bool muonPT =    (fAuxInputs[fLeptonList[0]].pt()<20 || fAuxInputs[fLeptonList[1]].pt()<10)
-                      && (fAuxInputs[fLeptonList[1]].pt()<20 || fAuxInputs[fLeptonList[0]].pt()<10);
-        bool muonEta =    fabs(fAuxInputs[fLeptonList[0]].eta())>2.5 
-                       || fabs(fAuxInputs[fLeptonList[1]].eta())>2.5; 
+        if (fLeptons.size() != 2)
+            return false;
+        
+        bool muonInJet =    fLeptons[0].delta_R(fSortedJets[0])<fR
+                         || fLeptons[1].delta_R(fSortedJets[0])<fR; 
+        bool muonPT =    (fLeptons[0].pt()<20 || fLeptons[1].pt()<10)
+                      && (fLeptons[1].pt()<20 || fLeptons[0].pt()<10);
+        bool muonEta =    fabs(fLeptons[0].eta())>2.5 
+                       || fabs(fLeptons[1].eta())>2.5; 
                       
-        if (   fLeptonList.size()!=2 || muonInJet || muonPT || muonEta )
+        if ( muonInJet || muonPT || muonEta )
             return false;
 
         /* Dimuon system: require always Z0 mass cut (70-110 GeV) */
-        fastjet::PseudoJet tmpVec = fAuxInputs[fLeptonList[0]]+fAuxInputs[fLeptonList[1]]; 
+        fastjet::PseudoJet tmpVec = fLeptons[0]+fLeptons[1]; 
         if ( fabs(tmpVec.m())<70 || fabs(tmpVec.m())>110 ) return false;
         
         fJetVars.Alpha = (fSortedJets.size() > 1 ) ? fSortedJets[1].pt()/tmpVec.pt() : 0;
@@ -454,8 +454,8 @@ bool JetBase::SelectionParams()
         /* Check that there is only one charged lepton.
          * Special measures if a "false lepton" passes through the filter. */
         bool unwanted_lepton = false;
-        for ( auto i : fLeptonList ) {
-            if (fAuxInputs[i].pt() > 33 && fabs(fAuxInputs[i].eta() < 2.1)) {
+        for ( auto lept : fLeptons ) {
+            if (lept.pt() > 33 && fabs(lept.eta()) < 2.1) {
                 if (!unwanted_lepton)
                     unwanted_lepton = true;
                 else
@@ -463,7 +463,7 @@ bool JetBase::SelectionParams()
             }
         }
 
-        if (fAuxInputs[fLeptonId].pt() < 33 || fabs(fAuxInputs[fLeptonId].eta() > 2.1)) {
+        if (fTheLepton.pt() < 33 || fabs(fTheLepton.eta()) > 2.1) {
             if (unwanted_lepton)
                 cerr << "Single-lepton signal" << endl;
             return false;
@@ -504,14 +504,14 @@ void JetBase::PhysicsFlavor(unsigned i)
     fFlavour = 0;
     fJetVars.partonPT = 0;
     double dR_min = 10, dR_nextmin = 10; 
-    for ( auto k : fPartonList ) {
-        double dR = fSortedJets[i].delta_R( fAuxInputs[k] );
+    for ( auto part : fHardPartons ) {
+        double dR = fSortedJets[i].delta_R( part );
         
         if ( dR < dR_min ) {
             if (fFlavour!=0) dR_nextmin = dR_min;
             dR_min = dR;
-            fJetVars.partonPT = fAuxInputs[k].pt();
-            fFlavour = abs(fPDGCode[fAuxInputs[k].user_index()]);
+            fJetVars.partonPT = part.pt();
+            fFlavour = abs(fPDGCode[part.user_index()]);
         } else if ( dR < dR_nextmin ) {
             dR_nextmin = dR;
         }
@@ -540,8 +540,8 @@ void JetBase::GhostPhysicsFlavor(unsigned i)
 
 void JetBase::HistoricPhysicsFlavor(unsigned i) 
 {
-    map<unsigned,double> et_sums;
-    et_sums.emplace(0,0);
+    map<int,double> et_sums;
+    et_sums.emplace(-1,0);
     
     /* Calculate et sum for each outgoing hard process parton descendants */
     for ( auto part : fJetParts ){
@@ -553,25 +553,20 @@ void JetBase::HistoricPhysicsFlavor(unsigned i)
     }
     
     double et_sum = 0;
-    unsigned max_id = 0;
-    for ( auto f : et_sums ) {
-        et_sum += f.second;
+    int max_id = 0;
+    for ( auto fl : et_sums ) {
+        et_sum += fl.second;
         
-        if ( f.second > et_sums[max_id] )
-            max_id = f.first;
+        if ( fl.second > et_sums[max_id] )
+            max_id = fl.first;
     }
     
     /* A purity condition for the jets. Reduces the flavor and parton information
      * to a simple flavor information. */
-    if ( et_sums[max_id]/et_sum < 0.7 ) {
+    if ( et_sums[max_id]/et_sum < 0.7 )
         fFlavour = 0;
-    } else {
-        fFlavour = max_id;
-        if ( fFlavour > 5 && fFlavour < 20 )
-            fFlavour -= 5;
-        if ( fFlavour > 21 )
-            fFlavour -= 5;
-    }
+    else
+        fFlavour = abs(fPDGCode[fHardPartons[max_id].user_index()]);
     
     fJetVars.DR = 0;
     fJetVars.nextDR = 0;
@@ -626,14 +621,14 @@ void JetBase::AlgorithmicFlavor(unsigned i)
     int hardestLightParton = 0;
     double lightDR = 0, lightPT = 0; 
     
-    for ( auto k : fPartonList ) {
-        double dR = fSortedJets[i].delta_R( fAuxInputs[k] );
-        int status = fAnalysisStatus[fAuxInputs[k].user_index()]-2;
-        int pdgCode = abs(fPDGCode[fAuxInputs[k].user_index()]);
+    for ( auto part : fPartons ) {
+        double dR = fSortedJets[i].delta_R( part );
+        int status = fAnalysisStatus[part.user_index()]-2;
+        int pdgCode = abs(fPDGCode[part.user_index()]);
 
         if (dR > 0.3) continue;
 
-        double PT = fAuxInputs[k].pt();
+        double PT = part.pt();
         if (status == 4 || status == 5) {
             if (status > fFlavour || PT > fJetVars.partonPT) {
                 fFlavour = status;
