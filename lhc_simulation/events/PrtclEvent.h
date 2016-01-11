@@ -6,10 +6,15 @@
 // IMPORTANT NOTES:                                                 //
 //                                                                  //
 //  - fAnalysisStatus is a purely user-defined index for indicating //
-//    why a particle has been saved. Example:                       //
+//    why a particle has been saved.                                //
 //     1: final state particles                                     //
 //     2: final state particles which have interesting properties   //
-//     3: partons saved for flavor studies                          //
+//     3: outgoing hard process partons                             //
+//     4: ghost partons                                             //
+//     5: ghost s hadrons                                           //
+//     6: ghost c hadrons                                           //
+//     7: ghost b hadrons                                           //
+//     8: outgoing hard process partons with corrected momenta      //
 //                                                                  //
 //  - This class structure includes some "bad c++" because of       //
 //    the way how ROOT works. Thus for instance some missing        //
@@ -45,8 +50,8 @@ public:
     PrtclData() { }
     virtual ~PrtclData() { }
 
-    void SetPxPyPzE(double,double,double,double);
-    void SetParams(int,int);
+    void SetPxPyPzE(double px,double py,double pz,double e);
+    void SetParams(int id,int status,int history_flavor);
     
     Double_t P() const { return fP4.P(); }
     Double_t Pt() const { return fP4.Pt(); }
@@ -63,6 +68,7 @@ private:
     
     int fPDGCode;
     int fAnalysisStatus;
+    int fHistoryFlavor;
    
 public:
     ClassDef(PrtclData,1)
@@ -76,7 +82,7 @@ public:
     PrtclEvent();
     virtual ~PrtclEvent() { Reset(); };
 
-    void AddPrtcl(double,double,double,double,int,int);
+    void AddPrtcl(double px,double py,double pz,double e,int id,int stat, int hf);
     PrtclData *InitPrtcl();
 
     void Clear(Option_t *option ="");

@@ -60,6 +60,7 @@ void JetBase::Init(TTree *tree)
     fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT);
     fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode);
     fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus);
+    fChain->SetBranchAddress("fPrtcls.fHistoryFlavor",fHistoryFlavor);
 }
 
 
@@ -136,13 +137,17 @@ bool JetBase::JetLoop()
         if (fDefinition == 1)
             PhysicsFlavor(i);
         else if (fDefinition == 2)
-            HadronicFlavor(i);
+            GhostPhysicsFlavor(i);
         else if (fDefinition == 3)
-            AlgorithmicFlavor(i);
+            GhostPhysicsFlavor(i);
         else if (fDefinition == 4)
-            PhysClusterFlavor(i);
+            HistoricPhysicsFlavor(i);
         else if (fDefinition == 5)
-            AlgoClusterFlavor(i);
+            HadronicFlavor(i);
+        else if (fDefinition == 6)
+            AlgorithmicFlavor(i);
+        else if (fDefinition == 7)
+            GhostAlgorithmicFlavor(i);
 
         if (fParticleStudy)
             ParticleLoop(); /* Operations on jet particles */
@@ -301,8 +306,17 @@ void JetBase::ParticlesToJetsorterInput()
                 /* Physics definition: the hard process */
                 fPartonList.push_back(auxCount++);
                 fAuxInputs.push_back(particleTemp);
-            } else if (fDefinition==4) {
+            } else if (fDefinition==2) {
                 /* Physics clustering definition: ghost partons from the hard process */
+                particleTemp *= pow( 10, -18 );
+                particleTemp.set_user_index( -i-1 );
+                fJetInputs.push_back( particleTemp );
+            }
+        } else if (stat==8) {
+            /* Outgoing momentum corrected hard process partons. */
+            
+            if (fDefinition==3) {
+                /* Finals state parton physics definition. */
                 particleTemp *= pow( 10, -18 );
                 particleTemp.set_user_index( -i-1 );
                 fJetInputs.push_back( particleTemp );
@@ -310,19 +324,19 @@ void JetBase::ParticlesToJetsorterInput()
         } else if (stat==4) {
             /* Algorithmic and hadronic definition: partons just before hadronization */
             
-            if (fDefinition==2 || fDefinition==5) {
+            if (fDefinition==5 || fDefinition==7) {
                 particleTemp *= pow( 10, -18 );
                 particleTemp.set_user_index( -i-1 );
                 fJetInputs.push_back( particleTemp );
-            } else if (fDefinition==3) {
+            } else if (fDefinition==6) {
                 if (pdgID > 6 && pdgID!=21) continue;
                 fPartonList.push_back(auxCount++);
                 fAuxInputs.push_back( particleTemp );
             }
-        } else if (/*stat == 5 ||*/ stat == 6 || stat == 7 /* || stat == 8 */) {
+        } else if (/*stat == 5 ||*/ stat == 6 || stat == 7 ) {
             /* Hadronic definition hadrons: charm and top omitted for now */
             
-            if (fDefinition==2) {
+            if (fDefinition==5) {
                 particleTemp *= pow( 10, -18 );
                 particleTemp.set_user_index( -i-1 );
                 fJetInputs.push_back( particleTemp );
@@ -349,6 +363,7 @@ bool JetBase::SelectionParams()
 {
     if ( fSortedJets.size() == 0 ) return false;
 
+    unsigned jet_counter = 0;
     if (fMode == 0) {
         
         fJetVars.Alpha = 0;
@@ -357,7 +372,14 @@ bool JetBase::SelectionParams()
         return true;
         
     } else if (fMode == 1) {
-        /* Dijet events: require always at least two jets */
+        /* Dijet events: require always at least two jets 
+         *
+         * Example of a jet selection that should be done:
+         *  -Minimum jet pT of 30 GeV.
+         *  -Maximum jet eta of 2.5
+         *  -Back-to-back angle of min 2.8 rad (2.5 rad)
+         *  -A third jet has at most 30% of the average pt of the leading jets (alpha) */
+        
         if ( fSortedJets.size() < 2 ) 
             return false;
         
@@ -366,23 +388,15 @@ bool JetBase::SelectionParams()
         fJetVars.DPhi    = fabs(fSortedJets[0].delta_phi_to( fSortedJets[1] ));
         fJetVars.matchPT = 0;
         
-        /* Example of a jet selection that should be done:
-         *  -Minimum jet pT of 30 GeV.
-         *  -Maximum jet eta of 2.5
-         *  -Back-to-back angle of min 2.8 rad (2.5 rad)
-         *  -A third jet has at most 30% of the average pt of the leading jets (alpha) */
-        if (fParamCuts) {
-            if (fJetVars.Alpha > 0.3 || fJetVars.DPhi < 2.8)
-                return false;
-        }
-        if (fJetCuts) {
-            for (auto i = 0u; i < 2; ++i) {
-                if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()) > 2.5)
-                    return false;
-            }
-        }
     } else if (fMode == 2) {
-        /* Gammajet events: require always sufficient resolution and cuts for gamma eta and pt */
+        /* Gammajet events: require always sufficient resolution and cuts for gamma eta and pt
+         *
+         * Example of a selection that should be done
+         *  -Minimum jet pT of 30 GeV
+         *  -Max jet eta of 2.5
+         *  -Back-to-back angle of min 2.8 rad
+         *  -A cut for the subleading jet pT with respect to gamma pT (alpha) */
+        
         bool gammaInJet = fAuxInputs[fGammaId].delta_R( fSortedJets[0] ) < fR;
         bool gammaPT = fAuxInputs[fGammaId].pt()<30;
         bool gammaEta = fabs(fAuxInputs[fGammaId].eta())>2.5;
@@ -394,21 +408,15 @@ bool JetBase::SelectionParams()
         fJetVars.DPhi    = fabs(fAuxInputs[fGammaId].delta_phi_to(fSortedJets[0]));
         fJetVars.matchPT = fAuxInputs[fGammaId].pt();
         
-        /* Example of a selection that should be done
-         *  -Minimum jet pT of 30 GeV
-         *  -Max jet eta of 2.5
-         *  -Back-to-back angle of min 2.8 rad
-         *  -A cut for the subleading jet pT with respect to gamma pT (alpha) */
-        if (fParamCuts) {
-            if (fJetVars.Alpha > 0.3 || fJetVars.DPhi < 2.8)
-                return false;
-        }
-        if (fJetCuts) {
-            if (fSortedJets[0].pt() < 30 || fabs(fSortedJets[0].eta()) > 2.5)
-                return false;
-        }
     } else if (fMode == 3) {
-        /* Zjet events: require always sufficient resolution and cuts for muon pt and eta */
+        /* Zjet events: require always sufficient resolution and cuts for muon pt and eta
+         *
+         * Example of a selection that should be done:
+         *  -Back-to-back angle of min 2.8 rad
+         *  -The subleading jet has smaller than 30% pT compared to the muons. (alpha)
+         *  -Min. jet pT of 30GeV
+         *  -Max jet eta of 2.5 */
+        
         bool muonInJet =    fAuxInputs[fLeptonList[0]].delta_R(fSortedJets[0])<fR
                          || fAuxInputs[fLeptonList[1]].delta_R(fSortedJets[0])<fR; 
         bool muonPT =    (fAuxInputs[fLeptonList[0]].pt()<20 || fAuxInputs[fLeptonList[1]].pt()<10)
@@ -427,23 +435,10 @@ bool JetBase::SelectionParams()
         fJetVars.DPhi = tmpVec.delta_phi_to( fSortedJets[0] );
         fJetVars.matchPT = tmpVec.pt();
         
-        /** Example of a selection that should be done:
-          *  -Back-to-back angle of min 2.8 rad
-          *  -The subleading jet has smaller than 30% pT compared to the muons. (alpha)
-          *  -Min. jet pT of 30GeV
-          *  -Max jet eta of 2.5 */
-        if (fParamCuts) {
-            if (fJetVars.Alpha > 0.3 || fJetVars.DPhi < 2.8)
-                return false;
-        }
-        if (fJetCuts) {
-            if (fSortedJets[0].pt() < 30 || fabs(fSortedJets[0].eta()) > 2.5)
-                return false;
-        }
     } else if (fMode == 4) {
         /* ttbar events: require at least 4 jets with sufficient kinematics.
          * Additionally require single-charged lepton events */
-        
+
         if ( fSortedJets.size() < 4 ) {
             return false;
         }
@@ -455,8 +450,8 @@ bool JetBase::SelectionParams()
                 }
             }
         }
-        
-        /* Check that there is only one charged lepton. 
+
+        /* Check that there is only one charged lepton.
          * Special measures if a "false lepton" passes through the filter. */
         bool unwanted_lepton = false;
         for ( auto i : fLeptonList ) {
@@ -475,8 +470,22 @@ bool JetBase::SelectionParams()
         } else if (unwanted_lepton) {
             return false;
         }
+        
+        return true;
     } else {
         throw std::runtime_error("Mode problematic");
+    }
+
+    // Cuts are done collectively except for ttbar and generic events
+    if (fParamCuts) {
+        if (fJetVars.Alpha > 0.3 || fJetVars.DPhi < 2.8)
+            return false;
+    }
+    if (fJetCuts) {
+        for (auto i = 0u; i < jet_counter; ++i) {
+            if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()) > 2.5)
+                return false;
+        }
     }
 
     return true;
@@ -509,6 +518,63 @@ void JetBase::PhysicsFlavor(unsigned i)
     }
     fJetVars.DR = dR_min;
     fJetVars.nextDR = dR_nextmin;
+}
+
+void JetBase::GhostPhysicsFlavor(unsigned i)
+{
+    fFlavour = 0;
+    for ( auto part : fJetParts ) {
+        if (part.user_index() > 0) continue; /* Not ghosts */
+        int id = -part.user_index()-1;
+            
+        /* If there are more than one hard process parton within a jet, mark no flavour */
+        if (fFlavour != 0) {
+            fFlavour = 0;
+            fJetVars.partonPT = 0;
+            break;
+        }
+        fFlavour = abs(fPDGCode[id]);
+        fJetVars.partonPT = part.pt()*pow(10,18);
+    }
+}
+
+void JetBase::HistoricPhysicsFlavor(unsigned i) 
+{
+    map<unsigned,double> et_sums;
+    et_sums.emplace(0,0);
+    
+    /* Calculate et sum for each outgoing hard process parton descendants */
+    for ( auto part : fJetParts ){
+        if (part.user_index() < 0) continue; /* Select non-ghosts */
+        
+        unsigned fl = fHistoryFlavor[part.user_index()];
+        if ( !(et_sums.emplace(fl,part.Et()).second) )
+            et_sums[fl] += part.Et();
+    }
+    
+    double et_sum = 0;
+    unsigned max_id = 0;
+    for ( auto f : et_sums ) {
+        et_sum += f.second;
+        
+        if ( f.second > et_sums[max_id] )
+            max_id = f.first;
+    }
+    
+    /* A purity condition for the jets. Reduces the flavor and parton information
+     * to a simple flavor information. */
+    if ( et_sums[max_id]/et_sum < 0.7 ) {
+        fFlavour = 0;
+    } else {
+        fFlavour = max_id;
+        if ( fFlavour > 5 && fFlavour < 20 )
+            fFlavour -= 5;
+        if ( fFlavour > 21 )
+            fFlavour -= 5;
+    }
+    
+    fJetVars.DR = 0;
+    fJetVars.nextDR = 0;
 }
 
 
@@ -563,7 +629,7 @@ void JetBase::AlgorithmicFlavor(unsigned i)
     for ( auto k : fPartonList ) {
         double dR = fSortedJets[i].delta_R( fAuxInputs[k] );
         int status = fAnalysisStatus[fAuxInputs[k].user_index()]-2;
-        int pdgCode = fPDGCode[fAuxInputs[k].user_index()];
+        int pdgCode = abs(fPDGCode[fAuxInputs[k].user_index()]);
 
         if (dR > 0.3) continue;
 
@@ -589,26 +655,8 @@ void JetBase::AlgorithmicFlavor(unsigned i)
     }
 }
 
-void JetBase::PhysClusterFlavor(unsigned i)
-{
-    fFlavour = 0;
-    for ( auto part : fJetParts ) {
-        if (part.user_index() > 0) continue; /* Not ghosts */
-        int id = -part.user_index()-1;
-            
-        /* If there are more than one hard process parton within a jet, mark no flavour */
-        if (fFlavour != 0) {
-            fFlavour = 0;
-            fJetVars.partonPT = 0;
-            break;
-        }
-        fFlavour = abs(fPDGCode[id]);
-        fJetVars.partonPT = part.pt()*pow(10,18);
-    }
-}
 
-
-void JetBase::AlgoClusterFlavor(unsigned i)
+void JetBase::GhostAlgorithmicFlavor(unsigned i)
 {
     int hardestLightParton = 0;
     double lightPT = 0;

@@ -1,0 +1,19 @@
+A posthumous log of the files within this directory, updated 8.1.2016
+
+mergeBins.C
+A simple script for merging pT bins.
+
+runSortedJets.C
+runPFSortedJets.C
+Scripts for plotting the fractions of all particle types.
+
+runSortedJetDistr.C
+Distributions of various jet parameters.
+
+runMinimalGraph.C
+JetProcessor.C/.h
+A historical flavour fraction plotting tool.
+
+TTBar.cc
+A tool for making mass plots from the ttbar events tool for making mass plots from the ttbar events.
+

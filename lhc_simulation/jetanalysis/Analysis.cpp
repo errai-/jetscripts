@@ -13,7 +13,8 @@ void Analysis::PostProcessing()
 }
 
 
-/* Throw the obtained values in temporary containers */
+/* Throw the obtained values into temporary containers.
+   For obtaining a good scaling summation is non-trivial. */
 void Analysis::TypeSort()
 {
     PseudoJet tmpLorentz;
@@ -134,20 +135,20 @@ void Analysis::Cuts()
     fCutJetParts.clear();
     vector<fastjet::PseudoJet> tmpParts;
     bool cutMode = false;
-    
+
     if (cutMode) {
-        /* Explicit cuts */
+        /* Explicit cuts (pt cut for photons and neutral hadrons) */
         for ( auto q : fJetParts ) {
             if ( q.user_index() < 0) continue;
             int id = abs(fPDGCode[ q.user_index() ]);
             if (!( q.pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) )
                 tmpParts.push_back( q );
         }
-        
-        /* Implicit cuts */
+
+        /* Implicit cuts (pt cut for hadrons) */
         for ( auto q : tmpParts ) {
             int id = abs(fPDGCode[ q.user_index() ]);
-            if ( !IsHadron(id) || ( (IsCharged(id) && q.pt()>0.3) || 
+            if ( !IsHadron(id) || ( (IsCharged(id) && q.pt()>0.3) ||
                 (!IsCharged(id) && q.pt()>3) ) )
             {
                 fCutJetParts.push_back( q );

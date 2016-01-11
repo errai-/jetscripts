@@ -34,9 +34,12 @@ int main(int argc, char* argv[])
             cout << "Usage: ./jetanalysis.exe [Standard form input file name] [path - e.g. './'] [Flavour def.]" << endl;
             cout << "Flavour options:" << endl;
             cout << "1: Physics definition" << endl;
-            cout << "2: Hadronic definition" << endl;
-            cout << "3: Algorithmic definition" << endl;
-            cout << "4: Physics cluster definition" << endl;
+            cout << "2: Ghost parton physics definition" << endl;
+            cout << "3: Final parton physics definition" << endl;
+            cout << "4: Historic physics definition" << endl;
+            cout << "5: Hadronic definition" << endl;
+            cout << "6: Algorithmic definition" << endl;
+            cout << "7: Ghost parton algotirhmic definition" << endl;
             return 0;
         }
         
@@ -47,7 +50,7 @@ int main(int argc, char* argv[])
         TTree *tree;
         string output = "", output2 = "hists_";
         
-        if ( definition<1||definition>4 ) throw std::runtime_error("Flavor options 1/2/3/4");
+        if ( definition<1||definition>7 ) throw std::runtime_error("Flavor options 1/2/3/4/5");
         
         string input = argv[1], fullPath = argv[2], tmpStr = "";
         fullPath += input;        
@@ -84,14 +87,23 @@ int main(int argc, char* argv[])
                         output += "physics_";
                         output2 += "physics_";
                     } else if (definition==2) {
+                        output += "ghostphys_";
+                        output2 += "ghostphys_";
+                    } else if (definition==3) {
+                        output += "finalphys_";
+                        output2 += "finalphys_";
+                    } else if (definition==4) {
+                        output += "historic_";
+                        output2 += "historic_";
+                    } else if (definition==5) {
                         output += "hadronic_";
                         output2 += "hadronic_";
-                    } else if (definition==3) {
+                    } else if (definition==6) {
                         output += "algorithmic_";
                         output2 += "algorithmic_";
-                    } else if (definition==4) {
-                        output += "physcluster_";
-                        output2 += "physcluster_";
+                    } else if (definition==7) {
+                        output += "ghostalgo_";
+                        output2 += "ghostalgo_";
                     }
                 }
                 tmpStr = "";

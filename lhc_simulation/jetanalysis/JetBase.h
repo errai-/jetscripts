@@ -13,6 +13,7 @@
 #include <ctime>
 #include <cmath>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <cassert>
 #include <stdexcept>
@@ -44,6 +45,7 @@
 using std::cout;
 using std::endl;
 using std::vector;
+using std::map;
 using std::cerr;
 using fastjet::PseudoJet;
 
@@ -75,8 +77,18 @@ public :
     /* Event type specific cuts */
     virtual Bool_t      SelectionParams();
     
-    /* The best jet flavour definition in terms of robustness. */
+    /* The classically best jet flavour definition in terms of robustness. */
     virtual void        PhysicsFlavor(unsigned);
+    /* Ghost parton jet clustering for the physics definition.
+     * Used by the ghost parton physics definition and the
+     * experimental final (ghost) parton physics definition.
+     * The latter uses a sum of the momenta of the hard process descendants
+     * instead of the hard process momentum values. */
+    virtual void        GhostPhysicsFlavor(unsigned);
+    /* The experimental historic physics definition for flavor.
+     * Determines the jet flavor based on an et-sum of the jet constituents.
+     * Each constituent has information of its ancestor. */
+    virtual void        HistoricPhysicsFlavor(unsigned);
     /* Particle identification the modern "Hadronic definition".
      * Determine whether a jet is dominated by quarks or by gluons.
      * Looping stops when a corresponding jet is found.
@@ -88,11 +100,8 @@ public :
      * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
      * for further information. */
     virtual void        AlgorithmicFlavor(unsigned);
-    /* A modernized variant of the physics definition:
-     * use ghost particle clustering for the hard process partons. */
-    virtual void        PhysClusterFlavor(unsigned);
     /* The hadronic definition without hadrons (or modernized algorithmic deifinition) */
-    virtual void        AlgoClusterFlavor(unsigned);
+    virtual void        GhostAlgorithmicFlavor(unsigned);
 
 protected: 
 ///////////
@@ -134,6 +143,7 @@ protected:
     
     Int_t           fPDGCode[kMaxfPrtcls];   //[fPrtcls_]
     Int_t           fAnalysisStatus[kMaxfPrtcls];   //[fPrtcls_]
+    Int_t           fHistoryFlavor[kMaxfPrtcls]; //[fPrtcls_]
 
 //////////
 // Output:

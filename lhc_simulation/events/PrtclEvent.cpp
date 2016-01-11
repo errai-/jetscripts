@@ -16,10 +16,11 @@ void PrtclData::SetPxPyPzE(double px, double py, double pz, double e)
 }
 
 
-void PrtclData::SetParams(int id, int status)
+void PrtclData::SetParams(int id, int status, int history_flav)
 {
     fPDGCode = id;
     fAnalysisStatus = status;
+    fHistoryFlavor = history_flav;
 }
 
 
@@ -34,14 +35,15 @@ PrtclEvent::PrtclEvent()
 }
 
 
-void PrtclEvent::AddPrtcl(double px, double py, double pz, double e, int id, int status)
+void PrtclEvent::AddPrtcl(double px, double py, double pz, double e,
+                          int id, int status, int hist_flav)
 {
     int ObjectNumber = TProcessID::GetObjectCount();
     
     PrtclData *part;
     part = InitPrtcl();
     part->SetPxPyPzE(px,py,pz,e);
-    part->SetParams(id,status);
+    part->SetParams(id,status,hist_flav);
     part->SetBit(kCanDelete);
     part->SetBit(kMustCleanup);
     
