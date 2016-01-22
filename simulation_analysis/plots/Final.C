@@ -1,5 +1,5 @@
-#define Fancy_cxx
-#include "fancy.h"
+#define EtaPhi_cxx
+#include "etaphi.h"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
@@ -30,7 +30,7 @@ double phif(double val, double center) {
     return corr;
 }
 
-void Fancy::Loop()
+void EtaPhi::Loop()
 {
     if (fChain == 0) return;
 
@@ -115,7 +115,7 @@ void Fancy::Loop()
                 continue;
 
             fl *= -1;
-            double saizu = TMath::Log10(t.E());
+            double saizu = TMath::Log10(t.Pt()/0.01);
             Color_t col;
             Style_t sty;
 
@@ -141,6 +141,12 @@ void Fancy::Loop()
             } else {
                 continue;
             }
+
+            if (saizu < 0)
+                continue;
+
+            if (t.Rapidity() > 4 && t.Rapidity() < 5 && t.Phi() < -1)
+                cout << t.Rapidity() << " " << t.Phi() << " " << fl << " " << saizu << endl;
 
             TGraph *f = new TGraph(1);
             f->SetPoint(0,t.Rapidity(),phif(t.Phi(),phi_sum));

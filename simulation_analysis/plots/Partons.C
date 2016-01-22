@@ -1,5 +1,5 @@
-#define Fancy_cxx
-#include "fancy.h"
+#define EtaPhi_cxx
+#include "etaphi.h"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
@@ -30,7 +30,7 @@ double phif(double val, double center) {
     return corr;
 }
 
-void Fancy::Loop()
+void EtaPhi::Loop()
 {
     if (fChain == 0) return;
 
@@ -107,7 +107,6 @@ void Fancy::Loop()
             el->Draw("same");
         }
 
-        vector<int> counters(5,0);
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
             TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
@@ -116,7 +115,7 @@ void Fancy::Loop()
                 continue;
 
             fl *= -1;
-            double saizu = TMath::Log10(t.E());
+            double saizu = TMath::Log10(t.Pt()/0.01);
             Color_t col;
             Style_t sty;
 
@@ -124,12 +123,18 @@ void Fancy::Loop()
                 col = kBlue;
                 sty = kCircle;
             } else if ( fl == 11 ) {
+                col = kAzure + 7;
+                sty = kCircle;
+            } else if ( fl == 12 ) {
                 col = kRed;
                 sty = kOpenSquare;
-            } else if ( fl == 12 ) {
-                col = kGreen+2;
-                sty = kCircle;
             } else if ( fl == 13 ) {
+                col = kGreen-7;
+                sty = kCircle;
+            } else if ( fl == 14 ) {
+                col = kYellow + 1;
+                sty = kCircle;
+            } else if ( fl == 15 ) {
                 col = kGreen+2;
                 sty = kOpenSquare;
             //} else if ( fl == 7 || fl == 8 ) {
@@ -142,7 +147,10 @@ void Fancy::Loop()
                 continue;
             }
 
-            if ( fl == 12 || fl == 13 || fl == 9 )
+            if (saizu < 0)
+                continue;
+
+            if ( fl == 13 || fl == 14 || fl == 15 || fl == 9 )
                 saizu *= 2;
 
             TGraph *f = new TGraph(1);

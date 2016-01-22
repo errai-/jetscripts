@@ -1,5 +1,0 @@
-
-{
-Fancy suu;
-suu.Loop();
-}
