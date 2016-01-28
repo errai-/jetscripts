@@ -104,7 +104,7 @@ void Pythia6Tree::ModeSettings() {
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 4) {
         // ttbar events
-        mPythia->SetMSEL(0);
+        mPythia->SetMSEL(6); // choose top quark
         mPythia->SetMSUB(81,1); // qqbar -> qqbar
         mPythia->SetMSUB(82,1); // gg->qqbar
         mPythia->SetPMAS(6,1,172);
@@ -208,7 +208,7 @@ void Pythia6Tree::EventLoop()
 
         if ( !ParticleLoop() ) continue;
         /* Print event listing */
-        mPythia->Pylist(2 );
+        //mPythia->Pylist(2);
         
         mTree->Fill();
         
@@ -295,12 +295,16 @@ bool Pythia6Tree::ParticleLoop()
 /* A handle for adding particle information */
 void Pythia6Tree::ParticleAdd(unsigned prt, int saveStatus)
 {
+    // TODO: history flavor?
+    int history = 0;
+    
     mPrtclEvent->AddPrtcl( mPythia->GetP(prt,1),
                            mPythia->GetP(prt,2),
                            mPythia->GetP(prt,3),
                            mPythia->GetP(prt,4),
                            mPythia->GetK(prt,2),
-                           saveStatus);
+                           saveStatus,
+                           history);
 } // ParticleAdd
 
 

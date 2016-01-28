@@ -58,7 +58,7 @@ name += ".cmnd"
 f = open(name,'w')
 
 f.write("Random:setSeed = on\n")
-f.write("Random:seed = {}\n\n".format(proc_id*10000) )
+f.write("Random:seed = {}\n\n".format(proc_id*6582337) )
 
 f.write("Main:numberOfEvents = {}\n\n".format(tot_evts/procs))
 

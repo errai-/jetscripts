@@ -74,7 +74,7 @@ void Pythia8Tree::EventLoop()
         if ( !ParticleLoop() ) continue;
         /* Print event listing */
         //mEvent.list();
-        
+
         mTree->Fill();
 
         /* Update progress */
@@ -123,6 +123,7 @@ bool Pythia8Tree::ParticleLoop()
         throw std::logic_error("Unexpected hard process structure");
     }
     
+    int history_count = 0;
     for (auto prt : mPartonHistory) {
         mPrtclEvent->AddPrtcl(  prt.second.Px(),
                                 prt.second.Py(),
@@ -130,7 +131,7 @@ bool Pythia8Tree::ParticleLoop()
                                 prt.second.E(),
                                 mEvent[prt.first].id(),
                                 8,
-                                -1);
+                                history_count++);
     }
     
     return true;
@@ -140,11 +141,9 @@ bool Pythia8Tree::ParticleLoop()
 void Pythia8Tree::ParticleAdd(unsigned prt, int saveStatus)
 {
     int history = -1;
-    if ( saveStatus==1 ) {
-        auto it = mHistory.find(prt);
-        if ( it != mHistory.end() && it->second!=-1 ) {
-            history = std::distance(mPartonHistory.begin(),mPartonHistory.find(it->second));
-        }
+    auto it = mHistory.find(prt);
+    if ( it != mHistory.end() && it->second!=-1 ) {
+        history = std::distance(mPartonHistory.begin(),mPartonHistory.find(it->second));
     }
     
     mPrtclEvent->AddPrtcl(  mEvent[prt].px(),
@@ -186,30 +185,13 @@ bool Pythia8Tree::IsExcitedHadronState(unsigned prt, int quarkId)
 void Pythia8Tree::PropagateHistory(unsigned int prt, int hard_count)
 {
     if ( mHistory.emplace(prt,hard_count).second ) {
+        /* Propagate history info recursively */
         for (auto d : mEvent[prt].daughterList())
             PropagateHistory(d,hard_count);
-        
-        if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) {
-            /* Adding final-state partons, used by the algorithmic and the modern
-             * "ghost" flavour definition. Also, the "true" parton momentum is
-             * calculated */
-            mPartonHistory[hard_count] += TLorentzVector(mEvent[prt].px(),
-                                                         mEvent[prt].py(),
-                                                         mEvent[prt].pz(),
-                                                         mEvent[prt].e());
-            ParticleAdd(prt, 4);
-        }
     } else {
         /* Mark repeated cases with a zero flavor */
-        if ( mHistory[prt] != hard_count ) {
-            /* Erase the momentum contribution at the first false repetition */
-            if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72)
-                mPartonHistory[hard_count] -= TLorentzVector(mEvent[prt].px(),
-                                                             mEvent[prt].py(),
-                                                             mEvent[prt].pz(),
-                                                             mEvent[prt].e());
+        if ( mHistory[prt] != hard_count )
             mHistory[prt] = -1;
-        }
     }
 }
 
@@ -220,16 +202,32 @@ void Pythia8Tree::PropagateHistory(unsigned int prt, int hard_count)
 
 bool Pythia8Tree::ProcessParticle(unsigned prt)
 {
-    /* Save partons and such */
-    if ( mEvent[prt].isParton() ) {
-        if ( mEvent[prt].statusAbs()==23 ) {
-            /* Save hard process outgoing partons */
-            ParticleAdd( prt, 3 );
-            
-            mPartonHistory.emplace( prt, TLorentzVector() );
-            PropagateHistory(prt, prt);
-            ++mHardProcCount;
-        }
+    if ( mEvent[prt].isFinalPartonLevel() ) {
+        auto it = mHistory.find(prt);
+        if (it != mHistory.end() && it->second!=-1)
+            mPartonHistory[mHistory[prt]] += TLorentzVector(mEvent[prt].px(),
+                                                            mEvent[prt].py(),
+                                                            mEvent[prt].pz(),
+                                                            mEvent[prt].e());
+    }
+    
+    if ( mEvent[prt].statusAbs()==23 ) {
+        /* Hard process activities */
+        
+        /* Initiate corrected hard process parton momentum */
+        mPartonHistory.emplace( prt, TLorentzVector() );
+        /* Propagate history information */
+        PropagateHistory(prt, prt);
+        ++mHardProcCount;
+
+        /* Save hard process outgoing partons */
+        ParticleAdd( prt, 3 );
+        return true;
+    } else if ( mEvent[prt].statusAbs() == 71 || mEvent[prt].statusAbs() == 72 ) {
+        /* Save final parton level */
+        ParticleAdd( prt, 4 );
+        return true;
+    } else if (mEvent[prt].isParton()) {
         return true;
     } else if (mEvent[prt].isHadron()) {
         /* Ghost hadrons can be final state particles */
