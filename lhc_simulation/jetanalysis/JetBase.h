@@ -17,6 +17,7 @@
 #include <fstream>
 #include <cassert>
 #include <stdexcept>
+#include <set>
 
 // ROOT
 #include <TROOT.h>
@@ -46,6 +47,7 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::map;
+using std::set;
 using std::cerr;
 using fastjet::PseudoJet;
 
@@ -68,10 +70,12 @@ public :
     virtual void        EventLoop();
     /* Calculate variables for the newly clustered jets */
     virtual bool        JetLoop();
+    virtual inline void InitLoop() { return; }
+    virtual inline void PostLoop() { return; }
     /* Study particle types in the clustered jets */
     virtual void        ParticleLoop();
     virtual inline void EventProcessing();
-    virtual inline void PostProcessing() { return; };
+    virtual inline void PostProcessing() { return; }
     
     virtual void        ParticlesToJetsorterInput();
     /* Event type specific cuts */
@@ -85,6 +89,8 @@ public :
      * The latter uses a sum of the momenta of the hard process descendants
      * instead of the hard process momentum values. */
     virtual void        GhostPhysicsFlavor(unsigned);
+    /* A combination of the physics definition and algorithmic definition */
+    virtual void        PhysAlgoFlavor(unsigned);
     /* The experimental historic physics definition for flavor.
      * Determines the jet flavor based on an et-sum of the jet constituents.
      * Each constituent has information of its ancestor. */
@@ -201,6 +207,7 @@ protected:
     Int_t           fMode;       /* Event type */
     Int_t           fDefinition; /* Flavour definition */
     Int_t           fBookedParton; /* Monitor partons that are paired with jets */
+    Int_t           fSuccessCount;
     
     JetVariables    fJetVars;
 };

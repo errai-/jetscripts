@@ -125,7 +125,7 @@ public:
 // An event class for the jet data that is stored
 class JetEvent : public TObject {
 public:
-    JetEvent(size_t = 1000);
+    JetEvent(size_t = 10000);
     virtual ~JetEvent();
 
     void AddJet(double,double,double,double,JetVariables&,double,int);

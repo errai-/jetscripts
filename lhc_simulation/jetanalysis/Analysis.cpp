@@ -20,23 +20,23 @@ void Analysis::TypeSort()
     PseudoJet tmpLorentz;
     double cumulator = 0;
     
-    cumulator += fPiPlus.Et();
+    cumulator += fPiPlus.E();
     tmpLorentz += fPiPlus;
-    cumulator += fPiMinus.Et();
+    cumulator += fPiMinus.E();
     tmpLorentz += fPiMinus;
-    cumulator += fKaPlus.Et();
+    cumulator += fKaPlus.E();
     tmpLorentz += fKaPlus;
-    cumulator += fKaMinus.Et();
+    cumulator += fKaMinus.E();
     tmpLorentz += fKaMinus;
-    cumulator += fProton.Et();
+    cumulator += fProton.E();
     tmpLorentz += fProton;
-    cumulator += fAproton.Et();
+    cumulator += fAproton.E();
     tmpLorentz += fAproton;
-    cumulator += fSigma.Et();
+    cumulator += fSigma.E();
     tmpLorentz += fSigma;
-    cumulator += fXiMinus.Et();
+    cumulator += fXiMinus.E();
     tmpLorentz += fXiMinus;
-    cumulator += fOmMinus.Et();
+    cumulator += fOmMinus.E();
     tmpLorentz += fOmMinus;
     fJetVars.chf = cumulator;
     fJetVars.chm = tmpLorentz.m();
@@ -44,17 +44,17 @@ void Analysis::TypeSort()
     tmpLorentz = PseudoJet();
     cumulator = 0;
     
-    cumulator += fKSZero.Et();
+    cumulator += fKSZero.E();
     tmpLorentz += fKSZero;
-    cumulator += fKLZero.Et();
+    cumulator += fKLZero.E();
     tmpLorentz += fKLZero;
-    cumulator += fNeutron.Et();
+    cumulator += fNeutron.E();
     tmpLorentz += fNeutron;
-    cumulator += fAneutron.Et();
+    cumulator += fAneutron.E();
     tmpLorentz += fAneutron;
-    cumulator += fLambda0.Et();
+    cumulator += fLambda0.E();
     tmpLorentz += fLambda0;
-    cumulator += fXiZero.Et();
+    cumulator += fXiZero.E();
     tmpLorentz += fXiZero;
     fJetVars.nhf = cumulator;
     fJetVars.nhm = tmpLorentz.m();
@@ -62,17 +62,17 @@ void Analysis::TypeSort()
     tmpLorentz = PseudoJet();
     cumulator = 0;
     
-    cumulator += fPi0Gamma.Et();
+    cumulator += fPi0Gamma.E();
     tmpLorentz += fPi0Gamma;
-    cumulator += fGamma.Et();
+    cumulator += fGamma.E();
     tmpLorentz += fGamma;
     fJetVars.phf = cumulator;
     fJetVars.phm = tmpLorentz.m();
     
-    fJetVars.elf = fElec.Et();
+    fJetVars.elf = fElec.E();
     fJetVars.elm = fElec.m();
     
-    fJetVars.muf = fMuon.Et();
+    fJetVars.muf = fMuon.E();
     fJetVars.mum = fMuon.m();
     
     double scale = fJetVars.chf + fJetVars.nhf + fJetVars.phf + fJetVars.elf + fJetVars.muf;

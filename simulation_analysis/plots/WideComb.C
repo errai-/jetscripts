@@ -5,6 +5,7 @@
 #include <TCanvas.h>
 #include <TMath.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <map>
@@ -21,10 +22,14 @@ using std::set;
 
 const double radius2 = TMath::Power(0.5,2);
 const bool lines = true;
-const bool connect = true;
+const bool connect = false;
 const bool useflav = true;
+const bool printflav = false;
+const bool printremn = false;
+const bool skip = false;
 const double pi2 = 2*TMath::Pi();
-const double separation = 5;
+const double separation2 = TMath::Power(25,2);
+const unsigned stop = 600;
 
 bool accept() {
     string ses;
@@ -47,6 +52,11 @@ double dphi(double phi1, double phi2) {
     if ( diff > TMath::Pi() )
         diff = pi2 - diff;
     return diff;
+}
+
+double dR2(double phi1, double phi2, double eta1, double eta2) {
+    double phi_diff = dphi(phi1,phi2);
+    return TMath::Power(phi_diff,2)+TMath::Power(eta1-eta2,2);
 }
 
 void Append(TH2D* th, double eta, double phi, double pt) {
@@ -74,9 +84,10 @@ void EtaPhi::QuarkPairs( vector<pair<int,int> >& smaller, vector<pair<int,int> >
             TLorentzVector t(fX[jdx],fY[jdx],fZ[jdx],fT[jdx]);
             if ( !useflav || (iflav == jflav) ) {
                 double phi_diff = dphi( s.Phi(), t.Phi() );
-                double dist2 = TMath::Power( phi_diff, 2 ) + TMath::Power( s.Eta() - t.Eta(), 2 );
-                if ( TMath::Power( dist2, 0.5 ) > separation )
+                double dist2 = dR2(s.Phi(),t.Phi(),s.Eta(),t.Eta());
+                if ( dist2 > separation2 )
                     continue;
+                //dist2 *= min( t.Perp2(), s.Perp2() );
                 dists.insert( std::make_pair( dist2, std::make_pair(idx,jdx) ) );
             }
         }
@@ -112,6 +123,7 @@ void EtaPhi::Loop()
 
     Long64_t nentries = fChain->GetEntriesFast();
 
+    std::ofstream ulos("sus.txt");
     Long64_t nbytes = 0, nb = 0;
     cout << "Choose event, -1 for no choice" << endl;
     int choice;
@@ -120,6 +132,8 @@ void EtaPhi::Loop()
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break;
         fChain->GetEntry(jentry);
+        if ( stop > 0 && jentry > stop )
+            break;
 
         bool stahp = false;
         int count = 0;
@@ -130,6 +144,8 @@ void EtaPhi::Loop()
         if ( choice >= 0 && choice != jentry )
             continue;
 
+        if (printflav)
+            cout << jentry << endl;
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
             TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
@@ -137,26 +153,30 @@ void EtaPhi::Loop()
                 continue;
             jets.push_back(j);
 
+            if (printflav)
+                cout << " " << fl << endl;
             if ( fl != 0 )
                 ++count;
 
-            if ( fabs(t.Rapidity()) > 3 && jets.size() < 3 ) {
+            if ( choice==-1 && (fabs(t.Rapidity()) > 3 && jets.size() < 3) ) {
                 stahp = true;
                 break;
             }
 
             if ( jets.size() < 3 ) {
+            ulos << jentry << " " << fFlav[j] << endl;
                 phi_sum += t.Phi()*t.Pt();
                 pt_sum += t.Pt();
                 phi_diff += t.Phi()*TMath::Power(-1.0,int(jets.size()));
             }
         }
-        if ( /*stahp ||*/ (count > 1 && choice == -1) ) {
+        if ( choice == -1 && ( stahp || count > 1 ) )
+            continue;
+        if ( skip || !accept() ) {
+            choice = -1;
             continue;
         }
-        cout << jentry << " " << count << endl;
-        if ( !accept() )
-            continue;
+
         phi_sum /= pt_sum;
         if ( fabs(phi_diff) < TMath::Pi() )
             phi_sum += TMath::Pi();
@@ -187,7 +207,7 @@ void EtaPhi::Loop()
         gStyle->SetOptStat(0);
         gStyle->SetPalette(kBird);
         grid->SetXTitle("y");
-        grid->SetYTitle("#phi");
+        grid->SetYTitle("#phi (rad)");
         grid->Draw("COLZ");
 
         for ( unsigned j = 0; j < jets.size(); ++j ) {
@@ -212,6 +232,7 @@ void EtaPhi::Loop()
 
         vector<pair<int,int> > quarks;
         vector<pair<int,int> > antiquarks;
+        vector<TLorentzVector> x_quark, x_aquark;
 
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
@@ -231,6 +252,7 @@ void EtaPhi::Loop()
 
             if ( group == 3 ) {
                 if ( fl < 6 ) {
+                    x_quark.push_back(t);
                     col = kBlue+2;
                     sty = kCircle;
                 } else {
@@ -238,6 +260,7 @@ void EtaPhi::Loop()
                     sty = kOpenSquare;
                 }
             } else if ( group == 4 ) {
+                x_aquark.push_back(t);
                 col = kCyan;
                 sty = kCircle;
             } else if ( group == 5 ) {
@@ -251,15 +274,19 @@ void EtaPhi::Loop()
                 } else if ( fl > 2000 ) {
                     col = kBlue;
                     sty = kOpenSquare;
+                    if (printremn)
+                        cout << "pos " << t.Eta() << endl;
                 } else {
                     col = kRed;
                     sty = kOpenSquare;
                 }
             } else if ( group == 8 ) {
                 col = kMagenta;
-                if ( fl > 2000 )
+                if ( fl > 2000 ) {
                     sty = kOpenSquare;
-                else {
+                    if (printremn)
+                        cout << "anti " << t.Eta() << endl;
+                } else {
                     sty = kCircle;
                     antiquarks.push_back( std::make_pair( j, fl ) );
                 }
@@ -313,6 +340,38 @@ void EtaPhi::Loop()
         }
 
         if ( connect ) {
+            for ( unsigned i = 0, Ni = x_quark.size(); i < Ni; ++i ) {
+                int best_match = -1;
+                double min_dist = 100;
+                for ( unsigned j = 0, Nj = quarks.size(); j < Nj; ++j ) {
+                    int id = quarks[j].first;
+                    TLorentzVector t(fX[id],fY[id],fZ[id],fT[id]);
+                    double dist = dR2(t.Phi(),x_quark[i].Phi(),t.Eta(),x_quark[i].Eta());
+                    if ( dist < min_dist ) {
+                        best_match = j;
+                        min_dist = dist;
+                    }
+                }
+                quarks.erase( quarks.begin()+best_match );
+            }
+            for ( unsigned i = 0, Ni = x_aquark.size(); i < Ni; ++i ) {
+                int best_match = -1;
+                double min_dist = 100;
+                for ( unsigned j = 0, Nj = antiquarks.size(); j < Nj; ++j ) {
+                    int id = antiquarks[j].first;
+                    TLorentzVector t(fX[id],fY[id],fZ[id],fT[id]);
+                    double dist = dR2(t.Phi(),x_aquark[i].Phi(),t.Eta(),x_aquark[i].Eta());
+                    if ( dist < min_dist ) {
+                        best_match = j;
+                        min_dist = dist;
+                    }
+                }
+                antiquarks.erase( antiquarks.begin()+best_match );
+            }
+            if (printremn)
+                cout << "quarks: " << quarks.size() << " antiquarks: " << antiquarks.size() << endl;
+
+
             if ( antiquarks.size() < quarks.size() )
                 QuarkPairs( antiquarks, quarks );
             else

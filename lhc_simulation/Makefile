@@ -67,6 +67,10 @@ analysis_standard: jetanalysis/main_standard.cpp jetbase.o analysis.o libPrtclEv
 	cd jetanalysis && $(CXX) main_standard.cpp jetbase.o analysis.o -L../lib -lPrtclEvent -lJetEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
 
+analysis_plot: jetanalysis/main_standard.cpp jetbase.o jetplot.o libPrtclEvent.so libJetEvent.so
+	cd jetanalysis && $(CXX) main_plot.cpp jetbase.o jetplot.o -L../lib -lPrtclEvent -lJetEvent -w \
+	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
+
 analysis_hard: jetanalysis/main_hard.cpp jetbase.o hardproc.o libPrtclEvent.so libJetEvent.so
 	cd jetanalysis && $(CXX) main_hard.cpp jetbase.o hardproc.o -L../lib -lPrtclEvent -lJetEvent -w \
 	$(INCLUDE) $(CXXFLAGS) $(ROOT) $(FASTJET) -I. -ldl -o ../analysis.exe
@@ -81,6 +85,10 @@ analysis_test: jetanalysis/main_test.cpp jetbase.o test.o libPrtclEvent.so libJe
 
 analysis.o: Analysis.cpp jetbase.o
 	cd jetanalysis && $(CXX) -c Analysis.cpp jetbase.o -L../lib -lPrtclEvent -lJetEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
+
+jetplot.o: JetPlot.cpp jetbase.o
+	cd jetanalysis && $(CXX) -c JetPlot.cpp jetbase.o -L../lib -lPrtclEvent -lJetEvent \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) -ldl -o $@
 
 hardproc.o: HardProc.cpp jetbase.o

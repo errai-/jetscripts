@@ -11,6 +11,11 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <vector>
+#include <utility>
+
+using std::vector;
+using std::pair;
 
 // Header file for the classes stored in the TTree if any.
 #include "Math/GenVector/PxPyPzE4D.h"
@@ -51,6 +56,7 @@ public :
    Float_t         fAlpha[kMaxfJets];   //[fJets_]
    Float_t         fDPhi[kMaxfJets];   //[fJets_]
    Double_t        fWeight;
+   Double_t        phi_sum;
 
    EtaPhi(TTree *tree=0);
    virtual ~EtaPhi();
@@ -61,6 +67,7 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   virtual void     QuarkPairs(vector<pair<int,int> >& smaller, vector<pair<int,int> >& larger);
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "common_main.h"
+#include "JetPlot.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -22,7 +23,7 @@ int main(int argc, char* argv[])
         if (!(tree->GetEntries())) throw std::runtime_error("Zero events found");
         
         /* Analysis process */
-        HardProc treeHandle(tree, output.c_str(), output2.c_str(), mode, definition);
+        JetPlot treeHandle(tree, output.c_str(), output2.c_str(), mode, definition);
         treeHandle.EventLoop();
         delete tree;
     } catch (std::exception& e) {
