@@ -1,4 +1,5 @@
 #include "common_main.h"
+#include "Histograms.h"
 
 int main(int argc, char* argv[]) 
 {

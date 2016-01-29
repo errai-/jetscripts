@@ -10,7 +10,7 @@ JetBase::JetBase(TTree *tree,
                  fChain         (0), 
                  fMode          (mode), 
                  fDefinition    (definition),
-                 fJetCuts       (false),
+                 fJetCuts       (true),
                  fParamCuts     (true),
                  fInitialized   (true),
                  fAddNonJet     (true),
@@ -301,15 +301,15 @@ void JetBase::ParticlesToJetsorterInput()
                 /* charged lepton from W stored to output */
                 fTheLepton = particleTemp;
                 
-                if (fAddNonJet)
-                    fJetVars.SetZero();
-                    fJetEvent->AddJet(particleTemp.px(),
-                                      particleTemp.py(),
-                                      particleTemp.pz(),
-                                      particleTemp.e(),
-                                      fJetVars,
-                                      fWeight,
-                                      pdgID);
+            if (fAddNonJet)
+                fJetVars.SetZero();
+                fJetEvent->AddJet(particleTemp.px(),
+                                    particleTemp.py(),
+                                    particleTemp.pz(),
+                                    particleTemp.e(),
+                                    fJetVars,
+                                    fWeight,
+                                    pdgID);
             }
         } else if (stat==3) {
             /* Outgoing hard process particles - these are used with some of the
@@ -621,7 +621,7 @@ void JetBase::HistoricPhysicsFlavor(unsigned i)
     
     /* A purity condition for the jets. Reduces the flavor and parton information
      * to a simple flavor information. */
-    fFlavour = abs(fPDGCode[fHardPartons[max_id].user_index()]);
+    fFlavour = (max_id==-1) ? 0 : abs(fPDGCode[fHardPartons[max_id].user_index()]);
     
     fJetVars.DR = et_sums[max_id]/et_sum;
     if ( fJetVars.DR == 0.0 ) cout << "wot" << endl;

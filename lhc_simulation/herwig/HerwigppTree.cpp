@@ -23,9 +23,16 @@ using std::string;
 /* The danish number system is very complicated, so better just divide with GeV */
 void HerwigppTree::particleAdd(const tPPtr& part, int saveStatus) 
 {
-    mPrtclEvent->AddPrtcl(part->momentum().x()/GeV,part->momentum().y()/GeV,
-                          part->momentum().z()/GeV,part->momentum().t()/GeV,
-                          part->id(), saveStatus);
+    // TODO: history flavor
+    int history = 0;
+    
+    mPrtclEvent->AddPrtcl(part->momentum().x()/GeV,
+                          part->momentum().y()/GeV,
+                          part->momentum().z()/GeV,
+                          part->momentum().t()/GeV,
+                          part->id(),
+                          saveStatus,
+                          history);
 }
 
 void HerwigppTree::print_parents(const tPPtr& part) {
