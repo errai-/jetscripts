@@ -24,7 +24,7 @@ for (( i=1; i<=$NUM_PROC; i++ ))
 do
     cp $WRKDIR/settings.py .
     P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i $DIVINE_IDX)
-    $WRKDIR/pythia8.exe $JOB_TYPE $P8FILE & 
+    $WRKDIR/pythia8.exe $JOB_TYPE $P8FILE &
     pidArr+=($!)
     pidArr+=" "
     NAMES+="particles_pythia8_"$P8FILE".root"
@@ -36,7 +36,8 @@ do
     wait ${pidArr[$i]}
 done
 
-MERGE="particles_pythia8_"$(python -c "import sys; word = sys.argv[1]; print word[0:-2]" $P8FILE)".root"
+BODY=$(python -c "import sys; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $P8FILE)
+MERGE="particles_pythia8_"$BODY".root"
 
 if [ $NUM_PROC -gt 1 ]; then
     hadd -f $MERGE $NAMES
@@ -50,8 +51,7 @@ else
 fi
 
 if [ $DEBUG -eq 0 ]; then
-    REMAIN=$(python -c "import sys; word = sys.argv[1]; print word[0:-2]" $P8FILE)
-    rm $REMAIN*.cmnd
+    rm $BODY*.cmnd
 fi
 
 xrdcp $MERGE root://eoscms.cern.ch//eos/cms/store/group/phys_jetmet/hsiikone/.
