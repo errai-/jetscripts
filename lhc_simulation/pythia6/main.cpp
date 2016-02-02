@@ -3,10 +3,7 @@
 // Hannu Siikonen 21.8.2015                 //
 //////////////////////////////////////////////
 
-#include <iostream>
-#include <string>
 #include "Pythia6Tree.h"
-#include <stdexcept>
 
 int main(int argc, char** argv)
 {

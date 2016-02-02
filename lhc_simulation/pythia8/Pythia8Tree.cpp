@@ -247,7 +247,7 @@ bool P8GenericTree::ProcessParticle(unsigned int prt)
     /* pi0 photons in a generic event have the status 2 */
     if ( mEvent[prt].isFinal() ) {
         int saveStatus = 1;
-        if ( mMode==0 && mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
+        if ( (mMode==0||mMode==1) && mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
         ParticleAdd( prt, saveStatus );
     }
     

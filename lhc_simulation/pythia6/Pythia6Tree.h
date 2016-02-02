@@ -60,7 +60,7 @@ using std::cout;
 using std::endl;
 using std::cerr;
 using std::runtime_error;
-
+using std::stoi;
 
 class Pythia6Tree
 {
@@ -140,6 +140,20 @@ protected:
     Timer                           mTimer;
     
     vector<unsigned>                mSpecialIndices;
+    
+    static const unsigned           mNumSeeds = 10;
+    const unsigned                  mSeeds[mNumSeeds] = {
+                                                            840744607,
+                                                            431166825,
+                                                            11489507,
+                                                            859341684,
+                                                            719632152,
+                                                            384411333,
+                                                            90405435,
+                                                            297596781,
+                                                            620424940,
+                                                            829585206
+                                                        };
 };
 
 #endif // PYTHIA6TREE

@@ -9,7 +9,9 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     /* Create an instance of the Pythia event generator: */
     mPythia = new TPythia6;
     /* Set a seed value according to the run index and make sure it is used: */
-    mPythia->SetMRPY(1,10000*nameId);
+    if ( nameId < 1 || nameId > 10 )
+        throw std::runtime_error("Incompatible seed ID");
+    mPythia->SetMRPY(1,mSeeds[nameId-1]);
     mPythia->SetMRPY(2,0);
     
     /* Event type: */
@@ -282,7 +284,7 @@ bool Pythia6Tree::ParticleLoop()
         /* Stable particles */
         if (status <= 10) {
             int saveStatus = 1;
-            if ( mMode==0 && id==22 && GammaChecker(prt))
+            if ( (mMode==0||mMode==1) && id==22 && GammaChecker(prt))
                 saveStatus = 2;
             ParticleAdd(prt,saveStatus);
         }
