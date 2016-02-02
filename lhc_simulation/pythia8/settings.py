@@ -3,6 +3,11 @@
 import sys
 import os
 
+seeds=[840744607,431166825,11489507,859341684,719632152,384411333,90405435,297596781,620424940,829585206,
+       350220548,862060943,865146589,11119376,706126850,761335296,286390445,408256820,447625541,368022699,
+       281922559,852542479,509348179,175162098,688006297,512118632,676751467,212155085,158795947,68988051,
+       258456879,625579469,146828216,582720998,226158642,439232438,366169042,745702146,412672564,177882235]
+
 # Hard coded tune type
 # 0: 4C from Herwig++ defaults (CTEQ6L1)
 # 1: CUETP8S1 from CMS         (CTEQ6L1)
@@ -20,7 +25,7 @@ pdf = 0
 eScale = 0
 
 # Read run settings from command line parameters
-if len(sys.argv) != 5:
+if len(sys.argv) != 6:
     print "Incorrect amount of command line parameters"
     sys.exit()
 
@@ -28,6 +33,7 @@ tot_evts = int(sys.argv[1])
 mode = int(sys.argv[2])
 procs = int(sys.argv[3])
 proc_id = int(sys.argv[4])
+start_id = int(sys.argv[5])
 
 if tot_evts%procs!=0:
     print "Number of processors and events should fit"
@@ -58,7 +64,7 @@ name += ".cmnd"
 f = open(name,'w')
 
 f.write("Random:setSeed = on\n")
-f.write("Random:seed = {}\n\n".format(proc_id*6582337) )
+f.write("Random:seed = {}\n\n".format(seeds[start_id+proc_id]) )
 
 f.write("Main:numberOfEvents = {}\n\n".format(tot_evts/procs))
 

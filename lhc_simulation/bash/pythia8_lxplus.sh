@@ -12,6 +12,7 @@ export PATH=/afs/cern.ch/user/h/hsiikone/Cern/installs/bin:/afs/cern.ch/sw/lcg/e
 NUM_EVT=$1
 JOB_TYPE=$2
 NUM_PROC=$3
+DIVINE_IDX=$4
 DEBUG=0
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
@@ -22,7 +23,7 @@ NAMES=""
 for (( i=1; i<=$NUM_PROC; i++ ))
 do
     cp $WRKDIR/settings.py .
-    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
+    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i $DIVINE_IDX)
     $WRKDIR/pythia8.exe $JOB_TYPE $P8FILE & 
     pidArr+=($!)
     pidArr+=" "
