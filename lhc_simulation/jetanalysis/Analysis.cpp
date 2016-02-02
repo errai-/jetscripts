@@ -1,7 +1,7 @@
 #include "Analysis.h"
 
 
-void Analysis::PostProcessing()
+void Analysis::PostProcessing(unsigned)
 {
     Cuts();
     fJetVars.constituents = fCutJetParts.size();
@@ -14,59 +14,41 @@ void Analysis::PostProcessing()
 
 
 /* Throw the obtained values into temporary containers.
-   For obtaining a good scaling summation is non-trivial. */
+   For obtaining a good scaling summation is non-trivial.
+   If Et is used instead of E, there will be error in the
+   third or fourth decimal. */
 void Analysis::TypeSort()
 {
     PseudoJet tmpLorentz;
-    double cumulator = 0;
     
-    cumulator += fPiPlus.E();
     tmpLorentz += fPiPlus;
-    cumulator += fPiMinus.E();
     tmpLorentz += fPiMinus;
-    cumulator += fKaPlus.E();
     tmpLorentz += fKaPlus;
-    cumulator += fKaMinus.E();
     tmpLorentz += fKaMinus;
-    cumulator += fProton.E();
     tmpLorentz += fProton;
-    cumulator += fAproton.E();
     tmpLorentz += fAproton;
-    cumulator += fSigma.E();
     tmpLorentz += fSigma;
-    cumulator += fXiMinus.E();
     tmpLorentz += fXiMinus;
-    cumulator += fOmMinus.E();
     tmpLorentz += fOmMinus;
-    fJetVars.chf = cumulator;
+    fJetVars.chf = tmpLorentz.E();
     fJetVars.chm = tmpLorentz.m();
     
     tmpLorentz = PseudoJet();
-    cumulator = 0;
     
-    cumulator += fKSZero.E();
     tmpLorentz += fKSZero;
-    cumulator += fKLZero.E();
     tmpLorentz += fKLZero;
-    cumulator += fNeutron.E();
     tmpLorentz += fNeutron;
-    cumulator += fAneutron.E();
     tmpLorentz += fAneutron;
-    cumulator += fLambda0.E();
     tmpLorentz += fLambda0;
-    cumulator += fXiZero.E();
     tmpLorentz += fXiZero;
-    fJetVars.nhf = cumulator;
+    fJetVars.nhf = tmpLorentz.E();
     fJetVars.nhm = tmpLorentz.m();
     
     tmpLorentz = PseudoJet();
-    cumulator = 0;
     
-    cumulator += fPi0Gamma.E();
     tmpLorentz += fPi0Gamma;
-    cumulator += fGamma.E();
     tmpLorentz += fGamma;
-    fJetVars.phf = cumulator;
+    fJetVars.phf = tmpLorentz.E();
     fJetVars.phm = tmpLorentz.m();
     
     fJetVars.elf = fElec.E();
@@ -75,7 +57,7 @@ void Analysis::TypeSort()
     fJetVars.muf = fMuon.E();
     fJetVars.mum = fMuon.m();
     
-    double scale = fJetVars.chf + fJetVars.nhf + fJetVars.phf + fJetVars.elf + fJetVars.muf;
+    double scale = fEtSum.E();
     fJetVars.chf /= scale;
     fJetVars.nhf /= scale;
     fJetVars.phf /= scale;

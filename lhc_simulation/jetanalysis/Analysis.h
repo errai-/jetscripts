@@ -31,7 +31,7 @@ public :
     virtual Double_t PTD();
     virtual Double_t Sigma2();
 
-    virtual void     PostProcessing();
+    virtual void     PostProcessing(unsigned = 0);
     
 protected:
     vector<fastjet::PseudoJet> fCutJetParts;

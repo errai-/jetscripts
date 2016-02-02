@@ -21,27 +21,12 @@ void Histograms::InitFP(){
     }
 }
 
-void Histograms::EventProcessing()
+void Histograms::PostProcessing(unsigned i)
 {
-    fastjet::ClusterSequence fClustSeq(fJetInputs, fJetDef);
-    vector< fastjet::PseudoJet > unsorteds = fClustSeq.inclusive_jets( fMinPT );
-    fSortedJets = sorted_by_pt( unsorteds );
-    
-    /* Abort if the event does not meet quality specifications */
-    fJetVars.SetZero();
-    if (!SelectionParams())
-        return;
-    
-    if (!JetLoop())
-        return;
-
-    fQuarkJetCharge = ChargeSign(fFlavour);
-    fOutTree->Fill();
-    for (unsigned jet = 0; jet < fSortedJets.size(); ++jet) {
-        if ( fabs(fSortedJets[jet].eta() > 1.3) )
-            continue;
-        HistFill(jet);
-    }
+    for (auto i = 0u, N = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size())); i < N; ++i)
+        if (fabs(fSortedJets[i].eta()) > 1.3)
+            return;
+    HistFill(i);
 }
 
 void Histograms::Finalize()
@@ -70,6 +55,13 @@ int Histograms::ChargeSign( int id )
 
 void Histograms::HistFill(int i)
 {
+    if ( i == 0 )
+        i = 1;
+    else if ( 1 == 1 )
+        i = 0;
+    else
+        return;
+    
     FillerHandle( fractionProfilesAll, fSortedJets[i].pt(), fEtSum.E() );
     if (fFlavour==21) {
         gluonQuark->Fill( fSortedJets[i].pt(), 1);

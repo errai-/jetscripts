@@ -164,9 +164,7 @@ bool JetBase::JetLoop()
         if (fParticleStudy)
             ParticleLoop(); /* Operations on jet particles */
 
-            
-            
-        PostProcessing();
+        PostProcessing(i);
 
         fJetEvent->AddJet(fSortedJets[i].px(),
                           fSortedJets[i].py(),
@@ -373,7 +371,6 @@ bool JetBase::SelectionParams()
 {
     if ( fSortedJets.size() == 0 ) return false;
 
-    unsigned jet_counter = 0;
     if (fMode == 0) {
         
         fJetVars.Alpha = 0;
@@ -495,10 +492,9 @@ bool JetBase::SelectionParams()
             return false;
     }
     if (fJetCuts) {
-        for (auto i = 0u; i < jet_counter; ++i) {
+        for (auto i = 0u, N = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size())); i < N; ++i)
             if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()) > 2.5)
                 return false;
-        }
     }
 
     return true;

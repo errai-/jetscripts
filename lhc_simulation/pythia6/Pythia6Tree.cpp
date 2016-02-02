@@ -117,7 +117,7 @@ void Pythia6Tree::ModeSettings() {
 
 
 void Pythia6Tree::GeneralSettings() {
-    int tune = 1;
+    int tune = 0;
     
     mPythia->SetMSTU(21,1); // Check for errors
     mPythia->SetMSTJ(22,2); // Unstable particle decay:

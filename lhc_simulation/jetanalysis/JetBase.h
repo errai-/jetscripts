@@ -75,7 +75,7 @@ public :
     /* Study particle types in the clustered jets */
     virtual void        ParticleLoop();
     virtual inline void EventProcessing();
-    virtual inline void PostProcessing() { return; }
+    virtual inline void PostProcessing(unsigned = 0) { return; }
     
     virtual void        ParticlesToJetsorterInput();
     /* Event type specific cuts */

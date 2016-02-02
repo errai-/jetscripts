@@ -32,7 +32,7 @@
 
 void stackModify(TH1D *setter){
   setter->GetXaxis()->SetTitle("p_{T} (GeV)");
-  setter->GetYaxis()->SetTitle("Relative energy fraction");
+  setter->GetYaxis()->SetTitle("Energy fraction difference");
   setter->SetStats(0);
   setter->GetXaxis()->SetMoreLogLabels();
   setter->GetXaxis()->SetNoExponent();
@@ -108,8 +108,8 @@ int runPFSortedJets(std::string fileName1, std::string fileName2) {
         //fracs1[i]->Add( dummy, -1 );
         fracs1[i]->Scale(100);
         fracs1[i]->SetMarkerStyle(20);
-        fracs1[i]->SetMaximum( 3 );
-        fracs1[i]->SetMinimum( -2 );
+        fracs1[i]->SetMaximum( 1.5 );
+        fracs1[i]->SetMinimum( -1.5 );
         fracs1[i]->Draw("sameP");
     }
 

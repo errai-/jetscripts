@@ -21,6 +21,7 @@ public :
         JetBase::JetBase(tree, file1, file2, mode, definition)
     {
         fParticleStudy = true;
+        fJetCuts = false;
         gluonQuark = new TProfile("gq","gq",ptBins,ptRange);  
         InitFP();
     }
@@ -28,7 +29,7 @@ public :
     virtual void     InitFP();
     virtual void     Finalize();
 
-    virtual void     EventProcessing();
+    virtual void     PostProcessing(unsigned = 0);
         
     virtual Int_t    ChargeSign(Int_t);
     virtual void     FillerHandle( vector<TProfile*> &, Double_t, Double_t );

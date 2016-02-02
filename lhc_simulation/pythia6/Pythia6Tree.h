@@ -37,9 +37,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-/* Header file to access Pythia 8 program elements. */
-#include "Pythia8/Pythia.h"
-
 /* ROOT */
 #include "TROOT.h"
 #include "TFile.h"

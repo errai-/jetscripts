@@ -103,8 +103,8 @@ int runPFSortedJets(std::string fileName) {
     TLegend *leg = tdrLeg(0.83,0.1,0.98,0.93);
     leg->AddEntry( PFfracs[4], "rest", "f" );
     leg->AddEntry( PFfracs[3], "elf+muf", "f" );
-    leg->AddEntry( PFfracs[1], "nhf", "f" );
-    leg->AddEntry( PFfracs[2], "phf", "f" );
+    leg->AddEntry( PFfracs[2], "nhf", "f" );
+    leg->AddEntry( PFfracs[1], "phf", "f" );
     leg->AddEntry( PFfracs[0], "chf", "f" );
     leg->SetTextSize(0.045);
 

@@ -134,7 +134,8 @@ int runPFSortedJets(std::string fileName) {
   latex.SetTextSize(0.6*0.07);    
 
   partFracs->Draw("same");
-  latex.DrawLatex(0.77,0.85,"Pythia 6 Z2*");
+  latex.DrawLatex(0.77,0.85,"Pythia 8 CUETP8S1");
+  //latex.DrawLatex(0.77,0.85,"Pythia 6 Z2*");
   //errorFracs->Draw("same");
   
   fixOverlay();
