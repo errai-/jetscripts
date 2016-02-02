@@ -31,7 +31,7 @@ do
     NAMES+="particles_pythia8_"$P8FILE".root"
     NAMES+=" "
     if [ $i -eq 0 ]; then
-        BODY+=$(python -c "import sys; import re; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $P8FILE)
+        BODY+=$P8FILE
     fi
 done
 
@@ -40,7 +40,7 @@ do
     wait ${pidArr[$i]}
 done
 
-MERGE="particles_pythia8_"$BODY".root"
+MERGE="particles_pythia8_"$BODY"f.root"
 
 if [ $NUM_PROC -gt 1 ]; then
     hadd -f $MERGE $NAMES
@@ -54,7 +54,7 @@ else
 fi
 
 if [ $DEBUG -eq 0 ]; then
-    rm $BODY*.cmnd
+    rm $(python -c "import sys; import re; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $BODY)*.cmnd
 fi
 
 xrdcp $MERGE root://eoscms.cern.ch//eos/cms/store/group/phys_jetmet/hsiikone/.
