@@ -3,6 +3,7 @@
 NUM_EVT=$1
 JOB_TYPE=$2
 NUM_PROC=$3
+DIVINE_IDX=$4
 DEBUG=0
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
@@ -11,9 +12,9 @@ cd pythia8
 
 pidArr=()
 NAMES=""
-for (( i=1; i<=$NUM_PROC; i++ ))
+for (( i=0; i<$NUM_PROC; i++ ))
 do
-    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
+    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $(($i+$DIVINE_IDX)))
     ./pythia8.exe $JOB_TYPE $P8FILE &
     pidArr+=($!)
     pidArr+=" "
@@ -25,8 +26,8 @@ for (( i=1; i<=$NUM_PROC; i++ ))
 do
     wait ${pidArr[$i]}
 done
-
-MERGE="particles_pythia8_"$(python -c "import sys; word = sys.argv[1]; print word[0:-2]" $P8FILE)".root"
+BODY=$(python -c "import sys; import re; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $P8FILE)
+MERGE="particles_pythia8_"$BODY".root"
 
 if [ $NUM_PROC -gt 1 ]; then
     hadd -f $MERGE $NAMES
@@ -40,8 +41,7 @@ else
 fi
 
 if [ $DEBUG -eq 0 ]; then
-    REMAIN=$(python -c "import sys; word = sys.argv[1]; print word[0:-2]" $P8FILE)
-    rm $REMAIN*.cmnd
+    rm $BODY*.cmnd
 fi
 
 mv $MERGE ..

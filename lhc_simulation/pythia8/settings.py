@@ -25,7 +25,7 @@ pdf = 0
 eScale = 0
 
 # Read run settings from command line parameters
-if len(sys.argv) != 6:
+if len(sys.argv) != 5:
     print "Incorrect amount of command line parameters"
     sys.exit()
 
@@ -33,7 +33,6 @@ tot_evts = int(sys.argv[1])
 mode = int(sys.argv[2])
 procs = int(sys.argv[3])
 proc_id = int(sys.argv[4])
-start_id = int(sys.argv[5])
 
 if tot_evts%procs!=0:
     print "Number of processors and events should fit"
@@ -56,7 +55,7 @@ name += "_"
 name += str(tot_evts)
 
 name += "_"
-name += str(proc_id+start_id)
+name += str(proc_id)
 
 print name
 name += ".cmnd"
@@ -64,7 +63,7 @@ name += ".cmnd"
 f = open(name,'w')
 
 f.write("Random:setSeed = on\n")
-f.write("Random:seed = {}\n\n".format(seeds[start_id+proc_id]) )
+f.write("Random:seed = {}\n\n".format(seeds[proc_id]) )
 
 f.write("Main:numberOfEvents = {}\n\n".format(tot_evts/procs))
 

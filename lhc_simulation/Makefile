@@ -16,6 +16,7 @@ INCLUDE := $(INCLUDE) -I.
 NUM_EVT := 1000
 MODE := 0
 NUM_PROC := 1
+START_IDX := 0
 
 all: pythia8 pythia6 libHerwigppTree.so jetanalysis ptcut
 
@@ -128,7 +129,7 @@ pythia8.o: Pythia8Tree.cpp libPrtclEvent.so
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(PYTHIA8) -ldl -o $@
 
 run_pythia8:
-	bash bash/pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
+	bash bash/pythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC) $(START_IDX)
 
 # Pythia6
 

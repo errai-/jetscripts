@@ -20,10 +20,10 @@ WRKDIR=/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/pythia8
 
 pidArr=()
 NAMES=""
-for (( i=1; i<=$NUM_PROC; i++ ))
+for (( i=0; i<$NUM_PROC; i++ ))
 do
     cp $WRKDIR/settings.py .
-    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i $DIVINE_IDX)
+    P8FILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $(($i+$DIVINE_IDX)))
     $WRKDIR/pythia8.exe $JOB_TYPE $P8FILE &
     pidArr+=($!)
     pidArr+=" "
