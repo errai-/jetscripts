@@ -13,7 +13,7 @@ JetBase::JetBase(TTree *tree,
                  fJetCuts       (true),
                  fParamCuts     (true),
                  fInitialized   (true),
-                 fAddNonJet     (true),
+                 fAddNonJet     (false),
                  fParticleStudy (false),
                  fR             (0.5),
                  fMinPT         (10.),
@@ -286,7 +286,7 @@ void JetBase::ParticlesToJetsorterInput()
              * Depending on the event type these can be exlucded from jet
              * clustering and stored to AuxInputs. */
             
-            if (fMode==0) {
+            if (fMode==0 || fMode==1) {
                 /* pi0 photons in generic events */
                 fJetInputs.push_back(particleTemp);
             } else if (fMode==2) {
@@ -299,7 +299,7 @@ void JetBase::ParticlesToJetsorterInput()
                 /* charged lepton from W stored to output */
                 fTheLepton = particleTemp;
                 
-            if (fAddNonJet)
+            if (fAddNonJet && (fMode==2||fMode==3))
                 fJetVars.SetZero();
                 fJetEvent->AddJet(particleTemp.px(),
                                     particleTemp.py(),
