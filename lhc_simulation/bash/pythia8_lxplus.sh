@@ -14,6 +14,7 @@ JOB_TYPE=$2
 NUM_PROC=$3
 DIVINE_IDX=$4
 DEBUG=0
+BODY=""
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
 WRKDIR=/afs/cern.ch/user/h/hsiikone/Cern/jetscripts/lhc_simulation/pythia8
@@ -29,6 +30,9 @@ do
     pidArr+=" "
     NAMES+="particles_pythia8_"$P8FILE".root"
     NAMES+=" "
+    if [ $i -eq 0 ]; then
+        BODY+=$(python -c "import sys; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $P8FILE)
+    fi
 done
 
 for (( i=1; i<=$NUM_PROC; i++ ))
@@ -36,7 +40,6 @@ do
     wait ${pidArr[$i]}
 done
 
-BODY=$(python -c "import sys; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $P8FILE)
 MERGE="particles_pythia8_"$BODY".root"
 
 if [ $NUM_PROC -gt 1 ]; then

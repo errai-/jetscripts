@@ -363,17 +363,21 @@ bool P8ZmumujetTree::MuonAdd(unsigned prt)
 
 bool P8ttbarjetTree::ProcessParticle(unsigned prt)
 {
+    cout << "Neger" << endl;
     if (Pythia8Tree::ProcessParticle(prt))
         return true;
 
+    cout << "Neger" << endl;
     /* Add the outgoing hard process lepton */
     if ( mEvent[prt].statusAbs()==23 && mEvent[prt].idAbs() < 20 )
         return LeptonAdd( prt );
 
+    cout << "Neger" << endl;
     /* Special final-state particles have already been added */
     if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0 )
         return true;
 
+    cout << "Neger" << endl;
     /* pi0 photons in a generic event have the status 2 */
     if ( mEvent[prt].isFinal() )
         ParticleAdd( prt, 1 );
