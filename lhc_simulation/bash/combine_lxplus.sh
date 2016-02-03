@@ -16,9 +16,10 @@ TOTALPATH=root://eoscms.cern.ch//eos/cms/$WRKDIR
 COMMAND=$TOTALPATH/$FILE
 COMMAND+="_"
 COMMAND+=$FINALTAG
-COMMAND+=".root "
+COMMAND+=".root"
 COMBINE=$(ls $TOTALPATH/$FILE*)
 for fname in `cat $COMBINE`; do
+    $COMMAND+=" "
     $COMMAND+=$TOTALPATH/$fname
 done
 echo $COMMAND
