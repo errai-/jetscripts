@@ -11,7 +11,7 @@ FINALTAG=$2
 SUBDIR=$3
 
 WRKDIR=store/group/phys_jetmet/hsiikone/$SUBDIR
-TOTALPATH=root://eoscms.cern.ch//eos/cms/$WRKDIR/
+TOTALPATH=root://eoscms.cern.ch//eos/cms/$WRKDIR
 
 COMMAND=$TOTALPATH/$FILE
 COMMAND+="_"
