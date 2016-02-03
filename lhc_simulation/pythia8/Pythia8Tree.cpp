@@ -70,8 +70,8 @@ void Pythia8Tree::EventLoop()
     std::size_t numEvent = 0;
     while (numEvent != mNumEvents) {
         if (!mPythia.next()) continue;
-
-        if ( !ParticleLoop() ) continue;
+        if (!ParticleLoop()) continue;
+        
         /* Print event listing */
         //mEvent.list();
 
@@ -113,12 +113,11 @@ bool Pythia8Tree::ParticleLoop()
         if (!ProcessParticle(prt))
             return false;
     }
-    
     /* Sanity checks */
     if (   (mMode<4 && mHardProcCount !=2)
         || (mMode==2 && mSpecialIndices.size()!=1)
         || (mMode==3 && mSpecialIndices.size()!=2) 
-        || (mMode==4 && mHardProcCount != 4) ) 
+        || (mMode==4 && mHardProcCount != 6) ) 
     {
         throw std::logic_error("Unexpected hard process structure");
     }
@@ -247,7 +246,7 @@ bool P8GenericTree::ProcessParticle(unsigned int prt)
     /* pi0 photons in a generic event have the status 2 */
     if ( mEvent[prt].isFinal() ) {
         int saveStatus = 1;
-        if ( (mMode==0||mMode==1) && mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
+        if ( mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
         ParticleAdd( prt, saveStatus );
     }
     
@@ -261,8 +260,11 @@ bool P8DijetTree::ProcessParticle(unsigned prt)
         return true;
 
     /* Final particles */
-    if ( mEvent[prt].isFinal() )
+    if ( mEvent[prt].isFinal() ) {
+        int saveStatus = 1;
+        if ( mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
         ParticleAdd( prt, 1 );
+    }
     
     return true;
 } // ProcessParticle : Dijet

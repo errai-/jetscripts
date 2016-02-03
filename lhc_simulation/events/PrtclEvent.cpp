@@ -30,7 +30,7 @@ PrtclEvent::PrtclEvent()
     PrtclData::Class()->IgnoreTObjectStreamer();
     fN_Prtcl = 0;
     /* TClonesArray is dynamic in size, use 1000 for an approximation of the memory needed */
-    if (!fgPrtcls) fgPrtcls = new TClonesArray("PrtclData",1000);
+    if (!fgPrtcls) fgPrtcls = new TClonesArray("PrtclData",5000);
     fPrtcls = fgPrtcls;
 }
 
