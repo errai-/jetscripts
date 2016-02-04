@@ -108,7 +108,7 @@ int runPFSortedJets(std::string fileName1, std::string fileName2) {
         //fracs1[i]->Add( dummy, -1 );
         fracs1[i]->Scale(100);
         fracs1[i]->SetMarkerStyle(20);
-        fracs1[i]->SetMaximum( 1.5 );
+        fracs1[i]->SetMaximum( 2.5 );
         fracs1[i]->SetMinimum( -1.5 );
         fracs1[i]->Draw("sameP");
     }

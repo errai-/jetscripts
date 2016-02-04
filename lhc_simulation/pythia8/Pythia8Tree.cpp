@@ -262,10 +262,10 @@ bool P8DijetTree::ProcessParticle(unsigned prt)
     /* Final particles */
     if ( mEvent[prt].isFinal() ) {
         int saveStatus = 1;
-        if ( mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
-        ParticleAdd( prt, 1 );
+        if ( mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2;
+        ParticleAdd( prt, saveStatus );
     }
-    
+
     return true;
 } // ProcessParticle : Dijet
 
