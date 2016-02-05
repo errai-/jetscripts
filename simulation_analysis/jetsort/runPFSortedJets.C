@@ -140,7 +140,8 @@ int runPFSortedJets(std::string fileName) {
   
   gPad->RedrawAxis();
   //fixOverlay();
-  ////canv->SaveAs("efracs.pdf"); 
+  //canv->SaveAs("p6_z2star.pdf");
+  canv->SaveAs("p8_cuetp8s1.pdf"); 
   // Done.
   return 0;
 }

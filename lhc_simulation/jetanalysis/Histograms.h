@@ -22,6 +22,7 @@ public :
     {
         fParticleStudy = true;
         fJetCuts = false;
+        fOpposite = false;
         gluonQuark = new TProfile("gq","gq",ptBins,ptRange);  
         InitFP();
     }
@@ -40,6 +41,7 @@ public :
 protected:
     vector<PseudoJet> fCutJetParts;
     int fQuarkJetCharge;
+    bool fOpposite;
     
 //////////
 // Graphs:

@@ -55,12 +55,16 @@ int Histograms::ChargeSign( int id )
 
 void Histograms::HistFill(int i)
 {
-    if ( i == 0 )
-        i = 1;
-    else if ( 1 == 1 )
-        i = 0;
-    else
+    if ( fOpposite ) {
+        if ( i == 0 )
+            i = 1;
+        else if ( 1 == 1 )
+            i = 0;
+        else
+            return;
+    } else if ( i > 1 ) {
         return;
+    }
     
     FillerHandle( fractionProfilesAll, fSortedJets[i].pt(), fEtSum.E() );
     if (fFlavour==21) {

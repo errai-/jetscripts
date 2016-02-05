@@ -32,7 +32,7 @@
 
 void stackModify(TH1D *setter){
   setter->GetXaxis()->SetTitle("p_{T} (GeV)");
-  setter->GetYaxis()->SetTitle("Energy fraction difference");
+  setter->GetYaxis()->SetTitle("Energy fraction difference (%)");
   setter->SetStats(0);
   setter->GetXaxis()->SetMoreLogLabels();
   setter->GetXaxis()->SetNoExponent();
@@ -84,7 +84,7 @@ void WorkHorse(vector<TH1D*>& PFfracs, std::string fileName) {
     PFfracs[4]->SetFillColor(kCyan);
 }
 
-int runPFSortedJets(std::string fileName1, std::string fileName2) {
+int runPFRelative(std::string fileName1, std::string fileName2) {
 
     // Create file on which histogram(s) can be saved.
     // THStack* partFracs = new THStack("particlestacks", "");
@@ -116,7 +116,7 @@ int runPFSortedJets(std::string fileName1, std::string fileName2) {
 
     TLegend *leg = tdrLeg(0.83,0.1,0.98,0.93);
     leg->AddEntry( fracs1[4], "rest", "f" );
-    leg->AddEntry( fracs1[3], "elf+muf", "f" );
+    leg->AddEntry( fracs1[3], "elf+#muf", "f" );
     leg->AddEntry( fracs1[2], "nhf", "f" );
     leg->AddEntry( fracs1[1], "phf", "f" );
     leg->AddEntry( fracs1[0], "chf", "f" );
@@ -131,7 +131,7 @@ int runPFSortedJets(std::string fileName1, std::string fileName2) {
     latex.SetTextAlign(31);
     latex.SetTextSize(0.6*0.07);
 
-    latex.DrawLatex(0.7,0.88,"Pythia 6 Z2*/Pythia8 CUETP8S1");
+    latex.DrawLatex(0.7,0.88,"Pythia 6 Z2* - Pythia8 CUETP8S1");
 //
 //    fixOverlay();
 //    canv->Print("efracs.pdf"); 
