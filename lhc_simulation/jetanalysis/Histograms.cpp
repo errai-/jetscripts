@@ -23,8 +23,8 @@ void Histograms::InitFP(){
 
 void Histograms::PostProcessing(unsigned i)
 {
-    for (auto i = 0u, N = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size())); i < N; ++i)
-        if (fabs(fSortedJets[i].eta()) > 1.3)
+    for (auto jet = 0u, N = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size())); jet < N; ++jet)
+        if (fabs(fSortedJets[jet].eta()) > 1.3)
             return;
     HistFill(i);
 }
