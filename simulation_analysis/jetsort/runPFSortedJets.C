@@ -138,8 +138,9 @@ int runPFSortedJets(std::string fileName) {
   //latex.DrawLatex(0.77,0.85,"Pythia 6 Z2*");
   //errorFracs->Draw("same");
   
-  fixOverlay();
-  canv->Print("efracs.pdf"); 
+  gPad->RedrawAxis();
+  //fixOverlay();
+  ////canv->SaveAs("efracs.pdf"); 
   // Done.
   return 0;
 }
