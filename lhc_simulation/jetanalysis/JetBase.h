@@ -81,6 +81,8 @@ public :
     /* Event type specific cuts */
     virtual Bool_t      SelectionParams();
     
+    virtual Bool_t      IsolatedLepton(PseudoJet lepton, double R, double limit);
+    
     /* The classically best jet flavour definition in terms of robustness. */
     virtual void        PhysicsFlavor(unsigned);
     /* Ghost parton jet clustering for the physics definition.

@@ -298,16 +298,17 @@ void JetBase::ParticlesToJetsorterInput()
             } else if (fMode==4) {
                 /* charged lepton from W stored to output */
                 fTheLepton = particleTemp;
+            }
                 
-            if (fAddNonJet && (fMode==2||fMode==3))
+            if (fAddNonJet && (fMode==2||fMode==3)) {
                 fJetVars.SetZero();
                 fJetEvent->AddJet(particleTemp.px(),
-                                    particleTemp.py(),
-                                    particleTemp.pz(),
-                                    particleTemp.e(),
-                                    fJetVars,
-                                    fWeight,
-                                    pdgID);
+                                  particleTemp.py(),
+                                  particleTemp.pz(),
+                                  particleTemp.e(),
+                                  fJetVars,
+                                  fWeight,
+                                  pdgID);
             }
         } else if (stat==3) {
             /* Outgoing hard process particles - these are used with some of the
@@ -371,6 +372,7 @@ bool JetBase::SelectionParams()
 {
     if ( fSortedJets.size() == 0 ) return false;
 
+    unsigned studyJets = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size()));
     if (fMode == 0) {
         
         fJetVars.Alpha = 0;
@@ -452,23 +454,20 @@ bool JetBase::SelectionParams()
         if ( fSortedJets.size() < 4 ) {
             return false;
         }
-
-        if (fJetCuts) {
-            for ( auto i = 0u; i < 4; ++i ) {
-                if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()) > 2.4) {
-                    return false;
-                }
-            }
-        }
+        studyJets = 4;
 
         /* Check that there is only one charged lepton.
          * Special measures if a "false lepton" passes through the filter. */
         bool unwanted_lepton = false;
+        cout << fLeptons.size() << endl;
+        cout << "True lepton status: " << IsolatedLepton(fTheLepton,0.4,0.12) << endl;
+        cout << fTheLepton.e() << endl;
         for ( auto lept : fLeptons ) {
             if (lept.pt() > 33 && fabs(lept.eta()) < 2.1) {
-                if (!unwanted_lepton)
+                if (!unwanted_lepton) {
                     unwanted_lepton = true;
-                else
+                    cerr << "False lepton status: " << IsolatedLepton(lept,0.4,0.12) << endl;
+                } else
                     return false;
             }
         }
@@ -481,7 +480,9 @@ bool JetBase::SelectionParams()
             return false;
         }
         
-        return true;
+        /* Treated as dummies here for now */
+        fJetVars.Alpha = 0;
+        fJetVars.DPhi = 3;
     } else {
         throw std::runtime_error("Mode problematic");
     }
@@ -492,11 +493,30 @@ bool JetBase::SelectionParams()
             return false;
     }
     if (fJetCuts) {
-        for (auto i = 0u, N = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size())); i < N; ++i)
+        for (auto i = 0u; i < studyJets; ++i)
             if (fSortedJets[i].pt() < 30 || fabs(fSortedJets[i].eta()) > 2.5)
                 return false;
     }
 
+    return true;
+}
+
+
+Bool_t JetBase::IsolatedLepton(PseudoJet lepton, double R, double limit)
+{
+    unsigned id = lepton.user_index();
+    
+    double E_dR = 0;
+    for (auto part : fJetInputs) {
+        if ( part.user_index() < 0 || part.user_index() == id )
+            continue;
+        double dR = lepton.delta_R(part);
+        if ( dR < R )
+            E_dR += part.e();
+    }
+    cout << E_dR/lepton.e() << endl;
+    if (E_dR/lepton.e() > limit)
+        return false;
     return true;
 }
 
