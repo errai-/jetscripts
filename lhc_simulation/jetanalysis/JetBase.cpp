@@ -13,7 +13,7 @@ JetBase::JetBase(TTree *tree,
                  fJetCuts       (true),
                  fParamCuts     (true),
                  fInitialized   (true),
-                 fAddNonJet     (false),
+                 fAddNonJet     (true),
                  fParticleStudy (false),
                  fR             (0.5),
                  fMinPT         (10.),
@@ -300,7 +300,7 @@ void JetBase::ParticlesToJetsorterInput()
                 fTheLepton = particleTemp;
             }
                 
-            if (fAddNonJet && (fMode==2||fMode==3)) {
+            if (fAddNonJet && (fMode==2||fMode==3||fMode==4)) {
                 fJetVars.SetZero();
                 fJetEvent->AddJet(particleTemp.px(),
                                   particleTemp.py(),
@@ -456,28 +456,16 @@ bool JetBase::SelectionParams()
         }
         studyJets = 4;
 
-        /* Check that there is only one charged lepton.
-         * Special measures if a "false lepton" passes through the filter. */
-        bool unwanted_lepton = false;
-        cout << fLeptons.size() << endl;
-        cout << "True lepton status: " << IsolatedLepton(fTheLepton,0.4,0.12) << endl;
-        cout << fTheLepton.e() << endl;
-        for ( auto lept : fLeptons ) {
-            if (lept.pt() > 33 && fabs(lept.eta()) < 2.1) {
-                if (!unwanted_lepton) {
-                    unwanted_lepton = true;
-                    cerr << "False lepton status: " << IsolatedLepton(lept,0.4,0.12) << endl;
-                } else
-                    return false;
-            }
-        }
+        /* Quality check for primary lepton */
+        if (fTheLepton.pt() < 33 || fabs(fTheLepton.eta()) > 2.1 || !IsolatedLepton(fTheLepton))
+            return false;
 
-        if (fTheLepton.pt() < 33 || fabs(fTheLepton.eta()) > 2.1) {
-            if (unwanted_lepton)
-                cerr << "Single-lepton signal" << endl;
-            return false;
-        } else if (unwanted_lepton) {
-            return false;
+        /* Quality check for secondary leptons (required to be low-quality) */
+        for ( auto lept : fLeptons ) {
+            if (lept.pt() > 33 && fabs(lept.eta()) < 2.1 && IsolatedLepton(lept) ) {
+                cerr << "High-quality secondary lepton" << endl;
+                return false;
+            }
         }
         
         /* Treated as dummies here for now */
@@ -502,9 +490,12 @@ bool JetBase::SelectionParams()
 }
 
 
-Bool_t JetBase::IsolatedLepton(PseudoJet lepton, double R, double limit)
+Bool_t JetBase::IsolatedLepton(PseudoJet lepton)
 {
     unsigned id = lepton.user_index();
+    unsigned type = abs(fPDGCode[id]);
+    double R = (type==11) ? 0.3 : 0.4;
+    double limit = (type==11) ? 0.1 : 0.12;
     
     double E_dR = 0;
     for (auto part : fJetInputs) {
@@ -514,7 +505,6 @@ Bool_t JetBase::IsolatedLepton(PseudoJet lepton, double R, double limit)
         if ( dR < R )
             E_dR += part.e();
     }
-    cout << E_dR/lepton.e() << endl;
     if (E_dR/lepton.e() > limit)
         return false;
     return true;

@@ -43,6 +43,8 @@ void JetPlot::PostLoop()
             else
                 flavId = -2;
             fJetVars.constituents = 2;
+        } else if ( status == 2 ) {
+            fJetVars.constituents = 9;
         } else if ( status == 3 ) {
             if ( fPDGCode[i] > 0 ) {
                 fJetVars.constituents = 3;

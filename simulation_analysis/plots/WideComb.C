@@ -24,7 +24,7 @@ const double radius2 = TMath::Power(0.5,2);
 const bool lines = true;
 const bool connect = false;
 const bool useflav = true;
-const bool printflav = false;
+const bool printflav = true;
 const bool printremn = false;
 const bool skip = false;
 const double pi2 = 2*TMath::Pi();
@@ -32,6 +32,7 @@ const double separation2 = TMath::Power(25,2);
 const unsigned stop = 600;
 
 bool accept() {
+    cout << "OK? (y/n) ";
     string ses;
     cin >> ses;
     if ( ses == "y" ) return true;
@@ -148,13 +149,13 @@ void EtaPhi::Loop()
             cout << jentry << endl;
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
-            TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
             if (fl < 0 || fl == 10)
                 continue;
+            TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
             jets.push_back(j);
 
             if (printflav)
-                cout << " " << fl << endl;
+                cout << " " << fl << " " << t.E() << endl;
             if ( fl != 0 )
                 ++count;
 
@@ -162,9 +163,8 @@ void EtaPhi::Loop()
                 stahp = true;
                 break;
             }
-
             if ( jets.size() < 3 ) {
-            ulos << jentry << " " << fFlav[j] << endl;
+                ulos << jentry << " " << fFlav[j] << endl;
                 phi_sum += t.Phi()*t.Pt();
                 pt_sum += t.Pt();
                 phi_diff += t.Phi()*TMath::Power(-1.0,int(jets.size()));
@@ -290,6 +290,9 @@ void EtaPhi::Loop()
                     sty = kCircle;
                     antiquarks.push_back( std::make_pair( j, fl ) );
                 }
+            } else if ( group == 9 ) {
+                col = kCyan+2;
+                sty = kOpenSquare;
             } else {
                 continue;
             }
@@ -297,7 +300,7 @@ void EtaPhi::Loop()
             if (saizu < 0)
                 continue;
 
-            if ( group > 2 && group < 6 )
+            if ( (group > 2 && group < 6) || group == 9 )
                 saizu *= 2;
 
             TGraph *f = new TGraph(1);
