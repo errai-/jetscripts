@@ -408,9 +408,9 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
         if (mEvent[prt].idAbs()==15)
             return false;
     } else {
-        /* Neutrinos - ignored */
+        /* Neutrinos - also saved. (Secondary neutrinos ignored.) */
         if (mEvent[prt].isFinal())
-            ParticleAdd( prt, 1 );
+            ParticleAdd( prt, 2 );
         return true;
     }
     mSpecialIndices.push_back(prt);

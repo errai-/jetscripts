@@ -299,7 +299,13 @@ void JetBase::ParticlesToJetsorterInput()
                 /* charged lepton from W stored to output */
                 fTheLepton = particleTemp;
             }
-                
+            
+            if (pdgID == 12 || pdgID == 14 || pdgID == 16) {
+                fMET += particleTemp;
+            }
+            
+            /* Add gamma/lepton in certain event types as a jet. 
+             * Status: lepton or gamma particle code. */
             if (fAddNonJet && (fMode==2||fMode==3||fMode==4)) {
                 fJetVars.SetZero();
                 fJetEvent->AddJet(particleTemp.px(),
@@ -308,7 +314,7 @@ void JetBase::ParticlesToJetsorterInput()
                                   particleTemp.e(),
                                   fJetVars,
                                   fWeight,
-                                  pdgID);
+                                  fabs(pdgID) );
             }
         } else if (stat==3) {
             /* Outgoing hard process particles - these are used with some of the
@@ -353,6 +359,7 @@ void JetBase::ParticlesToJetsorterInput()
         }
         /* Unnecessary particles are implicitly discarded */
     }
+
     /* The MET-"jet" is given a status 10 */
     fJetVars.SetZero();
     if (fAddNonJet)

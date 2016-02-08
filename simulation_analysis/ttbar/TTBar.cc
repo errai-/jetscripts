@@ -14,6 +14,7 @@
 #include <cassert>
 #include <vector>
 #include <utility>
+#include <locale>
 
 #include "tdrstyle_mod14.C"
 
@@ -41,7 +42,7 @@ inline bool compatibility(double mass_sum, double mass_diff) {
 inline bool mass_study(double m1, double m2, double n1, double n2, bool noisy, int& id) {
     double sum_1 = m1+n2, sum_2 = m2+n1;
     double diff_1 = fabs(m1-n2), diff_2 = fabs(m2-n1);
-    
+
     unsigned success_count = 0;
     if (compatibility(sum_1,diff_1)) {
         ++success_count;
@@ -54,8 +55,11 @@ inline bool mass_study(double m1, double m2, double n1, double n2, bool noisy, i
         if (noisy)
             cout << "Lepton t " << m2 << " Jet t " << n1 << endl;
         id = 1;
+        if (success_count>1)
+            if (diff_1<diff_2)
+                id = 0;
     }
-    
+
     if (success_count > 0)
         return true;
     return false;
@@ -66,11 +70,11 @@ void Fracs(string file) {
 
 /* Initialization */
     gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
-    TH1D *Wlepton = new TH1D("","m_W lepton",50,60.0,110.0);
-    TH1D *Wjet = new TH1D("","m_W jet",50,60.0,110.0);
-    TH1D *Wjetc = new TH1D("","m_W jet",50,60.0,110.0);
-    TH1D *tlepton = new TH1D("","m_t lepton",100,140.0,240.0);
-    TH1D *tjet = new TH1D("","m_t jet",100,140.0,240.0);
+    TH1D *Wlepton = new TH1D("","m_W lepton",180,60.0,120.0);
+    TH1D *Wjet = new TH1D("","m_W jet",180,60.0,120.0);
+    TH1D *Wjetc = new TH1D("","m_W jet",200,0.0,300.0);
+    TH1D *tlepton = new TH1D("","m_t lepton",200,140.0,220.0);
+    TH1D *tjet = new TH1D("","m_t jet",200,140.0,220.0);
     TH1D *bboth = new TH1D("","m_b jet",100,3,23);
     TH1D *rbq = new TH1D("","pTb/pTW",100,0,3);
     
@@ -104,7 +108,7 @@ void Fracs(string file) {
     /* event loop */
     std::size_t mCount = 0;
     std::size_t mN = jetTree->GetEntries();
-    int success = 0, nonb1 = 0, nonb0 = 0, fluu = 0;
+    int success = 0, nonb1 = 0, nonb0 = 0, noflav = 0, nolw = 0, noqw = 0, nots = 0;
     for(size_t x=0; x != mN; ++x) {
         jetTree->GetEntry(x);
 
@@ -142,15 +146,21 @@ void Fracs(string file) {
             continue;
         }
         if (flav_count!=2) {
-            ++fluu;
+            ++noflav;
+            continue;
+        }
+        MET.SetE( MET.P() );
+        // Containers for combined lorentz vectors
+        TLorentzVector t1, t2, t3, t4, t5, t6;
+
+        // Reconstruct W mass from MET and the lepton
+        t1 = MET + lepton;
+        if (t1.M() < 60 || t1.M() > 110) {
+            ++nolw;
             continue;
         }
 
-        TLorentzVector t1, t2, t3, t4, t5, t6;
-        t1 = MET + lepton;
-        if (t1.M() < 60 || t1.M() > 110)
-            continue;
-
+        // Find jet pairs that correspond to the W
         vector<TLorentzVector> working;
         vector< pair<unsigned,unsigned> > working_idx;
         for (auto i = 0u; i < ljets.size()-1; ++i) {
@@ -164,28 +174,35 @@ void Fracs(string file) {
                 }
             }
         }
-        if (working.size() == 0)
+        if (working.size() == 0) {
+            ++noqw;
             continue;
-        
+        }
+
+        // Pairings of the lepton-W with bjets
         t3 = t1 + bjets[0];
         t4 = t1 + bjets[1];
-        unsigned saccess = 0;
+        unsigned tmatch = 0;
         unsigned best;
         int id;
+
+        // Find pairings of the quark-W with bjets
         for ( unsigned i = 0; i < working.size(); ++i ) {
             t5 = working[i] + bjets[0];
             t6 = working[i] + bjets[1];
             if (mass_study(t3.M(),t4.M(),t5.M(),t6.M(),false,id)) {
-                ++saccess;
+                ++tmatch;
                 t2 = working[i];
                 best = i;
             }
         }
-        if (saccess == 0)
+        if (tmatch == 0) {
+            ++nots;
             continue;
-        if (saccess > 1)
+        }
+        if (tmatch > 1)
             cerr << "    HOX" << endl;
-            
+
         ++success;
         Wlepton->Fill(t1.M());
         Wjet->Fill(t2.M());
@@ -201,7 +218,7 @@ void Fracs(string file) {
         rbq->Fill( rbqval );
         bboth->Fill( bjets[0].M() );
         bboth->Fill( bjets[1].M() );
-        
+
 //         cout << "Lepton W:" << t1.M() << " Jet W:" << t2.M() << endl;
 //         cout << "Light flavours: " << flavours[working_idx[best].first] << " " << flavours[working_idx[best].second] << endl << endl;
     }
@@ -233,6 +250,11 @@ void Fracs(string file) {
     Wjetc->SetYTitle("events");
     Wjetc->SetXTitle("m (GeV)");
     Wjetc->Draw();
-    cout << success << endl;
-    cout << nonb1 << " " << nonb0 << " " << fluu << endl;
+    cout << success << " successful matches." << endl;
+    cout << nonb1 << " missing second b." << endl;
+    cout << nonb0 << " missing first b." << endl;
+    cout << noflav << " missing light flav." << endl;
+    cout << nolw << " no lepton w match." << endl;
+    cout << noqw << " no quark w match." << noqw << endl;
+    cout << nots << " TTbar matching failed." << endl;
 }
