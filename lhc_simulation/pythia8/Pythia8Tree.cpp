@@ -1,6 +1,5 @@
 #include "Pythia8Tree.h"
 
-
 bool TTBarSelector::doVetoProcessLevel(Event& process)
 {
     unsigned leptons = 0;
@@ -404,14 +403,17 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
             if (prt == 0)
                 return false; /* Charged lepton decays to partons and a neutrino */
         }
-        /* Make sure that no taus are allowed through */
+        
         if (mEvent[prt].idAbs()==15)
-            return false;
+            cerr << "No tau decay, check settings." << endl;
     } else {
         /* Neutrinos - also saved. (Secondary neutrinos ignored.) */
-        if (mEvent[prt].isFinal())
-            ParticleAdd( prt, 2 );
-        return true;
+        while (!mEvent[prt].isFinal()) {
+            vector<int> leptons = mEvent[prt].daughterList();
+            if (leptons.size()>1)
+                cerr << "Neutrino decay, check settings." << endl;
+            prt = leptons[0];
+        }
     }
     mSpecialIndices.push_back(prt);
     ParticleAdd( prt, 2 );
