@@ -135,7 +135,7 @@ void JetBase::EventProcessing() {
 bool JetBase::JetLoop()
 {
     for (size_t i = 0; i < fSortedJets.size(); ++i) {
-        if ( i == fJetsPerEvent ) break;
+        if ( i == fJetsPerEvent || fSortedJets[i].pt()<30 ) break;
 
         fJetParts = fSortedJets[i].constituents();
 
@@ -462,7 +462,6 @@ bool JetBase::SelectionParams()
             return false;
         }
         studyJets = 4;
-
         /* Quality check for primary lepton */
         if (fTheLepton.pt() < 33 || fabs(fTheLepton.eta()) > 2.1 || !IsolatedLepton(fTheLepton))
             return false;
