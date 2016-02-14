@@ -115,11 +115,11 @@ double Analysis::Sigma2()
 void Analysis::Cuts()
 {
     fCutJetParts.clear();
-    vector<fastjet::PseudoJet> tmpParts;
-    bool cutMode = false;
+    bool cutMode = true;
 
     if (cutMode) {
         /* Explicit cuts (pt cut for photons and neutral hadrons) */
+        vector<fastjet::PseudoJet> tmpParts;
         for ( auto q : fJetParts ) {
             if ( q.user_index() < 0) continue;
             int id = abs(fPDGCode[ q.user_index() ]);

@@ -70,9 +70,11 @@ void Pythia8Tree::EventLoop()
     while (numEvent != mNumEvents) {
         if (!mPythia.next()) continue;
         if (!ParticleLoop()) continue;
+//         if (mIterCount!=0)
+//             cout << "Event: " << numEvent << " reps: " << mIterCount << endl;
         
         /* Print event listing */
-        //mEvent.list();
+//         mEvent.list();
 
         mTree->Fill();
 
@@ -103,6 +105,7 @@ bool Pythia8Tree::ParticleLoop()
     mSpecialIndices.clear();
     mHistory.clear();
     mPartonHistory.clear();
+//     mIterCount = 0;
     
     mPrtclEvent->fWeight = mPythia.info.weight();
     
@@ -208,6 +211,9 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
                                                             mEvent[prt].pz(),
                                                             mEvent[prt].e());
     }
+    int id = mEvent[prt].idAbs();
+//     if ( mEvent[prt].isFinal() && (id==12||id==14||id==16) )
+//         ++mIterCount;
     
     if ( mEvent[prt].statusAbs() == 71 || mEvent[prt].statusAbs() == 72 ) {
         /* Save final parton level */

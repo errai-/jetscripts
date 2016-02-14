@@ -36,7 +36,7 @@ JetBase::JetBase(TTree *tree,
 
     fJetsPerEvent = 2;
     if (mode==0) fJetsPerEvent = 100;
-    if (mode==1) fJetsPerEvent = 2;
+    if (mode==1) fJetsPerEvent = 100;
     if (mode==2||mode==3) fJetsPerEvent = 1;
     if (mode==4) fJetsPerEvent = 100;
     
@@ -136,6 +136,7 @@ bool JetBase::JetLoop()
 {
     for (size_t i = 0; i < fSortedJets.size(); ++i) {
         if ( i == fJetsPerEvent || fSortedJets[i].pt()<30 ) break;
+        fJetVars.SetZero();
 
         fJetParts = fSortedJets[i].constituents();
 
@@ -165,7 +166,9 @@ bool JetBase::JetLoop()
             ParticleLoop(); /* Operations on jet particles */
 
         PostProcessing(i);
-
+        
+        if (fJetVars.PTD<0.1)
+            cout << fJetVars.constituents << " " << fJetVars.PTD << " " << fJetVars.Sigma2 << endl;
         fJetEvent->AddJet(fSortedJets[i].px(),
                           fSortedJets[i].py(),
                           fSortedJets[i].pz(),

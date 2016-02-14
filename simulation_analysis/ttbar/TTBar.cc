@@ -1,83 +1,20 @@
-// This is a monstrous script for comparing jet data from pythia6, pythia8 and Herwig++
+#include "common_ttbar.h"
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TChain.h"
-#include "TProfile.h"
-#include "THStack.h"
-#include "TH1D.h"
-#include "TPad.h"
-#include "TLorentzVector.h"
-
-#include <iostream>
-#include <string>
-#include <cassert>
-#include <vector>
-#include <utility>
-#include <locale>
-
-#include "tdrstyle_mod14.C"
-
-using std::cout;
-using std::endl;
-using std::string;
-using std::vector;
-using std::pair;
-
-const int ptBins = 45.;//29.;//61.;
-const double ptRange[]=
-    //{18, 21, 24, 
-    {28, 32, 37, 43, 49,
-     56, 64, 74, 84,
-     97, 114, 133, 153, 174, 196, 220, 245, 272, 300, 330, 362, 395, 430, 468,
-     507, 548, 592, 638, 686, 737, 790, 846, 905, 967,
-     1032, 1101, 1172, 1248, 1327, 1410, 1497, 1588, 1684, 1784, 1890, 2000,
-     2116, 2238, 2366, 2500, 2640, 2787, 2941, 3103, 3273, 3450,
-     3637, 3832, 4037};
-
-inline bool compatibility(double mass_sum, double mass_diff) {
-    return (mass_sum < 400 && mass_sum > 300 && mass_diff < 50);
-}
-
-inline bool mass_study(double m1, double m2, double n1, double n2, bool noisy, int& id) {
-    double sum_1 = m1+n2, sum_2 = m2+n1;
-    double diff_1 = fabs(m1-n2), diff_2 = fabs(m2-n1);
-
-    unsigned success_count = 0;
-    if (compatibility(sum_1,diff_1)) {
-        ++success_count;
-        if (noisy)
-            cout << "Lepton t " << m1 << "Jet t " << n2 << endl;
-        id = 0;
-    }
-    if (compatibility(sum_2,diff_2)) {
-        ++success_count;
-        if (noisy)
-            cout << "Lepton t " << m2 << " Jet t " << n1 << endl;
-        id = 1;
-        if (success_count>1)
-            if (diff_1<diff_2)
-                id = 0;
-    }
-
-    if (success_count > 0)
-        return true;
-    return false;
-}
-
-
-void Fracs(string file) {
+void TTBar(string file) {
 
 /* Initialization */
     gROOT->ProcessLine(".L sim_dir/lib/libJetEvent.so");
-    TH1D *Wlepton = new TH1D("","m_W lepton",180,60.0,120.0);
-    TH1D *Wjet = new TH1D("","m_W jet",180,60.0,120.0);
+    TH1D *Wlepton = new TH1D("","m_W lepton",noW,lowerW,upperW);
+    TH1D *Wtlepton = new TH1D("","m_W true lepton",noW,lowerW,upperW);
+    TH1D *Wjet = new TH1D("","m_W jet",noW,lowerW,upperW);
     TH1D *Wjetc = new TH1D("","m_W jet",200,0.0,300.0);
-    TH1D *tlepton = new TH1D("","m_t lepton",200,140.0,220.0);
-    TH1D *tjet = new TH1D("","m_t jet",200,140.0,220.0);
+    TH1D *tlepton = new TH1D("","m_t lepton",noT,lowerT,upperT);
+    TH1D *ttlepton = new TH1D("","m_t true lepton",noT,lowerT,upperT);
+    TH1D *tjet = new TH1D("","m_t jet",noT,lowerT,upperT);
     TH1D *bboth = new TH1D("","m_b jet",100,3,23);
     TH1D *rbq = new TH1D("","pTb/pTW",100,0,3);
-    
+    TH1D *Wfrac = new TH1D("","frac",100,0.5,2);
+
     static const Int_t kMaxfJets = 100;
 
     Int_t           mJets;
@@ -116,7 +53,7 @@ void Fracs(string file) {
 
         vector<unsigned> flavours;
         vector<TLorentzVector> bjets, ljets;
-        TLorentzVector MET, lepton;
+        TLorentzVector MET, lepton, neutrino;
         unsigned flav_count = 0;
         for (int i = 0; i < mJets; ++i) {
             TLorentzVector tmpVec(mX[i],mY[i],mZ[i],mT[i]);
@@ -124,6 +61,8 @@ void Fracs(string file) {
                 MET = tmpVec;
             else if (mFlav[i]==11||mFlav[i]==13||mFlav[i]==15)
                 lepton = tmpVec;
+            else if (mFlav[i]==12||mFlav[i]==14||mFlav[i]==16)
+                neutrino = tmpVec;
             else {
                 if (tmpVec.Pt() < 30)
                     continue;
@@ -149,12 +88,17 @@ void Fracs(string file) {
             ++noflav;
             continue;
         }
+        // Interesting tests
+        MET.SetPz( neutrino.Pz() );
+        //MET.SetPz( 0 );
+        //MET.SetPz( pz_calc(lepton,MET,neutrino) );
         MET.SetE( MET.P() );
         // Containers for combined lorentz vectors
-        TLorentzVector t1, t2, t3, t4, t5, t6;
+        TLorentzVector t1, t1_alt, t2, t3, t4, t5, t6;
 
         // Reconstruct W mass from MET and the lepton
-        t1 = MET + lepton;
+        t1_alt = MET + lepton;
+        t1 = neutrino + lepton;
         if (t1.M() < 60 || t1.M() > 110) {
             ++nolw;
             continue;
@@ -204,18 +148,22 @@ void Fracs(string file) {
             cerr << "    HOX" << endl;
 
         ++success;
-        Wlepton->Fill(t1.M());
+        Wlepton->Fill(t1_alt.M());
+        Wtlepton->Fill(t1.M());
         Wjet->Fill(t2.M());
         double rbqval = (bjets[0].Pt() + bjets[1].Pt())/t2.Pt();
         Wjetc->Fill(rbqval*t2.M());
         if (id == 0) {
-            tlepton->Fill( (t1+bjets[0]).M() );
+            tlepton->Fill( (t1_alt+bjets[0]).M() );
+            ttlepton->Fill( (t1+bjets[0]).M() );
             tjet->Fill( (t2+bjets[1]).M() );
         } else {
-            tlepton->Fill( (t1+bjets[1]).M() );
+            tlepton->Fill( (t1_alt+bjets[1]).M() );
+            ttlepton->Fill( (t1+bjets[1]).M() );
             tjet->Fill( (t2+bjets[0]).M() );
         }
         rbq->Fill( rbqval );
+        Wfrac->Fill( neutrino.Pz()/MET.Pz() );
         bboth->Fill( bjets[0].M() );
         bboth->Fill( bjets[1].M() );
 
@@ -226,6 +174,10 @@ void Fracs(string file) {
     Wlepton->SetYTitle("events");
     Wlepton->SetXTitle("m (GeV)");
     Wlepton->Draw();
+    TCanvas *c11 = new TCanvas("c11");
+    Wtlepton->SetYTitle("events");
+    Wtlepton->SetXTitle("m (GeV)");
+    Wtlepton->Draw();
     TCanvas *c2 = new TCanvas("c2");
     Wjet->SetYTitle("events");
     Wjet->SetXTitle("m (GeV)");
@@ -234,22 +186,30 @@ void Fracs(string file) {
     tlepton->SetYTitle("events");
     tlepton->SetXTitle("m (GeV)");
     tlepton->Draw();
+    TCanvas *c31 = new TCanvas("c31");
+    ttlepton->SetYTitle("events");
+    ttlepton->SetXTitle("m (GeV)");
+    ttlepton->Draw();
     TCanvas *c4 = new TCanvas("c4");
     tjet->SetYTitle("events");
     tjet->SetXTitle("m (GeV)");
     tjet->Draw();
-    TCanvas *c5 = new TCanvas("c5");
-    bboth->SetYTitle("events");
-    bboth->SetXTitle("m (GeV)");
-    bboth->Draw();
-    TCanvas *c6 = new TCanvas("c6");
-    rbq->SetYTitle("events");
-    rbq->SetXTitle("rbq");
-    rbq->Draw();
-    TCanvas *c7 = new TCanvas("c7");
-    Wjetc->SetYTitle("events");
-    Wjetc->SetXTitle("m (GeV)");
-    Wjetc->Draw();
+    //TCanvas *c5 = new TCanvas("c5");
+    //bboth->SetYTitle("events");
+    //bboth->SetXTitle("m (GeV)");
+    //bboth->Draw();
+    //TCanvas *c6 = new TCanvas("c6");
+    //rbq->SetYTitle("events");
+    //rbq->SetXTitle("rbq");
+    //rbq->Draw();
+    //TCanvas *c7 = new TCanvas("c7");
+    //Wjetc->SetYTitle("events");
+    //Wjetc->SetXTitle("m (GeV)");
+    //Wjetc->Draw();
+    TCanvas *c8 = new TCanvas("c8");
+    Wfrac->SetYTitle("events");
+    Wfrac->SetXTitle("fraction");
+    Wfrac->Draw();
     cout << success << " successful matches." << endl;
     cout << nonb1 << " missing second b." << endl;
     cout << nonb0 << " missing first b." << endl;

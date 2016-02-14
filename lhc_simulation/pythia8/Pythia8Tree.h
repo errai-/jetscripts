@@ -132,8 +132,9 @@ protected:
     
     /* Indicator that the event loop can be run */
     bool                mInitialized;
-    /* A general-purpose counter for physics debugging */
+    /* A general-purpose counters for physics debugging */
     unsigned            mCounter;
+    unsigned            mIterCount;
     
     unsigned            mHardProcCount; 
     unsigned            mPartonCount;
