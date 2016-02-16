@@ -398,6 +398,7 @@ bool JetBase::SelectionParams()
          *  -Maximum jet eta of 2.5
          *  -Back-to-back angle of min 2.8 rad (2.5 rad)
          *  -A third jet has at most 30% of the average pt of the leading jets (alpha) */
+        studyJets = 2;
         
         if ( fSortedJets.size() < 2 ) 
             return false;
@@ -415,6 +416,7 @@ bool JetBase::SelectionParams()
          *  -Max jet eta of 2.5
          *  -Back-to-back angle of min 2.8 rad
          *  -A cut for the subleading jet pT with respect to gamma pT (alpha) */
+        studyJets = 1;
         
         bool gammaInJet = fTheGamma.delta_R( fSortedJets[0] ) < fR;
         bool gammaPT = fTheGamma.pt()<30;
@@ -435,6 +437,7 @@ bool JetBase::SelectionParams()
          *  -The subleading jet has smaller than 30% pT compared to the muons. (alpha)
          *  -Min. jet pT of 30GeV
          *  -Max jet eta of 2.5 */
+        studyJets = 1;
         
         if (fLeptons.size() != 2)
             return false;
@@ -460,11 +463,11 @@ bool JetBase::SelectionParams()
     } else if (fMode == 4) {
         /* ttbar events: require at least 4 jets with sufficient kinematics.
          * Additionally require single-charged lepton events */
+        studyJets = 4;
 
         if ( fSortedJets.size() < 4 ) {
             return false;
         }
-        studyJets = 4;
         /* Quality check for primary lepton */
         if (fTheLepton.pt() < 33 || fabs(fTheLepton.eta()) > 2.1 || !IsolatedLepton(fTheLepton))
             return false;
