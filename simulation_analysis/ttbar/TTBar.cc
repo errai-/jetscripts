@@ -128,16 +128,22 @@ void TTBar(string file) {
         t4 = t1 + bjets[1];
         unsigned tmatch = 0;
         unsigned best;
+        double best_diff = 10000;
         int id;
 
         // Find pairings of the quark-W with bjets
         for ( unsigned i = 0; i < working.size(); ++i ) {
             t5 = working[i] + bjets[0];
             t6 = working[i] + bjets[1];
-            if (mass_study(t3.M(),t4.M(),t5.M(),t6.M(),false,id)) {
-                ++tmatch;
-                t2 = working[i];
-                best = i;
+            double loc_diff;
+            unsigned loc_mult = mass_study(t3.M(),t4.M(),t5.M(),t6.M(),false,id,loc_diff);
+            if (loc_mult>0) {
+                tmatch+=loc_mult;
+                if (loc_diff<best_diff) {
+                    t2 = working[i];
+                    best = i;
+                    best_diff = loc_diff;
+                }
             }
         }
         if (tmatch == 0) {

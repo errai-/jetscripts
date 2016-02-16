@@ -65,7 +65,7 @@ void FetchData(string fileName, vector<TH1F*>& mult, vector<TH1F*>& ptd, vector<
         jetTree->GetEntry(x);
         assert(kMaxfJets>fJets);
 
-        if (idx == 0) {
+        if (idx == 100) {
             vector<unsigned> flavours;
             vector<TLorentzVector> bjets, ljets;
             TLorentzVector MET, lepton, neutrino;
@@ -180,7 +180,7 @@ void Compare(string ttbarFile, string diFile)
 	h1->SetMaximum(1.05);
 	h1->GetYaxis()->SetNoExponent();
 	h1->GetXaxis()->SetNoExponent();
-	h1->GetXaxis()->SetRangeUser(0,60);
+	h1->GetXaxis()->SetRangeUser(0,40);
 
 	TCanvas *c1 = tdrCanvas("c1",h1,0,33);
     if (mult[0]->Integral()>0.0f) {
@@ -215,23 +215,22 @@ void Compare(string ttbarFile, string diFile)
 	    tdrDraw(mult[4],"HIST P",kOpenCircle,kBlue,kSolid,-1,3005,kBlue);
     }
     TLegend *multLeg = tdrLeg(0.15,0.6,0.35,0.9);
-    multLeg->AddEntry(mult[0],"tt g","p");
-    multLeg->AddEntry(mult[3],"di g","p");
-    multLeg->AddEntry(mult[2],"tt q","p");
-    multLeg->AddEntry(mult[5],"di q","p");
-    multLeg->AddEntry(mult[1],"tt b","p");
-    multLeg->AddEntry(mult[4],"di b","p");
+    multLeg->AddEntry(mult[0],"gluon ttbar","p");      
+    multLeg->AddEntry(mult[3],"gluon dijet","p");      
+    multLeg->AddEntry(mult[2],"b quark ttbar","p");    
+    multLeg->AddEntry(mult[5],"b quark ttbar","p");    
+    multLeg->AddEntry(mult[1],"non-b quark ttbar","p");
+    multLeg->AddEntry(mult[4],"non-b quark dijet","p");
 	
 		
 	/****************pTD****************/
 
 	setTDRStyle();
-	TH1D *h2 = new TH1D("h2",";p_{T}D;Events",100,0,1);
+	TH1D *h2 = new TH1D("h2",";p_{T}D;Events",100,0.15,0.85);
     h2->SetMinimum(0.0);
 	h2->SetMaximum(1.05);
 	h2->GetYaxis()->SetNoExponent();
 	h2->GetXaxis()->SetNoExponent();
-	h2->GetXaxis()->SetRangeUser(0,30);
 
 	TCanvas *c2 = tdrCanvas("c2",h2,0,33);
     if (ptd[0]->Integral()>0.0f) {
@@ -267,17 +266,17 @@ void Compare(string ttbarFile, string diFile)
     }
 
     TLegend *ptdLeg = tdrLeg(0.15,0.6,0.35,0.9);
-    ptdLeg->AddEntry(mult[0],"tt g","p");
-    ptdLeg->AddEntry(mult[3],"di g","p");
-    ptdLeg->AddEntry(mult[2],"tt q","p");
-    ptdLeg->AddEntry(mult[5],"di q","p");
-    ptdLeg->AddEntry(mult[1],"tt b","p");
-    ptdLeg->AddEntry(mult[4],"di b","p");
+    ptdLeg->AddEntry(mult[0],"gluon ttbar","p");      
+    ptdLeg->AddEntry(mult[3],"gluon dijet","p");      
+    ptdLeg->AddEntry(mult[2],"b quark ttbar","p");    
+    ptdLeg->AddEntry(mult[5],"b quark ttbar","p");    
+    ptdLeg->AddEntry(mult[1],"non-b quark ttbar","p");
+    ptdLeg->AddEntry(mult[4],"non-b quark dijet","p");
 
 	/****************sigma2****************/
 	
     setTDRStyle();
-	TH1D *h3 = new TH1D("h3",";#sigma_{2};Events",100,0,0.2);
+	TH1D *h3 = new TH1D("h3",";#sigma_{2};Events",100,0,0.14);
 	h3->SetMinimum(0);
 	h3->SetMaximum(1.05);
 	h3->GetYaxis()->SetNoExponent();
@@ -318,11 +317,11 @@ void Compare(string ttbarFile, string diFile)
     }
 
     TLegend *s2Leg = tdrLeg(0.65,0.6,0.85,0.9);
-    s2Leg->AddEntry(mult[0],"tt g","p");
-    s2Leg->AddEntry(mult[3],"di g","p");
-    s2Leg->AddEntry(mult[2],"tt q","p");
-    s2Leg->AddEntry(mult[5],"di q","p");
-    s2Leg->AddEntry(mult[1],"tt b","p");
-    s2Leg->AddEntry(mult[4],"di b","p");
+    s2Leg->AddEntry(mult[0],"gluon ttbar","p");
+    s2Leg->AddEntry(mult[3],"gluon dijet","p");
+    s2Leg->AddEntry(mult[1],"b quark ttbar","p");
+    s2Leg->AddEntry(mult[4],"b quark ttbar","p");
+    s2Leg->AddEntry(mult[2],"non-b quark ttbar","p");
+    s2Leg->AddEntry(mult[5],"non-b quark dijet","p");
 }
 
