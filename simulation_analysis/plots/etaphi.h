@@ -13,9 +13,11 @@
 #include <TFile.h>
 #include <vector>
 #include <utility>
+#include <string>
 
 using std::vector;
 using std::pair;
+using std::string;
 
 // Header file for the classes stored in the TTree if any.
 #include "Math/GenVector/PxPyPzE4D.h"
@@ -58,7 +60,7 @@ public :
    Double_t        fWeight;
    Double_t        phi_sum;
 
-   EtaPhi(TTree *tree=0);
+   EtaPhi(string);
    virtual ~EtaPhi();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -73,18 +75,16 @@ public :
 #endif
 
 #ifdef EtaPhi_cxx
-EtaPhi::EtaPhi(TTree *tree) : fChain(0) 
+EtaPhi::EtaPhi(string file) : fChain(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("target.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("target.root");
-      }
-      f->GetObject("JetTree",tree);
-
+   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(file.c_str());
+   TTree *tree;
+   if (!f || !f->IsOpen()) {
+      f = new TFile(file.c_str());
    }
+   f->GetObject("JetTree",tree);
    Init(tree);
 }
 

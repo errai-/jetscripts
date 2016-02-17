@@ -121,7 +121,7 @@ void Analysis::Cuts()
         /* Explicit cuts (pt cut for photons and neutral hadrons) */
         vector<fastjet::PseudoJet> tmpParts;
         for ( auto q : fJetParts ) {
-            if ( q.user_index() < 0) continue;
+            if (q.user_index() < 0) continue;
             int id = abs(fPDGCode[ q.user_index() ]);
             if (!( q.pt()<1 && (id == 22 || (IsHadron(id) && !IsCharged(id)))) )
                 tmpParts.push_back( q );
@@ -138,6 +138,8 @@ void Analysis::Cuts()
         }
     } else {
         for ( auto q : fJetParts ) {
+            if (q.user_index() < 0)
+                continue;
             fCutJetParts.push_back(q);
         }
     }

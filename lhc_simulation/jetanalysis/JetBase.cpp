@@ -167,8 +167,6 @@ bool JetBase::JetLoop()
 
         PostProcessing(i);
         
-        if (fJetVars.PTD<0.1)
-            cout << fJetVars.constituents << " " << fJetVars.PTD << " " << fJetVars.Sigma2 << endl;
         fJetEvent->AddJet(fSortedJets[i].px(),
                           fSortedJets[i].py(),
                           fSortedJets[i].pz(),

@@ -218,9 +218,9 @@ void Compare(string ttbarFile, string diFile)
     multLeg->AddEntry(mult[0],"gluon ttbar","p");      
     multLeg->AddEntry(mult[3],"gluon dijet","p");      
     multLeg->AddEntry(mult[2],"b quark ttbar","p");    
-    multLeg->AddEntry(mult[5],"b quark ttbar","p");    
-    multLeg->AddEntry(mult[1],"non-b quark ttbar","p");
-    multLeg->AddEntry(mult[4],"non-b quark dijet","p");
+    multLeg->AddEntry(mult[5],"b quark dijet","p");    
+    multLeg->AddEntry(mult[1],"quark (#neq b) ttbar","p");
+    multLeg->AddEntry(mult[4],"quark (#neq b) dijet","p");
 	
 		
 	/****************pTD****************/
@@ -269,9 +269,9 @@ void Compare(string ttbarFile, string diFile)
     ptdLeg->AddEntry(mult[0],"gluon ttbar","p");      
     ptdLeg->AddEntry(mult[3],"gluon dijet","p");      
     ptdLeg->AddEntry(mult[2],"b quark ttbar","p");    
-    ptdLeg->AddEntry(mult[5],"b quark ttbar","p");    
-    ptdLeg->AddEntry(mult[1],"non-b quark ttbar","p");
-    ptdLeg->AddEntry(mult[4],"non-b quark dijet","p");
+    ptdLeg->AddEntry(mult[5],"b quark dijet","p");    
+    ptdLeg->AddEntry(mult[1],"quark (#neq b) ttbar","p");
+    ptdLeg->AddEntry(mult[4],"quark (#neq b) dijet","p");
 
 	/****************sigma2****************/
 	
@@ -319,9 +319,9 @@ void Compare(string ttbarFile, string diFile)
     TLegend *s2Leg = tdrLeg(0.65,0.6,0.85,0.9);
     s2Leg->AddEntry(mult[0],"gluon ttbar","p");
     s2Leg->AddEntry(mult[3],"gluon dijet","p");
-    s2Leg->AddEntry(mult[1],"b quark ttbar","p");
-    s2Leg->AddEntry(mult[4],"b quark ttbar","p");
-    s2Leg->AddEntry(mult[2],"non-b quark ttbar","p");
-    s2Leg->AddEntry(mult[5],"non-b quark dijet","p");
+    s2Leg->AddEntry(mult[2],"b quark ttbar","p");
+    s2Leg->AddEntry(mult[5],"b quark dijet","p");
+    s2Leg->AddEntry(mult[1],"quark (#neq b) ttbar","p");
+    s2Leg->AddEntry(mult[4],"quark (#neq b) dijet","p");
 }
 

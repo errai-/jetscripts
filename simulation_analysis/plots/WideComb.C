@@ -25,7 +25,7 @@ const bool lines = true;
 const bool connect = false;
 const bool useflav = true;
 const bool printflav = true;
-const bool printremn = false;
+const bool printremn = true;
 const bool skip = false;
 const double pi2 = 2*TMath::Pi();
 const double separation2 = TMath::Power(25,2);
@@ -149,7 +149,7 @@ void EtaPhi::Loop()
             cout << jentry << endl;
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
-            if (fl < 0 || fl == 10)
+            if (fl < 0 || (fl >= 10 && fl < 20) )
                 continue;
             TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
             jets.push_back(j);
@@ -170,7 +170,7 @@ void EtaPhi::Loop()
                 phi_diff += t.Phi()*TMath::Power(-1.0,int(jets.size()));
             }
         }
-        if ( choice == -1 && ( stahp || count > 1 ) )
+        if ( choice == -1 && ( stahp ) ) // || count > 1 ) )
             continue;
         if ( skip || !accept() ) {
             choice = -1;

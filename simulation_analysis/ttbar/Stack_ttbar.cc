@@ -388,7 +388,7 @@ void Stack(string file) {
     //TLegend *heading = tdrLeg(0.675-0.4,0.50+0.5,0.775-0.4,0.505+0.5);·   
     //heading->SetHeader("Hadronic Definition, #sqrt{s} = 8 TeV");
     alphacute->SetHeader("");
-    etacute->SetHeader("#left|#eta#right|< 2.5");
+    etacute->SetHeader("p_{T}> 30 GeV");
 
     lege->AddEntry(unmatched,"None","f");    
     lege->AddEntry(gluons,"Gluon","f");
