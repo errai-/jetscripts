@@ -30,6 +30,10 @@ double phif(double val, double center) {
     return corr;
 }
 
+void EtaPhi::QuarkPairs( vector<pair<int,int> >& smaller, vector<pair<int,int> >& larger ) {
+    return;
+}
+
 void EtaPhi::Loop()
 {
     if (fChain == 0) return;
@@ -49,6 +53,8 @@ void EtaPhi::Loop()
         int count = 0;
         vector<int> jets;
         double phi_sum = 0;
+        double pt_sum = 0;
+        double phi_diff = 0;
 
         if ( choice >= 0 && choice != jentry )
             continue;
@@ -56,10 +62,9 @@ void EtaPhi::Loop()
         cout << jentry << endl;
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
-            TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
-            if (fl < 0 || fl == 10)
+            if (fl < 0 || (fl >= 10 && fl < 20) )
                 continue;
-
+            TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
             jets.push_back(j);
 
             cout << "  " << fl << endl;
@@ -70,28 +75,38 @@ void EtaPhi::Loop()
                 stahp = true;
                 break;
             }
-            phi_sum += t.Phi();
+            if ( jets.size() < 3 ) {
+                phi_sum += t.Phi()*t.Pt();
+                pt_sum += t.Pt();
+                phi_diff += t.Phi()*TMath::Power(-1.0,int(jets.size()));
+            }
         }
 
-        if ( stahp || (count > 1 && choice == -1) ) {
+        if ( choice == -1 && ( stahp ) ) //(count > 1 && choice == -1) ) {
+            continue;
+
+        if ( !accept() ) {
+            choice = -1;
             continue;
         }
 
-        if ( !accept() )
-            continue;
-        TCanvas* c1 = new TCanvas("c1", "c1", 1200, 1000);
+        phi_sum /= pt_sum;
+        if ( fabs(phi_diff) < TMath::Pi() )
+            phi_sum += TMath::Pi();
+
+        TCanvas* c1 = new TCanvas("c1", "c1", 1200, 1200);
         TH1D* th = new TH1D("","",100,-5.0,5.0);
         gStyle->SetOptStat(0);
         th->SetMinimum(-TMath::Pi());
-        th->SetMaximum(TMath::Pi());
+        th->SetMaximum((3/2.0)*TMath::Pi());
         th->SetXTitle("y");
         th->SetYTitle("#phi");
         th->Draw("P");
-        phi_sum /= jets.size();
 
         for ( unsigned j = 0; j < jets.size(); ++j ) {
             TLorentzVector t(fX[jets[j]],fY[jets[j]],fZ[jets[j]],fT[jets[j]]);
-            TEllipse *el = new TEllipse(t.Rapidity(),phif(t.Phi(),phi_sum),0.5,0.5);
+            double loc_phi = phif(t.Phi(),phi_sum);
+            TEllipse *el = new TEllipse(t.Rapidity(),loc_phi,0.5,0.5);
             Color_t ell_col = kRed+1;
             if (j == 1)
                 ell_col = kRed;
@@ -109,38 +124,51 @@ void EtaPhi::Loop()
         vector<int> counters(5,0);
         for ( int j = 0; j < fJets; ++j ) {
             int fl = fFlav[j];
-            TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
 
-            if (fl == 10)
+            if (fl >= 0)
                 continue;
 
             fl *= -1;
+            fl -= 1;
+
+            int group = fConstituents[j];
+            TLorentzVector t(fX[j],fY[j],fZ[j],fT[j]);
+
             double saizu = TMath::Log10(t.Pt()/0.01);
             Color_t col;
             Style_t sty;
 
-            if ( fl == 8 || fl == 7 ) {
-                col = kBlue;
+            if ( group == 3 ) {
+                if ( fl < 6 ) {
+                    col = kBlue+2;
+                    sty = kCircle;
+                } else {
+                    col = kGreen+3;
+                    sty = kOpenSquare;
+                }
+            } else if ( group == 4 ) {
+                col = kCyan;
                 sty = kCircle;
-            } else if ( (fl < 6 && fl > 0) || fl == 22 ) {
-                col = kRed;
-                sty = kCircle;
-                continue;
-            } else if ( fl == 12 ) {
-                saizu *= 2;
-                col = kGreen+2;
-                sty = kCircle;
-            } else if ( fl == 13 ) {
-                saizu *= 2;
-                col = kGreen+2;
-                sty = kOpenSquare;
-            } else if ( fl == 9 ) {
-                saizu *= 2;
-                col = kMagenta;
+            } else if ( group == 5 ) {
+                col = kMagenta-3;
                 sty = kDiamond;
+            } else if ( group == 2 ) {
+                if ( fl == 0 ) {
+                    col = kRed;
+                    sty = kOpenSquare;
+                } else if ( fl == 1 ) {
+                    col = kBlue;
+                    sty = kOpenCircle;
+                }
+            } else if ( group == 9 ) {
+                col = kRed;
+                sty = kOpenSquare;
             } else {
                 continue;
             }
+
+            if ( group == 3 || group == 4 || group == 5 )
+                saizu *= 2;
 
             if (saizu < 0)
                 continue;
@@ -149,11 +177,20 @@ void EtaPhi::Loop()
                 cout << t.Rapidity() << " " << t.Phi() << " " << fl << " " << saizu << endl;
 
             TGraph *f = new TGraph(1);
-            f->SetPoint(0,t.Rapidity(),phif(t.Phi(),phi_sum));
+            double loc_phi = phif(t.Phi(),phi_sum);
+            f->SetPoint(0,t.Rapidity(),loc_phi);
             f->SetMarkerStyle(sty);
             f->SetMarkerColor(col);
             f->SetMarkerSize(saizu);
             f->Draw("sameP");
+            if ( loc_phi < -TMath::Pi()/2 ) {
+                TGraph *g = new TGraph(1);
+                g->SetPoint(0,t.Rapidity(),loc_phi+2*TMath::Pi());
+                g->SetMarkerStyle(sty);
+                g->SetMarkerColor(col);
+                g->SetMarkerSize(saizu);
+                g->Draw("sameP");
+            }
         }
         break;
    }

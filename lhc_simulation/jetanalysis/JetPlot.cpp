@@ -78,13 +78,13 @@ void JetPlot::PostLoop()
             continue;
         }
 
-        fJetEvent->AddJet(part.px(),
-                          part.py(),
-                          part.pz(),
-                          part.e(),
-                          fJetVars,
-                          fWeight,
-                          flavId);
-        fJetVars.constituents = 0;
+//         fJetEvent->AddJet(part.px(),
+//                           part.py(),
+//                           part.pz(),
+//                           part.e(),
+//                           fJetVars,
+//                           fWeight,
+//                           flavId);
+//         fJetVars.constituents = 0;
     }
 }
