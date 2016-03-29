@@ -1,0 +1,17 @@
+Various scripts for TTBar analysis.
+
+TTBar:
+
+Ideal ttbar analysis, done as if we knew the neutrino properties.
+
+Also for MET the pz is substituted with the neutrino pz.
+As far as we know this is the best choice we can make -> the goal.
+
+Inv_ttbar:
+
+Only use the MET transverse information and try to reconstruct other
+stuffs.
+
+Stack_ttbar:
+
+A basic stack-plot thingie for ttbar events.

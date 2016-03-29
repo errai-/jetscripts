@@ -1,0 +1,43 @@
+Explanation of the purposes of the present files, updated 10.1.16.
+
+plotting.C:
+Mikko's style of using root for analysis.
+Does nothing that fancy but is good study material.
+
+>>>>>
+
+HppP6P8.cc:
+The most general comparison for flavor fractions.
+
+Stack.cc:
+Particle fraction plots.
+
+>>>>>
+
+Fracs.cc:
+Fractions from one bloop.
+
+>>>>>
+
+Plot.cc:
+The simplest script for robustness results.
+
+Compare.cc:
+The same as Consistence.cc. Seems to be a newer and better version.
+Does not give graphs.
+
+OneCompare.C:
+GenCompare, version for studying only one generator.
+
+Consistence.cc:
+For the comparison of dijet, gammajet and zjet events.
+As OneCompare.C, might be a deprecated version.
+
+GenCompare.C:
+Comparison between two event generators.
+
+QGL_general.cc:
+A generic QGL study script, one file.
+Compares generators.
+
+
