@@ -1,5 +1,5 @@
 Author Hannu Siikonen (github: errai-)
-README updated 16.5.2015
+README updated 3.4.2016
 
 #1) INTRODUCTION
 #2) FOLDER DESCRIPTIONS
@@ -11,135 +11,185 @@ This is a collection of data analysis and simulation tools used with the CMS
 project. Developed under Helsinki Institute of Physics, which contributes to
 the CMS project.
 
+My master's thesis was done using this software:
+
+
+A direct link to the github repository:
+    https://github.com/errai-/jetscripts
+
+Note: while building the sources, the number 'N' of parallel processes in 'make -jN'
+should be chosen wisely. E.g. for an 8-core processor N=6 can be a good choice.
 
 #2) FOLDER DESCRIPTIONS
+
 data_analysis:
-Tools for analyzing CMS jet data. Aim is to conveniently and quickly make plots
-of different aspects.
-Last updates in autumn 2014
+    Tools for analyzing CMS jet data. Aim is to conveniently and quickly make plots
+    of different aspects.
+    Last updates in autumn 2014
 
 lhc_simulation:
-Simulation tools for generating particle data with pythia6, pythia8 and
-Herwig++. A common jet sorting algorithm to turn the particle data into jet
-data.
-Currently actively developed.
+    Simulation tools for generating particle data with pythia6, pythia8 and Herwig++. 
+    A common jet sorting algorithm to turn the particle data into jet data.
 
 simulation_analysis:
-A collection of scripts for turning simulated jet data into various plots.
-Mostly not compatible with the newest versions of the simulations, these are to
-be updated.
-Flavor plotting actively developed, otherwise last updates in December 2014
+    A collection of scripts for turning simulated jet data into various plots.
 
 useful_structures:
-A collection of useful small scripts and old code versions, which may come in
-handy in certain circumstances.
-Updated occasionally, files remain mostly static after they are added here.
+    A collection of useful small scripts and old code versions, which may come in
+    handy in certain circumstances.
 
 
 #3) INSTALLATION
 
 Installation instructions for various softwares that are needed for the simulations.
 Some of the installations need to be done in the correct order, so that dependencies work correctly.
+The steps are given in a chronological order, but some steps can be skipped.
 
- #0] Other operations
+ #0] Misc operations
 
- -These are done after the installations but are generally important for working code.
+ -These can be done before/after the installations; these are generally important for obtaining working code.
 
-In .bashrc (or similar), add:
- export LD_LIBRARY_PATH = $LD_LIBRARY_PATH:/usr/local/lib:"pythia6Dir":"jetscriptsDir"/jet_simulations/lib
+ In .bashrc (or similar), add:
+     export LD_LIBRARY_PATH = $LD_LIBRARY_PATH:"installdir"/lib:"pythia6Dir":"jetscriptsDir"/lhc_simulations/lib
 
- -Here "pythia6Dir" is the installation location of pythia 6 and"jetscriptsDir" is the location of this folder.
+ Before continuing, any pre-existing installations should be eliminated completely or made compatible with the
+ new installation structures.
 
-In /usr/local/ and /usr/ subdirectories, remove the files related to previous installations (if there is one) of these
-programs. Found easily for instance by running:
- locate pythia8 | grep /usr/
+ #] HepMC2[.06.09]
 
- #I] Fastjet3[.1.2]
+ Preliminary:
+     export CFLAGS='-march=native -O2'
+     export CXXFLAGS='-march=native -O2 -std=c++11'
+
+ Run:
+     ./configure --with-momentum=GEV --with-length=MM --prefix="installdir"
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ #] ProMC
+
+ Preliminary:
+     export CFLAGS_OPT='-march=native -O2'
+     export CXXFLAGS_OPT='-march=native -O2 -std=c++11'
+
+ Run:
+     ./build.sh
+
+ Run:
+     ./install.sh "installdir" "installdir"
+
+ Insert into .bashrc:
+     source "installdir"/promc/setup.sh
+
+ Remarks:
+     -Dependent on HepMC
+     -PYTHONPATH might be messed up in the install.sh. This can be corrected within setup.sh.
+     -There's an annoying echo within setup.sh, this can/should be edited out.
+
+ #] Fastjet3[.2.0]
+
+ Preliminary:
+     export CFLAGS_OPT='-march=native -O2'
+     export CXXFLAGS_OPT='-march=native -O2'
+
+ Run:
+     ./configure --prefix="installdir"
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ #] fjcontrib-1[.022]
+
+ Run:
+     ./configure --prefix="installdir" --fastjet-config="installdir"/bin/fastjet-config
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ Remarks:
+     -Fastjet compiles OK with c++11, but fjcontrib does not work with this
+
+ #] LHAPDF 6[.1.6]
+
+ Preliminary:
+     export CFLAGS_OPT='-march=native -O2'
+     export CXXFLAGS_OPT='-march=native -O2'
+
+ Run:
+     ./configure --prefix="installdir"
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ Remarks:
+     -May require redhat-rpm-config to be installed.
+
+ #] Pythia6[.4.28]
+
+     Fetch http://home.fnal.gov/~rhatcher/build_pythia6.sh.
+     The files pyevwt.f and pyrand.f might need to be replaced (this needs to be done in the script).
+     Only thus event weighting and such will be performed as desired.
+
+ #] ROOT 6[.06.02]
+
+ Preliminary:
+     export CLINGCXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+     export CFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+     export CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+     export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+
+ Run:
+     ./configure --prefix=/home/hannu/install --with-clang --enable-cxx14 --with-pythia6-libdir=/home/hannu/Cern/install/lib --cflags='-D_GLIBCXX_USE_CXX11_ABI=0 -march=native' --cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -march=native'
+
+ Run:
+     make -jN
+
+ In .bashrc, add:
+     source "rootDir"/bin/thisroot.sh
+
+ Remarks:
+     -Note that pythia8 is not linked with root, since this will lead to inconveniences.
+     -Apparently root is developed using clang; it is not currently compatible with newest gcc versions.
+     -The ABI-tag causes issues even in clang, we need to set this ABI-macro to zero everywhere.
+     -Having or not having pythia8 explicitly linked for root should not be an issue. TPythia8 can be a convenient and
+      fast way to access pythia8 features, but it also removes some of the agility of the plain pythia8.
+
+ #] Pythia8[.2.15]
+
+ Run:
+     ./configure --prefix="installdir" --enable-64bit --enable-shared --with-fastjet3="installdir" --with-hepmc2="installdir" --with-lhapdf6="installdir" --with-promc="installdir"/promc --with-boost=/usr --with-powheg="installdir"/powheg --cxx-common="-D_GLIBCXX_USE_CXX11_ABI=0 -fPIC -march=native -O2"
 
 Run:
- ./configure
- -If errors or problems occur, some additional software installations or other fixes might be needed.
+     make -jN
 
 Run:
- make -j
- -Uses as many threads as possible for the build, a number after -j can be used to specify a smaller amount.
-
-Run:
- make check
-
-Run:
- sudo make install
- -Copies the installation below /usr/local
-
- #II] Pythia8[.2.05] (dependency: Fastjet3)
-
-Run:
- ./configure --with-fastjet3=/usr/local --enable-64bit --enable-shared --prefix=/usr/local
- -Depending on the machine additional flags might be needed.
-  Check that the output of configurations seems to be sensible.
-
-Run:
- make -j
- -Uses as many threads as possible for the build, a number after -j can be used to specify a smaller amount.
-
-Run:
- sudo make install
- -Copies the installation below /usr/local
+     make install
 
 In .bashrc, write:
- export PYTHIA8=/usr/local
- export PYTHIA8DATA=/usr/local/share/Pythia8/xmldoc
+     export PYTHIA8=/usr/local
+     export PYTHIA8DATA=/share/Pythia8/xmldoc
 
- #III] Pythia6[.4.28]
-
-Download https://root.cern.ch/download/pythia6.tar.gz and extract it to a good location.
-Remove the pythia*.f file and replace it with the newest pythia6 version available.
-Run a makePythia6 binary corresponding to the used computer architechture.
-
- #IV] ROOT 6[.03/05] (optional dependencies: Pythia6, Pythia8)
-
-Run:
- ./configure --with-pythia6-libdir="Location chosen in #III)"
- -Links root with pythia6 and other necessary components.
-  Note that pythia8 is not linked with root, since this will lead to inconveniences.
-
-Run:
- make -j
- -A fast local installation. This will freeze the computer so with 8 available threads 'make -j4' can be a good choice.
-
-In .bashrc, add:
- source "rootDir"/bin/thisroot.sh
-
-Remarks:
- Having or not having pythia8 explicitly linked for root should not be an issue. TPythia8 can be a convenient and
- fast way to access pythia8 features, but it also removes some of the agility of the plain pythia8.
-
- #V] LHAPDF 6[.1.5]
-
-Run:
- ./configure
- -Basic configuration with no dependencies. Check for errors.
-
-Run:
- make -j
- -Basic installation.
-
-Run:
- sudo make install
- -Copies the installation under /usr/local
-
-Remarks:
- This installation is optional and its function is bringing custom PDF's to Herwig++
-
- #VI] ThePEG 1[.9.2] (dependency: fastjet, optional dependency: LHAPDF)
+ #] ThePEG 1[.9.2] (dependency: fastjet, optional dependency: LHAPDF)
 
 Run:
  ./configure --with-lhapdf=/usr/local --with-fastjet=/usr/local
  -Basic configuration. Check for errors.
 
 Run:
- make -j
- -Basic installation.
+ make -jN
 
 Run:
  sudo make install
@@ -150,14 +200,14 @@ Remarks:
  ThePEG offers generic structures for particles, events etc. and its documentation is essential in daily life.
  Herwig++ is just some sugar on the top to make the simulator software complete.
 
- #VII] HERWIG++2[.7.1] (dependencies: fastjet, thepeg)
+ #] HERWIG++2[.7.1] (dependencies: fastjet, thepeg)
 
 Run:
  ./configure --with-fastjet=/usr/local --with-thepeg=/usr/local
  -Basic configuration, check for errors.
 
 Run:
- make -j
+ make -jN
  -Basic installation.
 
 Run:

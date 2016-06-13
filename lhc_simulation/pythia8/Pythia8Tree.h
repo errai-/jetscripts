@@ -128,6 +128,9 @@ protected:
     /* A function for indicating the flavour history */
     void PropagateHistory(unsigned prt, int hard_prt);
     
+    /* Has the particle already been appended */
+    bool Absent(unsigned prt);
+    
 protected:
     
     /* Indicator that the event loop can be run */

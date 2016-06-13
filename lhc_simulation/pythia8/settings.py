@@ -12,17 +12,17 @@ seeds=[840744607,431166825,11489507,859341684,719632152,384411333,90405435,29759
 # 0: 4C from Herwig++ defaults (CTEQ6L1)
 # 1: CUETP8S1 from CMS         (CTEQ6L1)
 # 2: CUETP8M1 from CMS         (NNPDF2.3LO)
-tune = 1
+tune = 2
 
 # Hard coded PDF choice
 # 0: CTEQ6L1
 # 1: use the default
-pdf = 0
+pdf = 1
 
 # CMS energy
 # 0: 8  TeV
 # 1: 13 TeV
-eScale = 0
+eScale = 1
 
 # Read run settings from command line parameters
 if len(sys.argv) != 5:

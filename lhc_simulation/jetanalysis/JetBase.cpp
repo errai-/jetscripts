@@ -433,7 +433,7 @@ bool JetBase::SelectionParams()
          * Example of a selection that should be done:
          *  -Back-to-back angle of min 2.8 rad
          *  -The subleading jet has smaller than 30% pT compared to the muons. (alpha)
-         *  -Min. jet pT of 30GeV
+         *  -Min. jet pT of 30 GeV
          *  -Max jet eta of 2.5 */
         studyJets = 1;
         

@@ -30,7 +30,7 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     mTree->SetAutoSave(100000000); /* 0.1 GBytes */
     mTree->SetCacheSize(10000000); /* 100 MBytes */
     TTree::SetBranchStyle(1); /* New branch style */
-
+    
     /* Connect an event to the tree */
     mPrtclEvent = new PrtclEvent();
     if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
@@ -38,7 +38,7 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
     mBranch->SetAutoDelete(kFALSE);
     mTree->BranchRef();
-    
+
     /* Setup a custom event timer */
     mTimerStep = 1000;
     mTimer.setParams(mNumEvents,mTimerStep);       
@@ -80,7 +80,7 @@ void Pythia6Tree::ModeSettings() {
         mPythia->SetMSUB(29,1);
         mPythia->SetMSUB(115,1);
         // Min and max pthat
-        mPythia->SetCKIN(3,10);
+        mPythia->SetCKIN(3,20);
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 3) {
         // Z+jets
@@ -196,8 +196,8 @@ void Pythia6Tree::GeneralSettings() {
 
     //mPythia->SetMSTP(111,0); // Hadronization off
 
-    //mPythia->Initialize("cms", "p", "p", 13000);
-    mPythia->Initialize("cms", "p", "p", 8000);
+    mPythia->Initialize("cms", "p", "p", 13000);
+    //mPythia->Initialize("cms", "p", "p", 8000);
 } // GeneralSettings
 
 
@@ -241,6 +241,8 @@ bool Pythia6Tree::ParticleLoop()
     
     /* Special particle indices are saved to eliminate saving overlap */
     mSpecialIndices.clear();
+
+    /* Pythia 6 speciality: do the gamma/muon analysis before the particle loop. */
     if (mMode==2) {
         GammaAdd();
     } else if (mMode==3) {
@@ -249,6 +251,7 @@ bool Pythia6Tree::ParticleLoop()
     
     mPrtclEvent->fWeight = 1./mPythia->GetVINT(99);
     
+    /* Particle loop */
     for (Int_t prt = 1; prt <= mPythia->GetN(); ++prt) {
         int status = mPythia->GetK(prt,1);
         int id = mPythia->GetK(prt,2);
@@ -267,11 +270,10 @@ bool Pythia6Tree::ParticleLoop()
         }
 
         /* Special final-state particles have already been added */
-        if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0 ) {
+        if (std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0)
             continue;
-        }
         
-        /* Hadronic and algorithmic definition */
+        /* Hadronic and algorithmic definitions: add FS partons or interesting hadrons. */
         if (status >= 11 && status <= 20) {
             if (abs(id) <= 6 || id == 21)
                 ParticleAdd(prt,4);
@@ -284,6 +286,7 @@ bool Pythia6Tree::ParticleLoop()
         /* Stable particles */
         if (status <= 10) {
             int saveStatus = 1;
+            /* Gamma from pi0 */
             if ( (mMode==0||mMode==1) && id==22 && GammaChecker(prt))
                 saveStatus = 2;
             ParticleAdd(prt,saveStatus);
@@ -314,11 +317,12 @@ bool Pythia6Tree::GammaAdd()
 {
     mSpecialIndices.push_back(9);
     
-    while ( mPythia->GetK(mSpecialIndices[0],1)>10 ) {
+    while ( mPythia->GetK(mSpecialIndices[0],1)>10 )
         mSpecialIndices[0] = mPythia->GetK(mSpecialIndices[0],4);
-    }
     
-    if ( mPythia->GetK(mSpecialIndices[0],2) != 22 ) throw std::logic_error("Expected photon is not photon");
+    if ( mPythia->GetK(mSpecialIndices[0],2) != 22 )
+        throw std::logic_error("The photon finder did not find a photon.");
+
     ParticleAdd(mSpecialIndices[0],2);
 }
 
@@ -330,10 +334,12 @@ bool Pythia6Tree::MuonAdd()
     }
     
     for ( std::size_t i = 0; i < mSpecialIndices.size(); ++i ) {
-        if ( abs(mPythia->GetK(mSpecialIndices[i],2))!=13 ) throw std::logic_error("Expected muon is not muon");
+        if ( abs(mPythia->GetK(mSpecialIndices[i],2))!=13 )
+            throw std::logic_error("The muon finder did not find a muon.");
         
-        while ( mPythia->GetK(mSpecialIndices[i],1)>10 ) {
-            for (int probe = mPythia->GetK(mSpecialIndices[i],4); probe <= mPythia->GetK(mSpecialIndices[i],5); ++probe) {
+        while (mPythia->GetK(mSpecialIndices[i],1)>10) {
+            for (unsigned probe = mPythia->GetK(mSpecialIndices[i],4); 
+                 probe <= mPythia->GetK(mSpecialIndices[i],5); ++probe) {
                 if ( abs(mPythia->GetK(probe,2)) == 13 ) {
                     mSpecialIndices[i] = probe;
                     break;
@@ -348,6 +354,7 @@ bool Pythia6Tree::MuonAdd()
 
 bool Pythia6Tree::LeptonAdd(unsigned int prt)
 {
+    // TODO: top events
     return true;
 }
 
@@ -369,4 +376,3 @@ bool Pythia6Tree::GammaChecker(unsigned prt)
 
     return true;
 }
-

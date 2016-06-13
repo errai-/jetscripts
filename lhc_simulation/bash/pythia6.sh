@@ -6,7 +6,7 @@ NUM_PROC=$3
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
 
-cd pythia6
+cd ../pythia6
 pidArr=()
 for (( i=1; i<=$NUM_PROC; i++ ))
 do

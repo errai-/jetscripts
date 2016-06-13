@@ -10,7 +10,7 @@
 //     1: final state particles                                     //
 //     2: final state particles which have interesting properties   //
 //     3: outgoing hard process partons                             //
-//     4: ghost partons                                             //
+//     4: partonic final state partons                              //
 //     5: ghost s hadrons                                           //
 //     6: ghost c hadrons                                           //
 //     7: ghost b hadrons                                           //
