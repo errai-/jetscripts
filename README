@@ -125,6 +125,7 @@ The steps are given in a chronological order, but some steps can be skipped.
      export CFLAGS_OPT='-march=native -O2'
      export CXXFLAGS_OPT='-march=native -O2'
 
+ Note: on lxplus this requires definition of the Boost location.
  Run:
      ./configure --prefix="installdir"
 
@@ -143,7 +144,7 @@ The steps are given in a chronological order, but some steps can be skipped.
      The files pyevwt.f and pyrand.f might need to be replaced (this needs to be done in the script).
      Only thus event weighting and such will be performed as desired.
 
- #] ROOT 6[.06.02]
+ #] ROOT 6[.06.04]
 
  Preliminary:
      export CLINGCXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
@@ -151,8 +152,10 @@ The steps are given in a chronological order, but some steps can be skipped.
      export CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
      export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
 
+
+ Dropped out: -D_GLIBCXX_USE_CXX11_ABI=0
  Run:
-     ./configure --prefix=/home/hannu/install --with-clang --enable-cxx14 --with-pythia6-libdir=/home/hannu/Cern/install/lib --cflags='-D_GLIBCXX_USE_CXX11_ABI=0 -march=native' --cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -march=native'
+     ./configure --prefix=/home/hannu/Cern/install --with-clang --enable-cxx14 --with-pythia6-libdir=/home/hannu/Cern/install/lib --disable-pythia8 --cflags='-march=native' --cxxflags='-march=native'
 
  Run:
      make -jN
@@ -167,10 +170,10 @@ The steps are given in a chronological order, but some steps can be skipped.
      -Having or not having pythia8 explicitly linked for root should not be an issue. TPythia8 can be a convenient and
       fast way to access pythia8 features, but it also removes some of the agility of the plain pythia8.
 
- #] Pythia8[.2.15]
+ #] Pythia8[.2.19]
 
  Run:
-     ./configure --prefix="installdir" --enable-64bit --enable-shared --with-fastjet3="installdir" --with-hepmc2="installdir" --with-lhapdf6="installdir" --with-promc="installdir"/promc --with-boost=/usr --with-powheg="installdir"/powheg --cxx-common="-D_GLIBCXX_USE_CXX11_ABI=0 -fPIC -march=native -O2"
+     ./configure --prefix="installdir" --enable-64bit --enable-shared --with-fastjet3="installdir" --with-hepmc2="installdir" --with-lhapdf6="installdir" --with-promc="installdir"/promc --with-boost=/usr --with-powheg="installdir"/powheg --cxx-common="-march=native -O2 -fPIC"
 
 Run:
      make -jN

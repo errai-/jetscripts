@@ -94,12 +94,12 @@ if mode==0:
     f.write("PhaseSpace:pTHatMin = 20.\n\n")
 if mode==1:
     f.write("HardQCD:all = on\n")
-    f.write("PhaseSpace:pTHatMin = 30.\n\n")
+    f.write("PhaseSpace:pTHatMin = 20.\n\n")
 if mode==2:
     f.write("PromptPhoton:qg2qgamma = on\n");
     f.write("PromptPhoton:qqbar2ggamma = on\n");
     f.write("PromptPhoton:gg2ggamma = on\n");
-    f.write("PhaseSpace:pTHatMin = 10.\n\n");
+    f.write("PhaseSpace:pTHatMin = 20.\n\n");
 if mode==3:
     f.write("! Produce only Z0's\n");
     f.write("WeakZ0:gmZmode = 2\n");

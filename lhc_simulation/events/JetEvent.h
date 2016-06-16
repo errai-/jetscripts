@@ -26,25 +26,25 @@ struct JetVariables
     float phf;
     float elf;
     float muf;
-    
+
     float chm;
     float nhm;
     float phm;
     float elm;
     float mum;
 
-    float nextDR;
+    //float nextDR;
     float partonPT;
     float matchPT;
-    
+
     int constituents;
     float PTD;
     float Sigma2;
-    
+
     float DR;
     float Alpha;
     float DPhi;
-    
+
     void SetZero() {
         chf = 0;
         nhf = 0;
@@ -64,7 +64,7 @@ struct JetVariables
         DR = 0;
         Alpha = 0;
         DPhi = 0;
-        nextDR = 0;
+        //nextDR = 0;
     }
 };
 
@@ -74,23 +74,23 @@ class JetData : public TObject {
 public:
     JetData() { }
     virtual ~JetData() { }
-    
+
     void SetPxPyPzE(double,double,double,double);
     void SetParams(JetVariables&,int);
-    
+
     Double_t P() const { return fP4.P(); }
     Double_t Pt() const { return fP4.Pt(); }
     Double_t Eta() const { return fP4.Eta(); }
     Double_t Phi() const { return fP4.Phi(); }
-    Double_t Mass() const { return fP4.M(); }  
+    Double_t Mass() const { return fP4.M(); }
 
 private:
    /* Use a pure ROOT LorentzVector so that for instance Pt can be found out
-    * even without the sources of this event class. This is a slightly better 
-    * format than TLorentzVector and is in use for instance in the KKousouris 
-    * scripts (indirectly, through CMSSW). */ 
+    * even without the sources of this event class. This is a slightly better
+    * format than TLorentzVector and is in use for instance in the KKousouris
+    * scripts (indirectly, through CMSSW). */
     ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
-    
+
     int   fFlav;
 
     float fChf;
@@ -98,25 +98,25 @@ private:
     float fPhf;
     float fElf;
     float fMuf;
-    
-    float fChm;
-    float fNhm;
-    float fPhm;
-    float fElm;
-    float fMum;
-    
+
+    //float fChm;
+    //float fNhm;
+    //float fPhm;
+    //float fElm;
+    //float fMum;
+
     float fPartonPT;
     float fMatchPT;
-    
+
     int   fConstituents;
     float fPTD;
     float fSigma2;
-    
+
     float fDR;
-    float fDR_Next;
+    //float fDR_Next;
     float fAlpha;
     float fDPhi;
-    
+
 public:
    ClassDef(JetData,1)
 };
@@ -130,18 +130,18 @@ public:
 
     void AddJet(double,double,double,double,JetVariables&,double,int);
     JetData *InitJet();
-    
+
     void Clear(Option_t *option ="");
     void Reset(Option_t *option ="");
 
 private:
-    size_t fN_Jet; //! 
+    size_t fN_Jet; //!
     size_t fSizeLim; //! Maximal amount of particles within an event
 
     TClonesArray *fJets;
     static TClonesArray *fgJets;
     double fWeight;
-    
+
 public:
     ClassDef(JetEvent,1)
 };

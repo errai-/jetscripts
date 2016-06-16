@@ -15,14 +15,13 @@ bool TTBarSelector::doVetoProcessLevel(Event& process)
 
 Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) :
     mEvent(mPythia.event),
-    mProcess(mPythia.process),
     mInitialized(true)
 {
     mMode = mode;
-    
+
     /* Initialization of the Pythia8 run */
     if (mMode == 4) mPythia.setUserHooksPtr(&mTTBarSelector);
-    if (!mPythia.readFile(settings.c_str())) throw std::invalid_argument("Error while reading settings"); 
+    if (!mPythia.readFile(settings.c_str())) throw std::invalid_argument("Error while reading settings");
     if (!mPythia.init()) throw runtime_error("Pythia8 initialization failed");
     mPythia.settings.listChanged();
 
@@ -51,12 +50,12 @@ Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) :
     if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
     mBranch->SetAutoDelete(kFALSE);
     mTree->BranchRef();
-    
+
     /* Setup a custom event timer */
     mTimerStep = 1000;
-    mTimer.setParams(mNumEvents,mTimerStep);       
+    mTimer.setParams(mNumEvents,mTimerStep);
     mTimer.startTiming();
-} // Pythia8Tree
+} // Pythia8Tree initializer
 
 
 void Pythia8Tree::EventLoop()
@@ -65,26 +64,26 @@ void Pythia8Tree::EventLoop()
         cerr << "Event loop can be performed only after proper initialization" << endl;
         return;
     }
-    
+
     /* The event loop */
-    unsigned numEvent = 0;
-    while (numEvent != mNumEvents) {
+    unsigned evtNo = 0;
+    while (evtNo != mNumEvents) {
         if (!mPythia.next()) continue;
         if (!ParticleLoop()) continue;
         mTree->Fill();
 
-        ++numEvent;
-        if (numEvent%mTimerStep==0) mTimer.printTime();
+        ++evtNo;
+        if (evtNo%mTimerStep==0) mTimer.printTime();
     }
 
     /* Cleaning up: */
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
     mFile->Close();
-    
+
     if (mCounter != 0)
         cerr << "Non-zero counter value: " << mCounter << endl;
-    
+
     delete mPrtclEvent; mPrtclEvent = 0;
     mInitialized = false;
 } // EventLoop
@@ -97,102 +96,91 @@ bool Pythia8Tree::ParticleLoop()
     mSpecialIndices.clear();
     mHistory.clear();
     mPartonHistory.clear();
-//     mIterCount = 0;
-    
+
     mPrtclEvent->fWeight = mPythia.info.weight();
-    
+
     /* Particle loop */
-    mHardProcCount = 0, mPartonCount = 0;
+    mHardProcCount = 0;
     for (unsigned prt = 0; prt!=mEvent.size(); ++prt)
         if (!ProcessParticle(prt))
             return false;
 
-    /* Sanity checks */
+    /* Sanity checks (for some ROOT-related reason the error produces a segfault) */
     if (   (mMode<4 && mHardProcCount !=2)
         || (mMode==2 && mSpecialIndices.size()!=1)
-        || (mMode==3 && mSpecialIndices.size()!=2) 
-        || (mMode==4 && mHardProcCount != 4) ) 
+        || (mMode==3 && mSpecialIndices.size()!=2)
+        || (mMode==4 && mHardProcCount != 4) )
     {
         mEvent.list();
-        throw std::logic_error("Unexpected hard process structure");
+        throw std::runtime_error("Unexpected hard process structure");
     }
-    
+
     /* Adding corrected parton momenta */
-    int history_count = 0;
-    for (auto prt : mPartonHistory) {
+    for (auto prt : mPartonHistory)
         mPrtclEvent->AddPrtcl(prt.second.Px(),
                               prt.second.Py(),
                               prt.second.Pz(),
                               prt.second.E(),
                               mEvent[prt.first].id(),
-                              8,
-                              history_count++);
-    }
-    
+                              8);
+
     return true;
 } // ParticleLoop
 
 
 void Pythia8Tree::ParticleAdd(unsigned prt, int saveStatus)
 {
-    int history = -1;
-    auto it = mHistory.find(prt);
-    if ( it != mHistory.end() && it->second!=-1 ) {
-        history = std::distance(mPartonHistory.begin(),mPartonHistory.find(it->second));
-    }
-    
     mPrtclEvent->AddPrtcl(mEvent[prt].px(),
                           mEvent[prt].py(),
                           mEvent[prt].pz(),
                           mEvent[prt].e(),
                           mEvent[prt].id(),
-                          saveStatus,
-                          history);
+                          saveStatus);
 } // ParticleAdd
 
 
 void Pythia8Tree::GhostHadronAdd(unsigned prt, bool useStrange)
 {
     int id = mEvent[prt].idAbs();
-    unsigned ghostStatus = 0;
 
-    if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5)) {
-        ghostStatus = 7; /* b Hadrons */
-    } else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4)) {
-        ghostStatus = 6; /* c Hadrons */
-    } else if (useStrange && (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3))) {
-        ghostStatus = 5; /* s Hadrons */
-    }
-
-    if (ghostStatus) { ParticleAdd(prt,ghostStatus); }
+    if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5))
+        ParticleAdd(prt,7);
+    else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))
+        ParticleAdd(prt,6);
+    else if (useStrange && (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3)))
+        ParticleAdd(prt,5);
 } // GhostHadronAdd
 
 
-bool Pythia8Tree::IsExcitedHadronState(unsigned prt, int quarkId) 
+bool Pythia8Tree::IsExcitedHadronState(unsigned prt, int quarkId)
 {
     vector<int> daughters = mEvent[prt].daughterList();
-    for (int& dtr : daughters) {
-        if ( HadrFuncs::StatusCheck(quarkId, mEvent[dtr].id()) ) return true;
-    }
+    for (int& dtr : daughters)
+        if (HadrFuncs::StatusCheck(quarkId, mEvent[dtr].idAbs()))
+            return true;
     return false;
 } // IsExcitedHadronState
 
-void Pythia8Tree::PropagateHistory(unsigned int prt, int hard_count)
+
+void Pythia8Tree::PropagateHistory(unsigned prt, int hard_count)
 {
-    if ( mHistory.emplace(prt,hard_count).second ) {
+    if (!mEvent[prt].isParton()) {
+        return;
+    } else if (mHistory.emplace(prt,hard_count).second) {
         /* Propagate history info recursively */
         for (auto d : mEvent[prt].daughterList())
             PropagateHistory(d,hard_count);
     } else {
         /* Mark repeated cases with a zero flavor */
-        if ( mHistory[prt] != hard_count )
+        if (mHistory[prt]!=hard_count)
             mHistory[prt] = -1;
     }
-}
+} // PropagateHistory
+
 
 inline bool Pythia8Tree::Absent(unsigned int prt)
 {
-    return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end(); 
+    return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end();
 }
 
 
@@ -203,6 +191,8 @@ inline bool Pythia8Tree::Absent(unsigned int prt)
 
 bool Pythia8Tree::ProcessParticle(unsigned prt)
 {
+    int id = mEvent[prt].idAbs();
+
     if (mEvent[prt].isFinalPartonLevel()) {
         /* Accumulate the corrected momentum of FS partons */
         auto it = mHistory.find(prt);
@@ -212,9 +202,8 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
                                                             mEvent[prt].pz(),
                                                             mEvent[prt].e());
     }
-    int id = mEvent[prt].idAbs();
-    
-    if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) {
+
+    if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) { /* Alt. 61-63 */
         /* Save final parton level */
         ParticleAdd(prt, 4);
         return true;
@@ -235,57 +224,42 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
         GhostHadronAdd(prt);
     }
 
-    /* Return true only if a parton is added */
-    return false;
-} // ProcessParticle : base
-
-
-bool P8GenericTree::ProcessParticle(unsigned int prt)
-{
-    if (Pythia8Tree::ProcessParticle(prt))
+    int cp = CustomProcess(prt);
+    if (cp==0)
+        return false;
+    else if (cp==1)
         return true;
-    
-    /* pi0 photons in a generic event have the status 2 */
-    if ( mEvent[prt].isFinal() ) {
-        int saveStatus = 1;
-        if ( mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2; 
-        ParticleAdd( prt, saveStatus );
-    }
-    
-    return true;
-} // ProcessParticle : Generic
-
-
-bool P8DijetTree::ProcessParticle(unsigned prt)
-{
-    if (Pythia8Tree::ProcessParticle(prt))
-        return true;
-
-    /* Final particles */
-    if ( mEvent[prt].isFinal() ) {
-        int saveStatus = 1;
-        if ( mEvent[prt].id()==22 && GammaChecker(prt) ) saveStatus = 2;
-        ParticleAdd( prt, saveStatus );
-    }
-
-    return true;
-} // ProcessParticle : Dijet
-
-
-bool P8GammajetTree::ProcessParticle(unsigned prt)
-{
-    if (Pythia8Tree::ProcessParticle(prt))
-        return true;
-
-    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23)
-        return GammaAdd(prt);
 
     /* Final-state particles */
-    if (mEvent[prt].isFinal() && Absent(prt))
-        ParticleAdd(prt, 1);
+    if (mEvent[prt].isFinal() && Absent(prt)) {
+        int saveStatus = 1;
+        if (mEvent[prt].id()==22 && GammaChecker(prt)) saveStatus = 9;
+        ParticleAdd( prt, saveStatus );
+    }
 
     return true;
-} // ProcessParticle : Gammajet
+} // ProcessParticle : Base
+
+
+inline int P8GenericTree::CustomProcess(unsigned prt)
+{
+    return 2;
+} // CustomProcess : Generic
+
+
+inline int P8DijetTree::CustomProcess(unsigned prt)
+{
+    return 2;
+} // CustomProcess : Dijet
+
+
+inline int P8GammajetTree::CustomProcess(unsigned prt)
+{
+    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23)
+        return (GammaAdd(prt) ? 1 : 0);
+
+    return 2;
+} // CustomProcess : Gammajet
 
 
 bool P8GammajetTree::GammaAdd(unsigned prt)
@@ -302,21 +276,15 @@ bool P8GammajetTree::GammaAdd(unsigned prt)
 } // GammaAdd
 
 
-bool P8ZmumujetTree::ProcessParticle(unsigned prt)
+// TODO: this might not behave well
+inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 {
-    if (Pythia8Tree::ProcessParticle(prt))
-        return true;
-
     /* The first status 62 hits correspond to the hard process Z0 */
     if ( mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==62 )
-        return MuonAdd(prt);
+        return (MuonAdd(prt) ? 1 : 0);
 
-    /* Final-state particles, excluding the added muons */
-    if (mEvent[prt].isFinal() && Absent(prt))
-        ParticleAdd(prt, 1);
-    
-    return true;
-} // ProcessParticle : Zmumujet
+    return 2;
+} // CustomProcess : Zmumujet
 
 
 bool P8ZmumujetTree::MuonAdd(unsigned prt)
@@ -325,13 +293,13 @@ bool P8ZmumujetTree::MuonAdd(unsigned prt)
         std::cerr << "Expected Z, found " << mEvent[prt].name() << endl;
         throw std::logic_error("Z identification malfunction.");
     }
-    
+
     for ( int daughter : mEvent[prt].daughterList() ) {
         if (mEvent[daughter].idAbs()==13) {
             mSpecialIndices.push_back(daughter);
         }
     }
-    
+
     /* Descend to the final muon forms */
     for ( unsigned i = 0; i < mSpecialIndices.size(); ++i ) {
         unsigned counter = 0;
@@ -345,39 +313,28 @@ bool P8ZmumujetTree::MuonAdd(unsigned prt)
         }
         ParticleAdd( mSpecialIndices[i], 2 );
     }
-    
-    if ( mSpecialIndices.size() == 2 ) { 
+
+    if ( mSpecialIndices.size() == 2 ) {
         ++mHardProcCount;
         return true;
     }
-    
+
     cerr << "Failed to locate muon pair! " << ++mNumErrs << endl;
     return true;
 } // MuonAdd
 
 
-bool P8ttbarjetTree::ProcessParticle(unsigned prt)
+inline int P8ttbarjetTree::CustomProcess(unsigned prt)
 {
-    if (Pythia8Tree::ProcessParticle(prt))
-        return true;
-
     /* Add the outgoing hard process lepton */
-    if ( mEvent[prt].statusAbs()==23 && mEvent[prt].idAbs() < 20 )
-        return LeptonAdd( prt );
+    if (mEvent[prt].statusAbs()==23 && mEvent[prt].idAbs() < 20)
+        return (LeptonAdd(prt) ? 1 : 0);
 
-    /* Special final-state particles have already been added */
-    if ( std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0 )
-        return true;
-
-    /* pi0 photons in a generic event have the status 2 */
-    if ( mEvent[prt].isFinal() )
-        ParticleAdd( prt, 1 );
-
-    return true;
+    return 2;
 } // ProcessParticle : ttbarjet
 
 
-bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
+bool P8ttbarjetTree::LeptonAdd(unsigned prt)
 {
     /* Charged lepton input: find a final-state charged lepton
      * neutrino input: add the parent W */
@@ -392,12 +349,12 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
                 if (mEvent[daughter].isLepton() && dType==1)
                     prt = daughter;
             }
-            
+
             /* This occurs around 25-30% of the time originating from tau decay */
             if (prt == 0)
                 return false; /* Charged lepton decays to partons and a neutrino */
         }
-        
+
         if (mEvent[prt].idAbs()==15)
             cerr << "No tau decay, check settings." << endl;
     } else {
@@ -410,17 +367,12 @@ bool P8ttbarjetTree::LeptonAdd(unsigned int prt)
         }
     }
     mSpecialIndices.push_back(prt);
-    ParticleAdd( prt, 2 );
+    ParticleAdd(prt, 2);
     return true;
 } // LeptonAdd
 
 
-/////////////////////////////////////////////////////////
-// Not in current production but kept in for reference //
-/////////////////////////////////////////////////////////
-
-
-/* Used in the generic events - these are not used to anything. */
+/* Does a photon originate from pions? */
 bool Pythia8Tree::GammaChecker(unsigned prt)
 {
     assert( mEvent.size() > prt );
@@ -430,7 +382,7 @@ bool Pythia8Tree::GammaChecker(unsigned prt)
     if ( mothers.size()!=1 || abs(mEvent[mothers[0]].id())!=111 ) return false;
 
     vector<int> daughters = mEvent[mothers[0]].daughterList();
-    
+
     double eDifference = mEvent[mothers[0]].e();
     for ( auto daugh : daughters )
         eDifference -= mEvent[daugh].e();
@@ -440,20 +392,3 @@ bool Pythia8Tree::GammaChecker(unsigned prt)
 
     return true;
 }
-
-/* Done within the history propagation */
-TLorentzVector Pythia8Tree::LastParton(unsigned prt)
-{
-    if (mEvent[prt].statusAbs() == 71 || mEvent[prt].statusAbs() == 72) {
-        TLorentzVector handle(mEvent[prt].px(),mEvent[prt].py(),mEvent[prt].pz(),mEvent[prt].e());
-        return handle;
-    }
-    
-    TLorentzVector cumulator(0,0,0,0);
-    for (auto &daughter : mEvent.daughterList(prt) ) {
-        cumulator += LastParton(daughter);
-    }
-    return cumulator;
-}
-
-

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////
 //                                                               //
-// Class structure for storing Pythia6 particle data into trees. //            
+// Class structure for storing Pythia6 particle data into trees. //
 //                                                               //
 // Modes of operation:                                           //
 //                                                               //
@@ -25,7 +25,7 @@
 ///////////////////////////////////////////////////////////////////
 
 #ifndef PYTHIA6TREE
-#define PYTHIA6TREE 
+#define PYTHIA6TREE
 
 /* Stdlib header file for input and output. */
 #include <iostream>
@@ -71,14 +71,14 @@ public:
     /* No copying or constructing with another instance */
     Pythia6Tree( const Pythia6Tree& other ) = delete;
     Pythia6Tree& operator=( const Pythia6Tree& ) = delete;
-    
+
     /* Run settings are provided via the initializer */
     Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int mode);
     Pythia6Tree() :
         mInitialized(false)
-    { 
+    {
         cerr << "Pythia8Tree is intended to be used only with the non-default initializer" << endl;
-    } 
+    }
     /* ROOT has an awful behaviour with pointers. It should do the cleaning-up
        and such stuff well, but there is a ton of memory leaks that result
        already from ROOT 'being there'. At least the software runs - but the
@@ -86,61 +86,68 @@ public:
     ~Pythia6Tree() {}
 
 protected:
-    
+
     /* A handle for adding particle information */
-    void ParticleAdd(unsigned prt,int status);
+    void                            ParticleAdd(unsigned prt,int status);
     /* Particles needed by the hadronic flavor definition */
-    void GhostHadronAdd(unsigned prt, bool useStrange = false);
-    
+    void                            GhostHadronAdd(unsigned prt, bool useStrange = false);
+
     /* Loop over particles within an event: return true if event is to be saved */
-    bool ParticleLoop();
+    bool                            ParticleLoop();
     /* The logic within particleloop */
-    bool ProcessParticle(unsigned prt);
-    
-    /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
-     * is in an excited state or not. Checks whether a hadron has a daughter of 
+    bool                            ProcessParticle(unsigned prt);
+
+    /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron
+     * is in an excited state or not. Checks whether a hadron has a daughter of
      * the same flavour. Parameter quarkId is a PDG quark flavour. */
-    bool IsExcitedHadronState(unsigned prt, int quarkID);
-    
+    bool                            IsExcitedHadronState(unsigned prt, int quarkId);
     /* A function that checks whether a photon is originated from a pi0 and that
      * the energy of the photon-pair corresponds to the pion. returns 0 if
      * the origin is not a pion with good energy and 1 if it is */
-    bool GammaChecker(unsigned);
-    TLorentzVector LastParton(unsigned prt);
-    
+    bool                            GammaChecker(unsigned);
+    /* Has the particle already been appended */
+    bool                            Absent(unsigned prt);
+
+
     /* Settings that depend on the selected mode */
-    void ModeSettings();
+    void                            ModeSettings();
     /* General settings that are always used */
-    void GeneralSettings();
+    void                            GeneralSettings();
 
     /* A handle for adding a hard process photon descended from the signal event photon */
-    bool GammaAdd();
+    bool                            GammaAdd();
     /* A handle for adding the two muons originating from a hard process Z prt */
-    bool MuonAdd();
+    bool                            MuonAdd();
     /* A handle for adding the produced leptons in ttbar events */
-    bool LeptonAdd(unsigned prt);
-    
+    bool                            LeptonAdd(unsigned prt);
+
 protected:
-    
+
     /* Indicator that the event loop can be run */
     bool                            mInitialized;
     /* A general-purpose counter for physics debugging */
     unsigned                        mCounter;
-    
+
     TPythia6                       *mPythia;
-    
+
     TFile                          *mFile;
     TTree                          *mTree;
     TBranch                        *mBranch;
     PrtclEvent                     *mPrtclEvent;
-    
+
     int                             mNumEvents;
     int                             mMode;
     int                             mTimerStep;
     Timer                           mTimer;
-    
+
     vector<unsigned>                mSpecialIndices;
-    
+
+    int                             mEnergy;
+    int                             mTune;
+    bool                            mMPI;
+    bool                            mISR;
+    bool                            mFSR;
+
     static const unsigned           mNumSeeds = 40;
     const unsigned                  mSeeds[mNumSeeds] = {840744607,
                                                          431166825,

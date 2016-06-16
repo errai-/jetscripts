@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         string fileName = "particles_pythia8_";
         fileName += name;
         fileName += ".root";
-    
+
         if (mode == 0) {
             P8GenericTree generatorHandle(settings, fileName, mode);
             generatorHandle.EventLoop();
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
             P8ttbarjetTree generatorHandle(settings, fileName, mode);
             generatorHandle.EventLoop();
         }
-            
+
     } catch (std::exception& e) {
         std::cerr << "An error occurred: " << e.what() << endl;
     }
-        
+
     return 0;
 }

@@ -27,17 +27,19 @@ void JetData::SetParams(JetVariables& vars, int flav)
     fPhm = vars.phm;
     fElm = vars.elm;
     fMum = vars.mum;
-    fFlav = flav;
-    fConstituents = vars.constituents;
-    fPTD = vars.PTD;
-    fSigma2 = vars.Sigma2;
-    fDR = vars.DR;
-    fAlpha = vars.Alpha;
-    fDPhi = vars.DPhi;
-    
-    fPartonPT = vars.partonPT;
-    fMatchPT = vars.matchPT;
-    fDR_Next = vars.nextDR;
+
+    fFlav = flav;                       /* Jet flavor, depends on the definition in use */
+    fConstituents = vars.constituents;  /* Number of constituents, exact definition varies (e.g. pT threshold) */
+    fPTD = vars.PTD;                    /* pT partition function */
+    fSigma2 = vars.Sigma2;              /* The inner jet radius */
+
+    fDR = vars.DR;                      /* The distance between the jet axis and the parton */
+    fAlpha = vars.Alpha;                /* The alpha parameter, depends on the event type */
+    fDPhi = vars.DPhi;                  /* The phi parameter, depends on the event type */
+
+    fPartonPT = vars.partonPT;          /* pT of the parton matched with the jet */
+    fMatchPT = vars.matchPT;            /* pT of the opposing jet or such */
+    //fDR_Next = vars.nextDR;             /* distance to the next parton to match */
 }
 
 
@@ -61,14 +63,14 @@ JetEvent::~JetEvent()
 void JetEvent::AddJet( double Px, double Py, double Pz, double E, JetVariables& jetVars, double weight, int flav)
 {
     Int_t ObjectNumber = TProcessID::GetObjectCount();
-    
+
     JetData *jet;
-    
+
     jet = InitJet();
     fWeight = weight;
     jet->SetPxPyPzE(Px,Py,Pz,E);
     jet->SetParams(jetVars,flav);
-    
+
     TProcessID::SetObjectCount(ObjectNumber);
 }
 

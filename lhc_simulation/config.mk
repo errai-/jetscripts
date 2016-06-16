@@ -10,9 +10,9 @@ CFLAGS :=
 #CXX := clang++
 #CFLAGS :=
 #######################################
-
-CFLAGS := $(CFLAGS) -g -Wall -Wextra -Werror -Wshadow -Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unknown-pragmas -march=native -O3 -pedantic -m64
-CXXFLAGS := $(CFLAGS) -std=c++11
+# -Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unknown-pragmas
+CFLAGS := $(CFLAGS) -g -Wall -Wextra -Werror -Wshadow -pedantic -m64
+CXXFLAGS := $(CFLAGS) -std=c++11 -march=native -O2
 
 PYTHIA6:=-lEG -lEGPythia6 -L/afs/cern.ch/user/h/hsiikone/Cern/pythia6 -lPythia6
 //PYTHIA6:=-lEG -lEGPythia6 -L/home/hannu/Cern/pythia6 -lPythia6

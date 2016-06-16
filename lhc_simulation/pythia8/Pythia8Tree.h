@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////
 //                                                               //
-// Class structure for storing Pythia8 particle data into trees. //            
+// Class structure for storing Pythia8 particle data into trees. //
 //                                                               //
 // Modes of operation:                                           //
 //                                                               //
@@ -24,7 +24,7 @@
 ///////////////////////////////////////////////////////////////////
 
 #ifndef PYTHIA8TREE
-#define PYTHIA8TREE 
+#define PYTHIA8TREE
 
 /* Stdlib header file for input and output. */
 #include <iostream>
@@ -68,30 +68,29 @@ class TTBarSelector : public UserHooks
 public:
     TTBarSelector() {}
     virtual ~TTBarSelector() {}
-    
+
     /* In UserHooks this returns false */
     virtual bool canVetoProcessLevel() { return true; }
-    
+
     /* Returns true, if the event is vetoed (i.e. amount of hard proc leptons != 2) */
-    virtual bool doVetoProcessLevel(Event& process); 
+    virtual bool doVetoProcessLevel(Event& process);
 };
 
 class Pythia8Tree
 {
 public:
     /* The event loop should be called once after a proper initialization */
-    void EventLoop();    
+    void EventLoop();
 
     /* No copying or constructing with another instance */
     Pythia8Tree( const Pythia8Tree& other ) = delete;
     Pythia8Tree& operator=( const Pythia8Tree& ) = delete;
-    
+
     /* Run settings are provided through the initializer */
     Pythia8Tree(string settings, string fileName, int mode);
     Pythia8Tree() :
-        mEvent(mPythia.event),
-        mProcess(mPythia.process),
-        mInitialized(false)
+                    mEvent(mPythia.event),
+                    mInitialized(false)
     {
         cerr << "Pythia8Tree is intended to be used only with the non-default initializer" << endl;
     }
@@ -102,63 +101,58 @@ public:
     ~Pythia8Tree() {}
 
 protected:
-    
+
     /* A handle for adding particle information */
-    void ParticleAdd(unsigned prt, int status);
+    void                ParticleAdd(unsigned prt, int status);
     /* Particles needed by the hadronic flavor definition */
-    void GhostHadronAdd(unsigned prt, bool useStrange = false);
-    
+    void                GhostHadronAdd(unsigned prt, bool useStrange = false);
+
     /* Loop over particles within an event: returns true if event is to be saved */
-    bool ParticleLoop();
+    bool                ParticleLoop();
     /* The logic within particleloop. */
-    virtual bool ProcessParticle(unsigned prt);
-    
-    /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron 
-     * is in an excited state or not. Checks whether a hadron has a daughter of 
+    bool                ProcessParticle(unsigned prt);
+    /* A custom phase within ProcessParticle */
+    virtual int         CustomProcess(unsigned prt) { return 0; }
+
+    /* See: HadronAndPartonSelector.cc in CMSSW. Indicates whether a ghost hadron
+     * is in an excited state or not. Checks whether a hadron has a daughter of
      * the same flavour. Parameter quarkId is a PDG quark flavour. */
-    bool IsExcitedHadronState(unsigned prt, int quarkID);
-    
+    bool                IsExcitedHadronState(unsigned prt, int quarkID);
     /* A function that checks whether a photon is originated from a pi0 and that
      * the energy of the photon-pair corresponds to the pion. returns 0 if
      * the origin is not a pion with good energy and 1 if it is */
-    bool GammaChecker(unsigned prt);
-    /* For a given parton goes to the last step before hadronization */
-    TLorentzVector LastParton(unsigned prt);
-    
+    bool                GammaChecker(unsigned prt);
     /* A function for indicating the flavour history */
-    void PropagateHistory(unsigned prt, int hard_prt);
-    
+    void                PropagateHistory(unsigned prt, int hard_prt);
     /* Has the particle already been appended */
-    bool Absent(unsigned prt);
-    
+    bool                Absent(unsigned prt);
+
 protected:
-    
+
     /* Indicator that the event loop can be run */
     bool                mInitialized;
     /* A general-purpose counters for physics debugging */
     unsigned            mCounter;
     unsigned            mIterCount;
-    
-    unsigned            mHardProcCount; 
-    unsigned            mPartonCount;
-    
+
+    unsigned            mHardProcCount;
+
     Pythia              mPythia;
     Event&              mEvent;
-    Event&              mProcess;
-    
+
     TFile              *mFile;
     TTree              *mTree;
     TBranch            *mBranch;
     PrtclEvent         *mPrtclEvent;
-    
+
     TTBarSelector       mTTBarSelector;
-    
+
     int                 mNumErrs;
     int                 mNumEvents;
     int                 mMode;
     int                 mTimerStep;
     Timer               mTimer;
-    
+
     vector<unsigned>             mSpecialIndices;
     map<unsigned,int>            mHistory;
     map<unsigned,TLorentzVector> mPartonHistory;
@@ -167,33 +161,33 @@ protected:
 
 class P8GenericTree : public Pythia8Tree
 {
-public:    
-    P8GenericTree(string settings, string fileName, int mode) : 
+public:
+    P8GenericTree(string settings, string fileName, int mode) :
         Pythia8Tree(settings, fileName, mode) {}
     ~P8GenericTree() {}
 
 protected:
-    virtual bool ProcessParticle(unsigned prt);
+    virtual int CustomProcess(unsigned prt);
 };
 
 
 class P8DijetTree : public Pythia8Tree
 {
-public:    
-    P8DijetTree(string settings, string fileName, int mode) : 
+public:
+    P8DijetTree(string settings, string fileName, int mode) :
         Pythia8Tree(settings, fileName, mode) {}
     ~P8DijetTree() {}
 
 protected:
     /* Dijet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
+    virtual int CustomProcess(unsigned prt);
 };
 
 
 class P8GammajetTree : public Pythia8Tree
 {
-public:    
-    P8GammajetTree(string settings, string fileName, int mode) : 
+public:
+    P8GammajetTree(string settings, string fileName, int mode) :
         Pythia8Tree(settings, fileName, mode) {}
     ~P8GammajetTree() {}
 
@@ -201,14 +195,14 @@ protected:
     /* A handle for adding a hard process photon descended from prt */
     bool GammaAdd(unsigned prt);
     /* Gammajet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
+    virtual int CustomProcess(unsigned prt);
 };
 
 
 class P8ZmumujetTree : public Pythia8Tree
 {
-public:    
-    P8ZmumujetTree(string settings, string fileName, int mode) : 
+public:
+    P8ZmumujetTree(string settings, string fileName, int mode) :
         Pythia8Tree(settings, fileName, mode) {}
     ~P8ZmumujetTree() {}
 
@@ -216,14 +210,14 @@ protected:
     /* A handle for adding the two muons originating from a hard process Z prt */
     bool MuonAdd(unsigned prt);
     /* Zmumujet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
+    virtual int CustomProcess(unsigned prt);
 };
 
 
 class P8ttbarjetTree : public Pythia8Tree
 {
-public:    
-    P8ttbarjetTree(string settings, string fileName, int mode) : 
+public:
+    P8ttbarjetTree(string settings, string fileName, int mode) :
         Pythia8Tree(settings, fileName, mode) {}
     ~P8ttbarjetTree() {}
 
@@ -231,7 +225,7 @@ protected:
     /* A handle for adding the produced leptons in ttbar events */
     bool LeptonAdd(unsigned prt);
     /* ttbarjet specific particle logic */
-    virtual bool ProcessParticle(unsigned prt);
+    virtual int CustomProcess(unsigned prt);
 };
 
 

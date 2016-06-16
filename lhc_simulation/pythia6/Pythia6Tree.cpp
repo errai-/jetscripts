@@ -4,7 +4,12 @@
 Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int mode) :
     mMode(mode),
     mNumEvents(nEvent),
-    mInitialized(true)
+    mInitialized(true),
+    mEnergy(13000),
+    mTune(0),
+    mMPI(true),
+    mISR(true),
+    mFSR(true)
 {
     /* Create an instance of the Pythia event generator: */
     mPythia = new TPythia6;
@@ -13,7 +18,7 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
         throw std::runtime_error("Incompatible seed ID");
     mPythia->SetMRPY(1,mSeeds[nameId-1]);
     mPythia->SetMRPY(2,0);
-    
+
     /* Event type: */
     ModeSettings();
     /* Other settings: */
@@ -30,7 +35,7 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     mTree->SetAutoSave(100000000); /* 0.1 GBytes */
     mTree->SetCacheSize(10000000); /* 100 MBytes */
     TTree::SetBranchStyle(1); /* New branch style */
-    
+
     /* Connect an event to the tree */
     mPrtclEvent = new PrtclEvent();
     if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
@@ -41,40 +46,22 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
 
     /* Setup a custom event timer */
     mTimerStep = 1000;
-    mTimer.setParams(mNumEvents,mTimerStep);       
+    mTimer.setParams(mNumEvents,mTimerStep);
     mTimer.startTiming();
 } // Pythia6Tree
 
-void Pythia6Tree::GhostHadronAdd(unsigned int prt, bool useStrange)
-{
-    return;
-}
-
-bool Pythia6Tree::IsExcitedHadronState(unsigned int prt, int quarkID)
-{
-    return false;
-}
-
-TLorentzVector Pythia6Tree::LastParton(unsigned int prt)
-{
-    return TLorentzVector();
-}
-
-bool Pythia6Tree::ProcessParticle(unsigned int prt)
-{
-    return true;
-}
 
 void Pythia6Tree::ModeSettings() {
+    cerr << "Initializing Pythia6 ..." << endl;
     if (mMode == 1 || mMode == 0) {
-        // Standard QCD
+        cerr << "  Generating standard QCD events." << endl;
         mPythia->SetMSEL(1);
         // Min and max pthat
-        mPythia->SetCKIN(3,25);
+        mPythia->SetCKIN(3,20);
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 2) {
-        // photon+jets
-        //pythia->SetMSEL(10);
+        cerr << "  Generating photon+jet events." << endl;
+        //pythia->SetMSEL(10); //(includes gamma-gamma bkg)
         mPythia->SetMSEL(0);
         mPythia->SetMSUB(14,1);
         mPythia->SetMSUB(29,1);
@@ -83,29 +70,29 @@ void Pythia6Tree::ModeSettings() {
         mPythia->SetCKIN(3,20);
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 3) {
-        // Z+jets
+        cerr << "  Generating Zmumu+jet events." << endl;
         mPythia->SetMSEL(13); // 11 would be the vanilla y*/Z
         // Leave only decay to muons on
-        mPythia->SetMDME( 174,1,0 ); // Z decay to d dbar
-        mPythia->SetMDME( 175,1,0 ); // Z decay to u ubar
-        mPythia->SetMDME( 176,1,0 ); // Z decay to s sbar
-        mPythia->SetMDME( 177,1,0 ); // Z decay to c cbar
-        mPythia->SetMDME( 178,1,0 ); // Z decay to b bbar
-        mPythia->SetMDME( 179,1,0 ); // Z decay to t tbar
-        mPythia->SetMDME( 182,1,0 ); // Zee
-        mPythia->SetMDME( 183,1,0 ); // Znuenue
-        mPythia->SetMDME( 184,1,1 ); // Zmumu
-        mPythia->SetMDME( 185,1,0 ); // Znumunumu
-        mPythia->SetMDME( 186,1,0 ); // Ztautau
-        mPythia->SetMDME( 187,1,0 ); // Znutaunutau
+        mPythia->SetMDME(174,1,0); // Z decay to d dbar
+        mPythia->SetMDME(175,1,0); // Z decay to u ubar
+        mPythia->SetMDME(176,1,0); // Z decay to s sbar
+        mPythia->SetMDME(177,1,0); // Z decay to c cbar
+        mPythia->SetMDME(178,1,0); // Z decay to b bbar
+        mPythia->SetMDME(179,1,0); // Z decay to t tbar
+        mPythia->SetMDME(182,1,0); // Zee
+        mPythia->SetMDME(183,1,0); // Znuenue
+        mPythia->SetMDME(184,1,1); // Zmumu
+        mPythia->SetMDME(185,1,0); // Znumunumu
+        mPythia->SetMDME(186,1,0); // Ztautau
+        mPythia->SetMDME(187,1,0); // Znutaunutau
         // Min and max mhat
         mPythia->SetCKIN(1,40);
         mPythia->SetCKIN(2,-1);
         // Min and max pthat
-        mPythia->SetCKIN(3,15);
+        mPythia->SetCKIN(3,20);
         mPythia->SetCKIN(4,3000);
     } else if (mMode == 4) {
-        // ttbar events
+        cerr << "  Generating ttbar lepton+jets events." << endl;
         mPythia->SetMSEL(6); // choose top quark
         mPythia->SetMSUB(81,1); // qqbar -> qqbar
         mPythia->SetMSUB(82,1); // gg->qqbar
@@ -119,12 +106,10 @@ void Pythia6Tree::ModeSettings() {
 
 
 void Pythia6Tree::GeneralSettings() {
-    int tune = 0;
-    
     mPythia->SetMSTU(21,1); // Check for errors
     mPythia->SetMSTJ(22,2); // Unstable particle decay:
     mPythia->SetPARJ(71,10); // ctau = 10 mm
-    
+
     mPythia->SetMSTP(33,0); // no K factors in hard cross sections
     mPythia->SetMSTP(2,1); // which order running alphaS
     mPythia->SetMSTP(51,10042); // Structure function (PDF CTEQ6L1)
@@ -132,10 +117,11 @@ void Pythia6Tree::GeneralSettings() {
 
     mPythia->SetMSTP(142,2); // Turn on Pt reweighting
 
-    if (tune==0) {
+    if (mTune==0) {
         /* Z2*, a classic CMS tune */
+        cerr << "  Z2* tune has been selected." << endl;
         mPythia->SetPARP(82,1.921); // pt cutoff, multiparton interactions
-        mPythia->SetPARP(89,1800.); // sqrts for which parp82 is set 
+        mPythia->SetPARP(89,1800.); // sqrts for which parp82 is set
         mPythia->SetPARP(90,0.227); // MPI: rescaling power
 
         mPythia->SetMSTP(95,6); // Color reconnection setParams
@@ -154,11 +140,11 @@ void Pythia6Tree::GeneralSettings() {
 
         mPythia->SetMSTP(81,21); // MPI
         mPythia->SetMSTP(82,4); // MPI model
-    } else if (tune==1) {
+    } else if (mTune==1) {
         /* cuep6s1 tune by CMS, the newest but not used that much */
-        
+        cerr << "  CUEP6S1 tune has been selected." << endl;
         mPythia->SetPARP(82,1.9096); // pt cutoff, multiparton interactions
-        mPythia->SetPARP(89,1800.); // sqrts for which parp82 is set 
+        mPythia->SetPARP(89,1800.); // sqrts for which parp82 is set
         mPythia->SetPARP(90,0.2479); // MPI: rescaling power
 
         mPythia->SetMSTP(95,6); // Color reconnection setParams
@@ -177,7 +163,7 @@ void Pythia6Tree::GeneralSettings() {
 
         mPythia->SetMSTP(81,21); // MPI
         mPythia->SetMSTP(82,4); // MPI model
-        
+
         mPythia->SetPARJ(1,0.08); // HAD diquark suppression
         mPythia->SetPARJ(2,0.21); // HAD strangeness suppression
         mPythia->SetPARJ(3,0.94); // HAD strange diquark suppression
@@ -189,56 +175,61 @@ void Pythia6Tree::GeneralSettings() {
         mPythia->SetPARJ(25,0.63); // HAD eta0 suppression
         mPythia->SetPARJ(26,0.12); // HAD eta0 suppression
     }
-    
-    //mPythia->SetMSTP(61,0); // ISR off
-    //mPythia->SetMSTP(71,0); // FSR off
-    //mPythia->SetMSTP(81,0); // MPI off
 
-    //mPythia->SetMSTP(111,0); // Hadronization off
+    if (!mISR) {
+        mPythia->SetMSTP(61,0);
+        cerr << "  WARNING: ISR has been turned off!" << endl;
+    }
+    if (!mFSR) {
+        mPythia->SetMSTP(71,0); // FSR off
+        cerr << "  WARNING: FSR has been turned off!" << endl;
+    }
+    if (!mMPI) {
+        mPythia->SetMSTP(81,0); // MPI off
+        cerr << "  WARNING: MPI has been turned off!" << endl;
+    }
 
-    mPythia->Initialize("cms", "p", "p", 13000);
-    //mPythia->Initialize("cms", "p", "p", 8000);
+    cerr << "  CMS energy of " << mEnergy/1000 << " TeV has been chosen." << endl;
+    mPythia->Initialize("cms", "p", "p", mEnergy);
 } // GeneralSettings
 
 
+// mPythia->Pylist(2);
+// mPythia->Pystat(1);
 void Pythia6Tree::EventLoop()
 {
     /* Simulation loop */
-    std::size_t ev = 0;
-    while (ev != mNumEvents) { 
+    unsigned evtNo = 0;
+    while (evtNo != mNumEvents) {
         mPythia->GenerateEvent();
 
-        if ( !ParticleLoop() ) continue;
-        /* Print event listing */
-        //mPythia->Pylist(2);
-        
+        if (!ParticleLoop()) continue;
+
         mTree->Fill();
-        
+
         /* Update progress */
-        ++ev;
-        if (ev%mTimerStep==0) mTimer.printTime();
+        ++evtNo;
+        if (evtNo%mTimerStep==0) mTimer.printTime();
     }
-    /* Print event statistics */
-    //mPythia->Pystat(1);
 
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
     mFile->Close();
-    
+
     if (mCounter != 0)
         cerr << "Non-zero counter value: " << mCounter << endl;
-    
+
     delete mPythia;
     mPythia = 0;
     delete mPrtclEvent;
-    mPrtclEvent = 0;  
+    mPrtclEvent = 0;
 } // EventLoop
 
 
 bool Pythia6Tree::ParticleLoop()
 {
     mPrtclEvent->Clear();
-    
+
     /* Special particle indices are saved to eliminate saving overlap */
     mSpecialIndices.clear();
 
@@ -248,49 +239,59 @@ bool Pythia6Tree::ParticleLoop()
     } else if (mMode==3) {
         MuonAdd();
     }
-    
+
     mPrtclEvent->fWeight = 1./mPythia->GetVINT(99);
-    
+
     /* Particle loop */
-    for (Int_t prt = 1; prt <= mPythia->GetN(); ++prt) {
-        int status = mPythia->GetK(prt,1);
-        int id = mPythia->GetK(prt,2);
-        
-        // prt == 7,8: outgoing particles in the hardest subprocess
-        if (mMode > 0) {
-            if (prt==7 || prt==8) {
-                if (mMode==2 && id==22) continue;
-                if (mMode==3 && id==23) continue;
+    for (Int_t prt = 1; prt <= mPythia->GetN(); ++prt)
+        if (!ProcessParticle(prt))
+            return false;
 
-                if ( status != 21 ) throw std::runtime_error("False functionality in hardest subprocess");
-                
-                ParticleAdd(prt,3);
-                continue;
-            }
-        }
+    return true;
+} // ParticleLoop
 
-        /* Special final-state particles have already been added */
-        if (std::count( mSpecialIndices.begin(), mSpecialIndices.end(), prt)>0)
-            continue;
-        
-        /* Hadronic and algorithmic definitions: add FS partons or interesting hadrons. */
-        if (status >= 11 && status <= 20) {
-            if (abs(id) <= 6 || id == 21)
-                ParticleAdd(prt,4);
-            else if (HadrFuncs::HasCharm(id))
-                ParticleAdd(prt,6);
-            else if (HadrFuncs::HasBottom(id))
-                ParticleAdd(prt,7);
+
+inline bool Pythia6Tree::Absent(unsigned int prt)
+{
+    return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end();
+}
+
+
+bool Pythia6Tree::ProcessParticle(unsigned prt)
+{
+    int status = mPythia->GetK(prt,1);
+    int id = abs(mPythia->GetK(prt,2));
+
+    // prt == 7,8: outgoing LO particles (hard process)
+    if (mMode > 0) {
+        if (prt==7 || prt==8) {
+            if (mMode==2 && id==22) return true;
+            if (mMode==3 && id==23) return true;
+
+            if (status!=21) throw std::runtime_error("False functionality in hard process.");
+
+            ParticleAdd(prt,3);
+            return true;
         }
-        
-        /* Stable particles */
-        if (status <= 10) {
-            int saveStatus = 1;
-            /* Gamma from pi0 */
-            if ( (mMode==0||mMode==1) && id==22 && GammaChecker(prt))
-                saveStatus = 2;
-            ParticleAdd(prt,saveStatus);
+    }
+
+    /* Hadronic and algorithmic definitions: add FS partons or interesting hadrons. */
+    if (status >= 11 && status <= 20) {
+        if (abs(id) <= 6 || id == 21) {
+            ParticleAdd(prt,4);
+            return true;
+        } else if (abs(mPythia->GetK(prt,2))>=100) {
+            GhostHadronAdd(prt);
         }
+    }
+
+    /* Stable particles, check that this is no special case. */
+    if (status <= 10 && Absent(prt)) {
+        int saveStatus = 1;
+        /* Gamma from pi0 */
+        if (id==22 && GammaChecker(prt))
+            saveStatus = 9;
+        ParticleAdd(prt,saveStatus);
     }
 
     return true;
@@ -300,47 +301,65 @@ bool Pythia6Tree::ParticleLoop()
 /* A handle for adding particle information */
 void Pythia6Tree::ParticleAdd(unsigned prt, int saveStatus)
 {
-    // TODO: history flavor?
-    int history = 0;
-    
-    mPrtclEvent->AddPrtcl( mPythia->GetP(prt,1),
-                           mPythia->GetP(prt,2),
-                           mPythia->GetP(prt,3),
-                           mPythia->GetP(prt,4),
-                           mPythia->GetK(prt,2),
-                           saveStatus,
-                           history);
+    mPrtclEvent->AddPrtcl(mPythia->GetP(prt,1),
+                          mPythia->GetP(prt,2),
+                          mPythia->GetP(prt,3),
+                          mPythia->GetP(prt,4),
+                          mPythia->GetK(prt,2),
+                          saveStatus);
 } // ParticleAdd
+
+
+void Pythia6Tree::GhostHadronAdd(unsigned int prt, bool useStrange)
+{
+    int id = abs(mPythia->GetK(prt,2));
+
+    if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5))
+        ParticleAdd(prt,7);
+    else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))
+        ParticleAdd(prt,6);
+    else if (useStrange && HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3))
+        ParticleAdd(prt,5);
+}
+
+
+bool Pythia6Tree::IsExcitedHadronState(unsigned int prt, int quarkId)
+{
+    for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); prt <= N; ++prt)
+        if (HadrFuncs::StatusCheck(quarkId, mPythia->GetK(dtr,2)))
+            return true;
+    return false;
+}
 
 
 bool Pythia6Tree::GammaAdd()
 {
     mSpecialIndices.push_back(9);
-    
+
     while ( mPythia->GetK(mSpecialIndices[0],1)>10 )
         mSpecialIndices[0] = mPythia->GetK(mSpecialIndices[0],4);
-    
+
     if ( mPythia->GetK(mSpecialIndices[0],2) != 22 )
         throw std::logic_error("The photon finder did not find a photon.");
 
     ParticleAdd(mSpecialIndices[0],2);
 }
 
-bool Pythia6Tree::MuonAdd() 
+bool Pythia6Tree::MuonAdd()
 {
     mSpecialIndices.push_back(12); mSpecialIndices.push_back(13);
     while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13) {
         ++mSpecialIndices[0]; ++mSpecialIndices[1];
     }
-    
+
     for ( std::size_t i = 0; i < mSpecialIndices.size(); ++i ) {
-        if ( abs(mPythia->GetK(mSpecialIndices[i],2))!=13 )
+        if (abs(mPythia->GetK(mSpecialIndices[i],2))!=13)
             throw std::logic_error("The muon finder did not find a muon.");
-        
+
         while (mPythia->GetK(mSpecialIndices[i],1)>10) {
-            for (unsigned probe = mPythia->GetK(mSpecialIndices[i],4); 
+            for (unsigned probe = mPythia->GetK(mSpecialIndices[i],4);
                  probe <= mPythia->GetK(mSpecialIndices[i],5); ++probe) {
-                if ( abs(mPythia->GetK(probe,2)) == 13 ) {
+                if (abs(mPythia->GetK(probe,2))==13) {
                     mSpecialIndices[i] = probe;
                     break;
                 }
@@ -363,7 +382,7 @@ bool Pythia6Tree::GammaChecker(unsigned prt)
 {
     /* One mother, which is pi0? */
     int mother = mPythia->GetK(prt,3);
-    if ( !mother || abs(mPythia->GetK(mother,2))!=111 ) return false;
+    if (!mother || abs(mPythia->GetK(mother,2))!=111) return false;
 
     int d1 = mPythia->GetK(mother,4);
     int d2 = mPythia->GetK(mother,5);

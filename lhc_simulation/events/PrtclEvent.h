@@ -21,7 +21,7 @@
 //    semicolons should not be corrected.                           //
 //                                                                  //
 // Author: Hannu Siikonen (errai- @GitHub)                          //
-// Last modification: 21.8.2015                                     //
+// Last modification: 16.6.2016                                     //
 //                                                                  //
 //////////////////////////////////////////////////////////////////////
 
@@ -43,16 +43,16 @@
 
 
 // The information concerning one particle, stored to a ROOT tree.
-class PrtclData : public TObject 
+class PrtclData : public TObject
 {
 public:
-    
+
     PrtclData() { }
     virtual ~PrtclData() { }
 
     void SetPxPyPzE(double px,double py,double pz,double e);
-    void SetParams(int id,int status,int history_flavor);
-    
+    void SetParams(int id,int status);
+
     Double_t P() const { return fP4.P(); }
     Double_t Pt() const { return fP4.Pt(); }
     Double_t Eta() const { return fP4.Eta(); }
@@ -61,28 +61,27 @@ public:
 
 private:
     /* Use a pure ROOT LorentzVector so that for instance Pt can be found out
-     * even without the sources of this event class. This is a slightly better 
-     * format than TLorentzVector and is in use for instance in the KKousouris 
-     * scripts (indirectly, through CMSSW). */ 
+     * even without the sources of this event class. This is a slightly better
+     * format than TLorentzVector and is in use for instance in the KKousouris
+     * scripts (indirectly, through CMSSW). */
     ROOT::Math::LorentzVector< ROOT::Math::PxPyPzE4D<double> > fP4;
-    
+
     int fPDGCode;
     int fAnalysisStatus;
-    int fHistoryFlavor;
-   
+
 public:
     ClassDef(PrtclData,1)
 };
 
 
 // An event class for the particle data that is stored
-class PrtclEvent : public TObject 
+class PrtclEvent : public TObject
 {
 public:
     PrtclEvent();
     virtual ~PrtclEvent() { Reset(); };
 
-    void AddPrtcl(double px,double py,double pz,double e,int id,int stat, int hf);
+    void AddPrtcl(double px,double py,double pz,double e,int id,int stat);
     PrtclData *InitPrtcl();
 
     void Clear(Option_t *option ="");
@@ -92,8 +91,8 @@ public:
     double fWeight;
 
 private:
-    size_t fN_Prtcl; //! Present amount of particles in the tree 
-    
+    size_t fN_Prtcl; //! Present amount of particles in the tree
+
     TClonesArray *fPrtcls;
     static TClonesArray *fgPrtcls;
 

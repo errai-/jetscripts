@@ -9,7 +9,7 @@ BODY=""
 
 EVT_PER_RUN=$(($NUM_EVT/$NUM_PROC))
 
-cd ../pythia8
+cd pythia8
 
 pidArr=()
 NAMES=""

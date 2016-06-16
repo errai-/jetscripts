@@ -15,8 +15,7 @@ USED STATUS CODES:
 
 1: Generic final particles
 
-2: Special index for storing event type dependent data.
-For gamma/Z-jets the stable gammas and Z's, for generic gammas originating from pi0
+2: For gamma/Z-jets the stable gammas and Z's
 
 3: Outgoing hardest subprocess
 
@@ -27,6 +26,8 @@ Ghost particles:
 7: Ghost b hadron
 
 8: Outgoing hardest subprocess with corrected momentum values.
+
+9: Photons originating from pions
 
 ////////////////////////////////////////////////////////////////////////////////
 
