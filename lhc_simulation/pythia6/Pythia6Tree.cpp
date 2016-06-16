@@ -232,6 +232,8 @@ bool Pythia6Tree::ParticleLoop()
 
     /* Special particle indices are saved to eliminate saving overlap */
     mSpecialIndices.clear();
+    mHistory.clear();
+    mPartonHistory.clear();
 
     /* Pythia 6 speciality: do the gamma/muon analysis before the particle loop. */
     if (mMode==2) {
@@ -243,9 +245,18 @@ bool Pythia6Tree::ParticleLoop()
     mPrtclEvent->fWeight = 1./mPythia->GetVINT(99);
 
     /* Particle loop */
-    for (Int_t prt = 1; prt <= mPythia->GetN(); ++prt)
+    for (unsigned prt = 1; prt <= mPythia->GetN(); ++prt)
         if (!ProcessParticle(prt))
             return false;
+
+    /* Adding corrected parton momenta */
+    for (auto prt : mPartonHistory)
+        mPrtclEvent->AddPrtcl(prt.second.Px(),
+                                prt.second.Py(),
+                                prt.second.Pz(),
+                                prt.second.E(),
+                                mPythia->GetK(prt.first,2),
+                                8);
 
     return true;
 } // ParticleLoop
@@ -254,6 +265,22 @@ bool Pythia6Tree::ParticleLoop()
 inline bool Pythia6Tree::Absent(unsigned int prt)
 {
     return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end();
+}
+
+
+inline bool Pythia6Tree::IsParton(unsigned int prt)
+{
+    int id = abs(mPythia->GetK(prt,2));
+    return (id <= 6 || id == 21);
+}
+
+
+inline bool Pythia6Tree::IsFSParton(unsigned int prt) /* This assumes implicitly that the particle prt is a parton */
+{
+    for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr)
+        if (IsParton(dtr))
+            return false;
+    return true;
 }
 
 
@@ -270,6 +297,11 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
 
             if (status!=21) throw std::runtime_error("False functionality in hard process.");
 
+            /* Initiate corrected hard process parton momentum */
+            mPartonHistory.emplace(prt, TLorentzVector());
+            /* Propagate history information */
+            PropagateHistory(prt, prt);
+
             ParticleAdd(prt,3);
             return true;
         }
@@ -277,8 +309,19 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
 
     /* Hadronic and algorithmic definitions: add FS partons or interesting hadrons. */
     if (status >= 11 && status <= 20) {
-        if (abs(id) <= 6 || id == 21) {
+        if (IsParton(prt)) {
             ParticleAdd(prt,4);
+
+            if (IsFSParton(prt)) {
+                /* Accumulate the corrected momentum of FS partons */
+                auto it = mHistory.find(prt);
+                if (it != mHistory.end() && it->second!=-1)
+                    mPartonHistory[mHistory[prt]] += TLorentzVector(mPythia->GetP(prt,1),
+                                                                    mPythia->GetP(prt,2),
+                                                                    mPythia->GetP(prt,3),
+                                                                    mPythia->GetP(prt,4));
+            }
+
             return true;
         } else if (abs(mPythia->GetK(prt,2))>=100) {
             GhostHadronAdd(prt);
@@ -325,11 +368,27 @@ void Pythia6Tree::GhostHadronAdd(unsigned int prt, bool useStrange)
 
 bool Pythia6Tree::IsExcitedHadronState(unsigned int prt, int quarkId)
 {
-    for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); prt <= N; ++prt)
+    for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr)
         if (HadrFuncs::StatusCheck(quarkId, mPythia->GetK(dtr,2)))
             return true;
     return false;
 }
+
+
+void Pythia6Tree::PropagateHistory(unsigned prt, int hard_count)
+{
+    if (!IsParton(prt)) {
+        return;
+    } else if (mHistory.emplace(prt,hard_count).second) {
+        /* Propagate history info recursively */
+        for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr)
+            PropagateHistory(dtr,hard_count);
+    } else {
+        /* Mark repeated cases with a zero flavor */
+        if (mHistory[prt]!=hard_count)
+            mHistory[prt] = -1;
+    }
+} // PropagateHistory
 
 
 bool Pythia6Tree::GammaAdd()
@@ -345,6 +404,7 @@ bool Pythia6Tree::GammaAdd()
     ParticleAdd(mSpecialIndices[0],2);
 }
 
+
 bool Pythia6Tree::MuonAdd()
 {
     mSpecialIndices.push_back(12); mSpecialIndices.push_back(13);
@@ -352,7 +412,7 @@ bool Pythia6Tree::MuonAdd()
         ++mSpecialIndices[0]; ++mSpecialIndices[1];
     }
 
-    for ( std::size_t i = 0; i < mSpecialIndices.size(); ++i ) {
+    for (unsigned i = 0; i < mSpecialIndices.size(); ++i) {
         if (abs(mPythia->GetK(mSpecialIndices[i],2))!=13)
             throw std::logic_error("The muon finder did not find a muon.");
 

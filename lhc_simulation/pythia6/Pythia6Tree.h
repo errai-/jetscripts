@@ -34,6 +34,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <stdexcept>
 
@@ -61,6 +62,7 @@ using std::endl;
 using std::cerr;
 using std::runtime_error;
 using std::stoi;
+using std::map;
 
 class Pythia6Tree
 {
@@ -105,9 +107,14 @@ protected:
      * the energy of the photon-pair corresponds to the pion. returns 0 if
      * the origin is not a pion with good energy and 1 if it is */
     bool                            GammaChecker(unsigned);
+    /* A function for indicating the flavour history */
+    void                            PropagateHistory(unsigned prt, int hard_prt);
     /* Has the particle already been appended */
     bool                            Absent(unsigned prt);
-
+    /* A shortcut for finding out what stuff is partons (no beam remnants) */
+    bool                            IsParton(unsigned prt);
+    /* Check whether this is an FS parton */
+    bool                            IsFSParton(unsigned prt);
 
     /* Settings that depend on the selected mode */
     void                            ModeSettings();
@@ -141,6 +148,8 @@ protected:
     Timer                           mTimer;
 
     vector<unsigned>                mSpecialIndices;
+    map<unsigned,int>               mHistory;
+    map<unsigned,TLorentzVector>    mPartonHistory;
 
     int                             mEnergy;
     int                             mTune;

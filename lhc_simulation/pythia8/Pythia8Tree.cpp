@@ -276,11 +276,11 @@ bool P8GammajetTree::GammaAdd(unsigned prt)
 } // GammaAdd
 
 
-// TODO: this might not behave well
+/* This is based on an assumption made about status codes - there are safeguards in muonadd. */
 inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 {
     /* The first status 62 hits correspond to the hard process Z0 */
-    if ( mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==62 )
+    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==62)
         return (MuonAdd(prt) ? 1 : 0);
 
     return 2;
@@ -290,11 +290,11 @@ inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 bool P8ZmumujetTree::MuonAdd(unsigned prt)
 {
     if (mEvent[prt].idAbs()!=23) {
-        std::cerr << "Expected Z, found " << mEvent[prt].name() << endl;
+        cerr << "Expected Z, found " << mEvent[prt].name() << endl;
         throw std::logic_error("Z identification malfunction.");
     }
 
-    for ( int daughter : mEvent[prt].daughterList() ) {
+    for (int daughter : mEvent[prt].daughterList()) {
         if (mEvent[daughter].idAbs()==13) {
             mSpecialIndices.push_back(daughter);
         }
@@ -311,7 +311,7 @@ bool P8ZmumujetTree::MuonAdd(unsigned prt)
                 }
             }
         }
-        ParticleAdd( mSpecialIndices[i], 2 );
+        ParticleAdd(mSpecialIndices[i], 2);
     }
 
     if ( mSpecialIndices.size() == 2 ) {
