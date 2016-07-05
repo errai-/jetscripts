@@ -18,7 +18,7 @@ MODE := 0
 NUM_PROC := 1
 START_IDX := 0
 
-all: pythia8 pythia6 libHerwigppTree.so jetanalysis ptcut
+all: pythia8 pythia6 libHerwigTree.so jetanalysis ptcut
 
 # Generic
 
@@ -146,9 +146,12 @@ run_pythia6:
 
 # Herwig
 
-libHerwigppTree.so : HerwigppTree.cpp HerwigppTree.h libPrtclEvent.so
-	cd herwig && $(CXX) -shared -fPIC HerwigppTree.cpp \
-	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
+#libHerwigTree.so : HerwigTree.cpp HerwigTree.h libPrtclEvent.so
+#	cd herwig && $(CXX) -shared -fPIC HerwigTree.cpp \
+#	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
+libHerwigTree.so : HerwigTree.cpp HerwigTree.h
+	cd herwig && $(CXX) -shared -fPIC HerwigTree.cpp \
+	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT_SAFE) $(CXXFLAGS) $(LDFLAGS) -o $@
 
 run_herwig:
 	bash bash/herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)

@@ -336,8 +336,7 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
 
 bool P8ttbarjetTree::LeptonAdd(unsigned prt)
 {
-    /* Charged lepton input: find a final-state charged lepton
-     * neutrino input: add the parent W */
+    /* Charged lepton input: find a final-state charged lepton. */
     int type = mEvent[prt].idAbs()%2;
     if (type) {
         /* Charged leptons */
@@ -356,13 +355,13 @@ bool P8ttbarjetTree::LeptonAdd(unsigned prt)
         }
 
         if (mEvent[prt].idAbs()==15)
-            cerr << "No tau decay, check settings." << endl;
+            throw std::logic_error("Final-state tau spotted.");
     } else {
         /* Neutrinos - also saved. (Secondary neutrinos ignored.) */
         while (!mEvent[prt].isFinal()) {
             vector<int> leptons = mEvent[prt].daughterList();
             if (leptons.size()>1)
-                cerr << "Neutrino decay, check settings." << endl;
+                throw std::logic_error("Neutrino decay spotted.");
             prt = leptons[0];
         }
     }

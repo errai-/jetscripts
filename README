@@ -155,7 +155,7 @@ The steps are given in a chronological order, but some steps can be skipped.
 
  Dropped out: -D_GLIBCXX_USE_CXX11_ABI=0
  Run:
-     ./configure --prefix=/home/hannu/Cern/install --with-clang --enable-cxx14 --with-pythia6-libdir=/home/hannu/Cern/install/lib --disable-pythia8 --cflags='-march=native' --cxxflags='-march=native'
+     ./configure --prefix=/home/hannu/Cern/install --with-clang --enable-cxx14 --with-pythia6-libdir=/home/hannu/Cern/install/lib --disable-pythia8 --cflags='-march=native' --cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -march=native -O2'
 
  Run:
      make -jN
@@ -173,7 +173,7 @@ The steps are given in a chronological order, but some steps can be skipped.
  #] Pythia8[.2.19]
 
  Run:
-     ./configure --prefix="installdir" --enable-64bit --enable-shared --with-fastjet3="installdir" --with-hepmc2="installdir" --with-lhapdf6="installdir" --with-promc="installdir"/promc --with-boost=/usr --with-powheg="installdir"/powheg --cxx-common="-march=native -O2 -fPIC"
+     ./configure --prefix="installdir" --enable-64bit --enable-shared --with-fastjet3="installdir" --with-hepmc2="installdir" --with-lhapdf6="installdir" --with-promc="installdir"/promc --with-boost=/usr --with-powheg="installdir"/powheg --cxx-common="-D_GLIBCXX_USE_CXX11_ABI=0 -march=native -O2 -fPIC"
 
 Run:
      make -jN
@@ -185,10 +185,10 @@ In .bashrc, write:
      export PYTHIA8=/usr/local
      export PYTHIA8DATA=/share/Pythia8/xmldoc
 
- #] ThePEG 1[.9.2] (dependency: fastjet, optional dependency: LHAPDF)
+ #] ThePEG 2[.0.2] (dependency: fastjet, optional dependency: LHAPDF)
 
 Run:
- ./configure --with-lhapdf=/usr/local --with-fastjet=/usr/local
+ ./configure --with-lhapdf=$HOME/Cern/install --with-hepmc=$HOME/Cern/install --with-fastjet=$HOME/Cern/install --prefix=$HOME/Cern/install
  -Basic configuration. Check for errors.
 
 Run:
@@ -203,10 +203,10 @@ Remarks:
  ThePEG offers generic structures for particles, events etc. and its documentation is essential in daily life.
  Herwig++ is just some sugar on the top to make the simulator software complete.
 
- #] HERWIG++2[.7.1] (dependencies: fastjet, thepeg)
+ #] HERWIG7[.0.2] (dependencies: fastjet, thepeg)
 
 Run:
- ./configure --with-fastjet=/usr/local --with-thepeg=/usr/local
+ ./configure --prefix=$HOME/Cern/install --with-thepeg=$HOME/Cern/install --with-thepeg=$HOME/Cern/install --with-fastjet=$HOME/Cern/install --with-madgraph=$HOME/Cern/sources/MG5_aMC_v2_4_2 --with-gosam=$HOME/Cern/install
  -Basic configuration, check for errors.
 
 Run:

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////
 //                                                                //
-// Class structure for storing Herwig++ particle data into trees. //            
+// Class structure for storing Herwig++ particle data into trees. //
 //                                                                //
 // Modes of operation:                                            //
 //                                                                //
@@ -20,12 +20,13 @@
 //       - Ttbar production with WW -> qqbarllbar                 //
 //                                                                //
 // Author: Hannu Siikonen (errai- @GitHub)                        //
-// Last modification: 21.8.2015                                   //
+// Last modification: 30.6.2016                                   //
 //                                                                //
 ////////////////////////////////////////////////////////////////////
 
-#ifndef STOREPARTICLES_H
-#define STOREPARTICLES_H
+
+#ifndef HERWIGTREE_H
+#define HERWIGTREE_H
 
 #include "ThePEG/Handlers/AnalysisHandler.h"
 #include "ThePEG/EventRecord/Event.h"
@@ -33,8 +34,9 @@
 #include "ThePEG/EventRecord/StandardSelectors.h"
 #include "ThePEG/Interface/ClassDocumentation.h"
 #include "ThePEG/EventRecord/Particle.h"
-#include "ThePEG/Repository/UseRandom.h"
+#include "ThePEG/Repository/CurrentGenerator.h"
 #include "ThePEG/Repository/EventGenerator.h"
+#include "ThePEG/Repository/UseRandom.h"
 #include "ThePEG/Utilities/DescribeClass.h"
 #include "ThePEG/PDT/StandardMatchers.h"
 #include "ThePEG/Config/Unitsystem.h"
@@ -54,48 +56,40 @@
 #include <cstdlib>
 #include <cassert>
 #include <stdexcept>
+
 using std::cout;
 using std::endl;
 using std::runtime_error;
 
-namespace jetanalysis {
+
+namespace Herwig {
 
 using namespace ThePEG;
 
-class HerwigppTree: public AnalysisHandler {
+class HerwigTree: public AnalysisHandler {
 
 public:
 
-    HerwigppTree() {}
-    
-    ~HerwigppTree() {}
-    
+    HerwigTree() {}
+
     /** Analyze a given Event.
-        * @param event pointer to the Event to be analyzed.
-        * @param ieve the event number.
-        * @param loop the number of times this event has been presented.
-        * @param state nonzero if the event has been manipulated. */
+     * @param event pointer to the Event to be analyzed.
+     * @param ieve the event number.
+     * @param loop the number of times this event has been presented.
+     * @param state nonzero if the event has been manipulated. */
     virtual void analyze(tEventPtr event, long ieve, int loop, int state);
 
     /** Standard Init function, called exactly once. */
-    static void Init() { static ClassDocumentation<HerwigppTree> documentation("No documentation"); }
+    static void Init() { static ClassDocumentation<HerwigTree> documentation("The HerwigTree class is intended for saving gen-level data into tree structures."); }
 
 protected:
-   
-    /** @name Generic dummy-methods. */
-    //@{
-    IBPtr clone() const { return new_ptr(*this); }
-    IBPtr fullclone() const { return new_ptr(*this); }
-    //@}
 
-    /** @name Setup and finalization of the run */
-    //@{
-    /** Initialize this object. Called in the run phase just before a run begins. */
+    virtual IBPtr clone() const { return new_ptr(*this); }
+    virtual IBPtr fullclone() const { return new_ptr(*this); }
+
     virtual void doinitrun();
-
-    /** Finalize this object. Called in the run phase just after a run has ended. */
     virtual void dofinish();
-    //@}
+
     /** @name Functions for the particle loop. */
     //@{
     bool gammaAdd(tPPtr);
@@ -104,61 +98,65 @@ protected:
 
     bool leptonAdd(tPPtr);
     //@}
-    
+
     void print_parents(const tPPtr&);
-    
+
     /** @name Help methods for the analysis */
     //@{
-    /** ThePEG does not provide useful status codes and the status has to be studied manually.
-      * This method is a mock-up of the CMSSW-way to calculate the status code. However, these
-      * codes are not at the moment in use and the method is here only for reference */
+   /** ThePEG does not provide useful status codes and the status has to be studied manually.
+     * This method is a mock-up of the CMSSW-way to calculate the status code. However, these
+     * codes are not at the moment in use and the method is here only for reference */
     int getStatusCode(const tPPtr&) const;
 
     int gammaChecker(const tPPtr&);
-    
+
     int isExcitedHadronState(const tPPtr&, int);
-    
+
     void particleAdd(const tPPtr&, int);
     //@}
-    
+
     /** @name Variables for the analysis */
     //@{
 
     /* The hardest event */
     tcEventBasePtr mHard;
-    
+
     TFile *mFile;
     TTree *mTree;
     TBranch *mBranch;
     PrtclEvent *mPrtclEvent;
-    
+
     int mNumEvents;
     int mMode;
     int mTimerStep;
     Timer mTimer;
-    
-    vector<std::size_t> mSpecialIndices;
+
+    vector<unsigned> mSpecialIndices;
     //@}
+
 private:
-    /* The assignment operator is private and must never be called nor implemented. */
-    HerwigppTree & operator=(const HerwigppTree &);
 
-}; // Class HerwigppTree
+   /** The static object used to initialize the description of this class. */
+    static NoPIOClassDescription<HerwigTree> initHerwigTree;
 
+   /** The assignment operator is private and must never be called. */
+    HerwigTree & operator=(const HerwigTree &);
+
+};
 
 /* Initialization, closing and administrative stuff: */
 
-void HerwigppTree::doinitrun()
+void HerwigTree::doinitrun()
 {
     AnalysisHandler::doinitrun();
     try {
         string fileName = "particles_herwig";
-        
+
         /* In a general multithread-case, generate a thread-unique root file name */
         fileName += "_";
         fileName += generator()->runName();
         fileName += ".root";
-        
+
         size_t pos = fileName.find("jet_");
         string modeName = fileName.substr(17,pos-17);
         if (modeName=="generic") {
@@ -174,19 +172,19 @@ void HerwigppTree::doinitrun()
         } else {
             throw runtime_error("Bad mode");
         }
-    
+
         /* Setup a root file */
         mFile = new TFile (fileName.c_str(),"RECREATE");
         if (!mFile) throw runtime_error("Creating an output file failed");
-        mFile->SetCompressionLevel(1); 
-        
+        mFile->SetCompressionLevel(1);
+
         /* Setup a root tree */
         mTree = new TTree ("HerwigTree","Herwig++ particle data.");
         if (!mTree) throw runtime_error("Creating a tree failed");
         mTree->SetAutoSave(100000000);  /* 0.1 GBytes */
         mTree->SetCacheSize(10000000);  /* 10 MBytes */
         TTree::SetBranchStyle(1); /* new style */
-        
+
         /* Connect an event handle with the tree */
         mPrtclEvent = new PrtclEvent;
         if (!mPrtclEvent) throw runtime_error("Creating an event handle failed");
@@ -194,32 +192,64 @@ void HerwigppTree::doinitrun()
         if (!mBranch) throw runtime_error("Associating the event handle with the tree failed");
         mBranch->SetAutoDelete(kFALSE);
         mTree->BranchRef();
-        
+
         /* Timing functions */
         mTimerStep = 1000;
         mTimer.setParams(mNumEvents,mTimerStep);
         mTimer.startTiming();
-        
+
     } catch (std::exception& e) {
         cout << "An error occurred: " << e.what() << endl;
     }
 }
 
-void HerwigppTree::dofinish() 
+void HerwigTree::dofinish()
 {
     AnalysisHandler::dofinish();
-    
+
     mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
     mFile->Close();
-    
-    cout << "A tree has been written into a .root file" << endl;  
+
+    cout << "A tree has been written into a .root file" << endl;
 }
 
-/* *** Attention *** This class-description must be correct. */
-DescribeNoPIOClass<HerwigppTree,AnalysisHandler>
-  describejetanalysisStoreParticles("jetanalysis::HerwigppTree", "../lib/libHerwigppTree.so");
+NoPIOClassDescription<HerwigTree> HerwigTree::initHerwigTree;
+// Definition of the static class description member.
 
-} // namespace jetanalysis
+}
 
-#endif /* STOREPARTICLES_H */
+
+
+#include "ThePEG/Utilities/ClassTraits.h"
+
+namespace ThePEG {
+
+/** @cond TRAITSPECIALIZATIONS */
+
+/** This template specialization informs ThePEG about the
+ *  base classes of HerwigTree. */
+template <>
+struct BaseClassTrait<Herwig::HerwigTree,1> {
+    /** Typedef of the first base class of HerwigTree. */
+    typedef AnalysisHandler NthBase;
+};
+
+/** This template specialization informs ThePEG about the name of
+ *  the HerwigTree class and the shared object where it is defined. */
+template <>
+struct ClassTraits<Herwig::HerwigTree>
+    : public ClassTraitsBase<Herwig::HerwigTree> {
+    /** Return a platform-independent class name */
+    static string className() { return "Herwig::HerwigTree"; }
+    /** Return the name(s) of the shared library (or libraries) be loaded to get
+    *  access to the HerwigTree class and any other class on which it depends
+    *  (except the base class). */
+    static string library() { return "libHerwigTree.so"; }
+};
+
+/** @endcond */
+
+}
+
+#endif /* HERWIGTREE_H */

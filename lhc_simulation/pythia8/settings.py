@@ -24,9 +24,15 @@ pdf = 1
 # 1: 13 TeV
 eScale = 1
 
+ISR=True
+FSR=True
+MPI=True
+
+print "Initializing pythia8:"
+
 # Read run settings from command line parameters
 if len(sys.argv) != 5:
-    print "Incorrect amount of command line parameters"
+    print "    Incorrect amount of command line parameters"
     sys.exit()
 
 tot_evts = int(sys.argv[1])
@@ -35,7 +41,7 @@ procs = int(sys.argv[3])
 proc_id = int(sys.argv[4])
 
 if tot_evts%procs!=0:
-    print "Number of processors and events should fit"
+    print "    Number of processors and events should fit"
     sys.exit()
 
 # Set a unique name for the run
@@ -57,7 +63,7 @@ name += str(tot_evts)
 name += "_"
 name += str(proc_id)
 
-print name
+print "   ", name
 name += ".cmnd"
 
 f = open(name,'w')
@@ -86,8 +92,10 @@ f.write("PhaseSpace:bias2SelectionRef = 15.\n\n")
 f.write("! CM energy\n")
 if eScale==0:
     f.write("Beams:eCM = 8000.\n\n")
+    print "    CMS energy 8 TeV"
 elif eScale==1:
     f.write("Beams:eCM = 13000.\n\n")
+    print "    CMS energy 13 TeV"
 
 if mode==0:
     f.write("HardQCD:all = on\n")
@@ -117,10 +125,12 @@ if mode==4:
 if mode>0:
     f.write("Tune:preferLHAPDF = 2\n")
     if tune==0:
+        print "    4C tune"
         f.write("! Tune (4C)\n")
         f.write("Tune:ee = 3\n")
         f.write("Tune:pp = 5\n")
     elif tune==1:
+        print "    CUETP8S1 tune (CTEQ6L1)"
         f.write("! CMS UE Tune CUETP8S1-CTEQ6L1\n")
         #f.write("Tune:pp = 15\n\n")
         f.write('Tune:ee 3\n')
@@ -131,6 +141,7 @@ if mode>0:
         f.write('MultipartonInteractions:a1=0.00\n')
         f.write('ColourReconnection:range=3.31257\n\n')
     elif tune==2:
+        print "    CUETP8M1 tune (Monash*)"
         f.write('! CMS UE Tune CUETP8M1-based on pythia8 monash-star tune\n')
         f.write('Tune:pp 14\n')
         f.write('Tune:ee 7\n')
@@ -141,10 +152,14 @@ if mode>0:
     if pdf==0:
         f.write("PDF:pSet = LHAPDF6:cteq6l1\n\n")
 
-#f.write("PartonLevel:MPI = off\n")
-#f.write("PartonLevel:ISR = off\n")
-#f.write("PartonLevel:FSR = off\n")
-
-#f.write("HadronLevel:Hadronize = off\n")
+if not MPI:
+    f.write("PartonLevel:MPI = off\n")
+    print "    WARNING: MPI has been turned off!"
+if not ISR:
+    f.write("PartonLevel:ISR = off\n")
+    print "    WARNING: ISR has been turned off!"
+if not FSR:
+    f.write("PartonLevel:FSR = off\n")
+    print "    WARNING: FSR has been turned off!"
 
 f.close()

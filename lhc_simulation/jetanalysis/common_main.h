@@ -24,7 +24,7 @@ using std::string;
 using std::vector;
 
 bool main_handle(int argc, char* argv[], string& fullPath, string& treePath,
-                 int& mode, int& definition, string& output, string& output2) 
+                 int& mode, int& definition, string& output, string& output2)
 {
     if (argc != 4) {
         cout << "Usage: ./jetanalysis.exe [Standard form input file name] [path - e.g. './'] [Flavour def.]" << endl;
@@ -41,16 +41,16 @@ bool main_handle(int argc, char* argv[], string& fullPath, string& treePath,
         cout << "10: Algotirhmic definition with ghost partons" << endl;
         return false;
     }
-    
+
     definition = std::stoi(argv[3]);
     int generator = -1;
     bool beginning = false;
-    
+
     if ( definition<1||definition>10 ) throw std::runtime_error("Flavor options 1-10");
-    
+
     string input = argv[1], tmpStr = "";
     fullPath = argv[2];
-    fullPath += input;        
+    fullPath += input;
     for (auto i : input) {
         if (i=='_') {
             if (!beginning && tmpStr=="particles") {
@@ -121,7 +121,7 @@ bool main_handle(int argc, char* argv[], string& fullPath, string& treePath,
         }
     }
     if (!beginning || generator==-1 || mode==-1) throw std::runtime_error("Input file uses wrong format");
-    
+
     /* Generator */
     if (generator==1) {
         treePath = "Pythia8Tree";

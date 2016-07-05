@@ -20,6 +20,7 @@ PYTHIA8:=$(shell pythia8-config --cflags --libs)
 FASTJET:=$(shell fastjet-config --cxxflags --libs)
 ROOT:=$(shell root-config --cflags --glibs) -lGenVector
 ROOT_INCLUDE:=$(shell root-config --cflags)
+ROOT_SAFE:=$(shell root-config --glibs) -lGenVector -I$(shell root-config --incdir)
 CINTERPRET=$(ROOTSYS)/bin/rootcling
 # ROOT 5:
 #CINTERPRET=$(shell $(ROOTSYS)/bin/rootcint)

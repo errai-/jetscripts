@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     int choiceId = 1;
     string nameId = "1";
     int multiplier = 1;
-    
+
     if (argc<2 || argc>5) {
         cout << "Usage: ./pythia6.exe [Number of events] (mode) (threads)" << endl;
         return 0;
@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     if (argc >= 2) {
         nEvent = stoi(argv[1]);
         assert( nEvent > 0 );
-    } 
+    }
     if (argc >= 3) {
         choiceId = stoi(argv[2]);
     }
@@ -47,8 +47,8 @@ int main(int argc, char** argv)
             fileName += "ttbarjet_";
             break;
         default:
-            cout << "Settings file options:" << endl << "0 - generic" << endl 
-                 << "1 - dijet" << endl << "2 - gammajet" << endl << "3 - Zjet" 
+            cout << "Settings file options:" << endl << "0 - generic" << endl
+                 << "1 - dijet" << endl << "2 - gammajet" << endl << "3 - Zjet"
                  << "4 - ttbarjet" << endl;
             return 0; break;
     }
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     fileName += std::to_string(nEvent);
     fileNameFinal += std::to_string(nEvent*multiplier);
     fileNameFinal += ".root";
-    
+
     if (multiplier > 1) {
         fileName += "_";
         fileName += nameId;

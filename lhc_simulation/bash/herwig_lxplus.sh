@@ -19,7 +19,7 @@ for (( i=1; i<=$NUM_PROC; i++ ))
 do
     cp $WRKDIR/settings.py .
     HFILE=$(python settings.py $NUM_EVT $JOB_TYPE $NUM_PROC $i)
-    Herwig++ read $HFILE &
+    Herwig read $HFILE &
     pidArr+=($!)
     pidArr+=" "
     NAMES+="particles_herwig_"$(python -c "import sys; word = sys.argv[1]; print word[0:-3]" $HFILE)".root"
