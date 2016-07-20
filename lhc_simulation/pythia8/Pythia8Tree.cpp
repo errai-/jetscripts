@@ -3,10 +3,10 @@
 bool TTBarSelector::doVetoProcessLevel(Event& process)
 {
     unsigned leptons = 0;
-    for (unsigned prt = 0; prt!=process.size(); ++prt) {
+    for (unsigned prt = 0; prt!=process.size(); ++prt)
         if (process[prt].statusAbs() == 23 && process[prt].isLepton())
             ++leptons;
-    }
+
     if (leptons != 2)
         return true;
     return false;
@@ -15,7 +15,8 @@ bool TTBarSelector::doVetoProcessLevel(Event& process)
 
 Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) :
     mEvent(mPythia.event),
-    mInitialized(true)
+    mInitialized(true),
+    mUseStrange(false)
 {
     mMode = mode;
 
@@ -58,6 +59,7 @@ Pythia8Tree::Pythia8Tree(string settings, string fileName, int mode) :
 } // Pythia8Tree initializer
 
 
+// Nice info: PrintEvent();
 void Pythia8Tree::EventLoop()
 {
     if (!mInitialized) {
@@ -94,9 +96,6 @@ bool Pythia8Tree::ParticleLoop()
     mPrtclEvent->Clear();
     /* Special particle indices are saved to eliminate saving overlap. */
     mSpecialIndices.clear();
-    mHistory.clear();
-    mPartonHistory.clear();
-
     mPrtclEvent->fWeight = mPythia.info.weight();
 
     /* Particle loop */
@@ -105,7 +104,7 @@ bool Pythia8Tree::ParticleLoop()
         if (!ProcessParticle(prt))
             return false;
 
-    /* Sanity checks (for some ROOT-related reason the error produces a segfault) */
+    /* Sanity checks (ROOT produces a segfault when the error is launched) */
     if (   (mMode<4 && mHardProcCount !=2)
         || (mMode==2 && mSpecialIndices.size()!=1)
         || (mMode==3 && mSpecialIndices.size()!=2)
@@ -114,15 +113,6 @@ bool Pythia8Tree::ParticleLoop()
         mEvent.list();
         throw std::runtime_error("Unexpected hard process structure");
     }
-
-    /* Adding corrected parton momenta */
-    for (auto prt : mPartonHistory)
-        mPrtclEvent->AddPrtcl(prt.second.Px(),
-                              prt.second.Py(),
-                              prt.second.Pz(),
-                              prt.second.E(),
-                              mEvent[prt.first].id(),
-                              8);
 
     return true;
 } // ParticleLoop
@@ -162,22 +152,6 @@ bool Pythia8Tree::IsExcitedHadronState(unsigned prt, int quarkId)
 } // IsExcitedHadronState
 
 
-void Pythia8Tree::PropagateHistory(unsigned prt, int hard_count)
-{
-    if (!mEvent[prt].isParton()) {
-        return;
-    } else if (mHistory.emplace(prt,hard_count).second) {
-        /* Propagate history info recursively */
-        for (auto d : mEvent[prt].daughterList())
-            PropagateHistory(d,hard_count);
-    } else {
-        /* Mark repeated cases with a zero flavor */
-        if (mHistory[prt]!=hard_count)
-            mHistory[prt] = -1;
-    }
-} // PropagateHistory
-
-
 inline bool Pythia8Tree::Absent(unsigned int prt)
 {
     return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end();
@@ -193,29 +167,23 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
 {
     int id = mEvent[prt].idAbs();
 
-    if (mEvent[prt].isFinalPartonLevel()) {
-        /* Accumulate the corrected momentum of FS partons */
-        auto it = mHistory.find(prt);
-        if (it != mHistory.end() && it->second!=-1)
-            mPartonHistory[mHistory[prt]] += TLorentzVector(mEvent[prt].px(),
-                                                            mEvent[prt].py(),
-                                                            mEvent[prt].pz(),
-                                                            mEvent[prt].e());
-    }
-
     if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) { /* Alt. 61-63 */
-        /* Save final parton level */
+        /* Save combined final parton level */
         ParticleAdd(prt, 4);
         return true;
     } else if (mEvent[prt].isParton()) {
         if (mEvent[prt].statusAbs()==23) { /* Hard process activities */
-            /* Initiate corrected hard process parton momentum */
-            mPartonHistory.emplace(prt, TLorentzVector());
-            /* Propagate history information */
-            PropagateHistory(prt, prt);
             ++mHardProcCount;
+            /* Save hard process outgoing partons with and without a corrected momentum. */
 
-            /* Save hard process outgoing partons */
+            TLorentzVector Correction = LastParton(prt);
+            mPrtclEvent->AddPrtcl(Correction.Px(),
+                                  Correction.Py(),
+                                  Correction.Pz(),
+                                  Correction.E(),
+                                  mEvent[prt].id(),
+                                  8);
+
             ParticleAdd(prt, 3);
         }
         return true;
@@ -234,7 +202,7 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
     if (mEvent[prt].isFinal() && Absent(prt)) {
         int saveStatus = 1;
         if (mEvent[prt].id()==22 && GammaChecker(prt)) saveStatus = 9;
-        ParticleAdd( prt, saveStatus );
+        ParticleAdd(prt, saveStatus);
     }
 
     return true;
@@ -255,7 +223,7 @@ inline int P8DijetTree::CustomProcess(unsigned prt)
 
 inline int P8GammajetTree::CustomProcess(unsigned prt)
 {
-    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23)
+    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23 && mEvent[prt].idAbs()==22)
         return (GammaAdd(prt) ? 1 : 0);
 
     return 2;
@@ -264,24 +232,33 @@ inline int P8GammajetTree::CustomProcess(unsigned prt)
 
 bool P8GammajetTree::GammaAdd(unsigned prt)
 {
+    /* Save a raw photon and the final photon distorted by ISR */
+    ParticleAdd(prt, 8);
+    double ptmp = mEvent[prt].pT();
+
     while (!mEvent[prt].isFinal()) {
         if (mEvent[prt].daughterList().size()>1)
             return false; // Detect pair production
         prt = mEvent[prt].daughter1();
     }
-    mSpecialIndices.push_back(prt);
-    ParticleAdd(prt, 2);
-    ++mHardProcCount;
-    return true;
+
+    if (mEvent[prt].idAbs()==22) {
+        mSpecialIndices.push_back(prt);
+        ParticleAdd(prt, 2);
+        ++mHardProcCount;
+        return true;
+    }
+
+    cerr << "Failed to locate final-state photon! " << ++mNumErrs << endl;
+    return false;
 } // GammaAdd
 
 
 /* This is based on an assumption made about status codes - there are safeguards in muonadd. */
 inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 {
-    /* The first status 62 hits correspond to the hard process Z0 */
-    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==62)
-        return (MuonAdd(prt) ? 1 : 0);
+    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23 && mEvent[prt].idAbs()==23)
+        return MuonAdd(prt);
 
     return 2;
 } // CustomProcess : Zmumujet
@@ -289,38 +266,38 @@ inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 
 bool P8ZmumujetTree::MuonAdd(unsigned prt)
 {
-    if (mEvent[prt].idAbs()!=23) {
-        cerr << "Expected Z, found " << mEvent[prt].name() << endl;
-        throw std::logic_error("Z identification malfunction.");
-    }
+    /* Save a raw Z0 and the muons distorted by ISR and brehmsstrahlung */
 
-    for (int daughter : mEvent[prt].daughterList()) {
-        if (mEvent[daughter].idAbs()==13) {
-            mSpecialIndices.push_back(daughter);
+    while (mSpecialIndices.size()==0) {
+        if (mEvent[mEvent[prt].daughter1()].idAbs()==23)
+            prt = mEvent[prt].daughter1();
+        else {
+            for (int daughter : mEvent[prt].daughterList()) {
+                if (mEvent[daughter].idAbs()==13)
+                    mSpecialIndices.push_back(daughter);
+            }
         }
     }
 
-    /* Descend to the final muon forms */
-    for ( unsigned i = 0; i < mSpecialIndices.size(); ++i ) {
+    /* Descend to the final muon forms; counter checks for absurd cases. */
+    for ( unsigned i = 0; i < mSpecialIndices.size(); ++i) {
         unsigned counter = 0;
         while (!mEvent[mSpecialIndices[i]].isFinal() && counter++ < 100) {
-            vector<int> mus = mEvent[mSpecialIndices[i]].daughterList();
-            for (int daughter : mus) {
-                if (mEvent[daughter].idAbs()==13) {
+            for (int daughter : mEvent[mSpecialIndices[i]].daughterList()) {
+                if (mEvent[daughter].idAbs()==13)
                     mSpecialIndices[i] = daughter; break;
-                }
             }
         }
         ParticleAdd(mSpecialIndices[i], 2);
     }
 
-    if ( mSpecialIndices.size() == 2 ) {
+    if (mSpecialIndices.size()==2) {
         ++mHardProcCount;
         return true;
     }
 
     cerr << "Failed to locate muon pair! " << ++mNumErrs << endl;
-    return true;
+    return false;
 } // MuonAdd
 
 
@@ -378,7 +355,7 @@ bool Pythia8Tree::GammaChecker(unsigned prt)
 
     /* One mother, which is pi0 */
     vector<int> mothers = mEvent[prt].motherList();
-    if ( mothers.size()!=1 || abs(mEvent[mothers[0]].id())!=111 ) return false;
+    if (mothers.size()!=1 || abs(mEvent[mothers[0]].id())!=111) return false;
 
     vector<int> daughters = mEvent[mothers[0]].daughterList();
 
@@ -386,8 +363,83 @@ bool Pythia8Tree::GammaChecker(unsigned prt)
     for ( auto daugh : daughters )
         eDifference -= mEvent[daugh].e();
 
-    if ( fabs(eDifference) > 0.001 )
+    if (fabs(eDifference) > 0.001)
         return false;
 
     return true;
+}
+
+
+/* Corrected parton momentum (contrast to FS partons 71 and 72) */
+TLorentzVector Pythia8Tree::LastParton(unsigned prt)
+{
+    if (mEvent[prt].statusAbs() == 62 || mEvent[prt].statusAbs() == 63) {
+        TLorentzVector handle(mEvent[prt].px(),mEvent[prt].py(),mEvent[prt].pz(),mEvent[prt].e());
+        return handle;
+    }
+
+    TLorentzVector cumulator(0,0,0,0);
+    for (auto &daughter : mEvent.daughterList(prt) ) {
+        cumulator += LastParton(daughter);
+    }
+    return cumulator;
+}
+
+
+/* Graphviz printing for a single particle */
+void Pythia8Tree::PrintParticle(unsigned prt)
+{
+    unsigned stat = mEvent[prt].statusAbs();
+    for (auto i : mEvent[prt].motherList()) {
+        unsigned output = (i == 0) ? -prt : i;
+        cout << output << " -> " << prt << " [label=\"" << prt << " ";
+        cout << mEvent[prt].name() << "\\n" << mEvent[prt].m2() << " " << mEvent[prt].m2Calc() << "\\n" << mEvent[prt].pT() << "\\n" << mEvent[prt].e();
+        cout << "\\n" << stat << "\"";
+        cout << ",penwidth=2,color=\"";
+        if (stat < 30)
+            cout << "blue";
+        else if (stat < 40)
+            cout << "yellow";
+        else if (stat < 50) {
+            if (stat == 44)
+                cout << "darkgreen";
+            else if (stat == 43)
+                cout << "limegreen";
+            else if (stat == 42)
+                cout << "mediumseagreen";
+            else
+                cout << "green";
+        } else if (stat < 60) {
+            if (stat == 51)
+                cout << "indianred";
+            else if (stat == 52)
+                cout << "maroon";
+            else
+                cout << "red";
+        } else if (stat < 70) {
+            if (stat == 71)
+                cout << "chocolate";
+            else if (stat == 72)
+                cout << "orangered";
+            else
+                cout << "orange";
+        } else if (stat < 80)
+            cout << "cyan";
+        else
+            cout << "violet";
+        cout << "\"];" << endl;
+    }
+}
+
+
+/* Graphviz printing for a whole event */
+void Pythia8Tree::PrintEvent()
+{
+    cout << "digraph test {" << endl;
+    cout << "randir=LR;" << endl;
+    cout << "ranksep=1.5;" << endl;
+    cout << "node [width=0.03,height=0.03,shape=point,label=\"\"];" << endl;
+    for (unsigned prt = 0; prt!=mEvent.size(); ++prt)
+        PrintParticle(prt);
+    cout << "}" << endl;
 }

@@ -205,6 +205,9 @@ void Pythia6Tree::EventLoop()
 
         if (!ParticleLoop()) continue;
 
+        PrintEvent();
+        mPythia->Pylist(2);
+
         mTree->Fill();
 
         /* Update progress */
@@ -291,6 +294,9 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
 
     // prt == 7,8: outgoing LO particles (hard process)
     if (mMode > 0) {
+        if (prt < 10)
+            cout << status << " " << id << " " << mPythia->GetK(prt,3) << " " << mPythia->GetK(prt,4) << " " << mPythia->GetK(prt,5) << endl;
+
         if (prt==7 || prt==8) {
             if (mMode==2 && id==22) return true;
             if (mMode==3 && id==23) return true;
@@ -454,4 +460,84 @@ bool Pythia6Tree::GammaChecker(unsigned prt)
         return false;
 
     return true;
+}
+
+
+/* Graphviz printing for a single particle */
+void Pythia6Tree::PrintParticle(unsigned prt)
+{
+    unsigned stat = mPythia->GetK(prt,2);
+//     if (mPythia->GetK(prt,4)>mPythia->GetK(prt,5) || mPythia->GetK(prt,5)>mPythia->GetN())
+//         return;
+    unsigned mother = mPythia->GetK(prt,3);
+    if (mother == 0 && prt > 2)
+        mother = prt-2;
+    cout << mother << " -> " << prt << " [label=\"" << prt << " ";
+    TLorentzVector probe(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
+    cout << mPythia->GetK(prt,1) << "\\n" << mPythia->GetK(prt,2) << "\\n";
+    cout << mPythia->GetP(prt,5) << "\\n" << probe.M2() << "\\n";
+    cout << stat << "\\n" << mHistory[prt] << "\"";
+    cout << ",penwidth=2,color=\"";
+    if (prt>2 && prt < 9)
+        cout << "blue";
+    else
+        cout << "violet";
+    cout << "\"];" << endl;
+
+    mother = prt;
+    prt = mPythia->GetK(prt,4);
+    if (prt>0 && prt==mPythia->GetK(mother,5)) {
+        cout << mother << " -> " << prt << " [label=\"" << prt << " ";
+        TLorentzVector probe(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
+        cout << mPythia->GetK(prt,1) << "\\n" << mPythia->GetK(prt,2) << "\\n";
+        cout << mPythia->GetP(prt,5) << "\\n" << probe.M2() << "\\n";
+        cout << stat << "\\n" << mHistory[prt] << "\"";
+        cout << ",penwidth=2,color=\"";
+        cout << "yellow";
+        cout << "\"];" << endl;
+    }
+//         if (stat < 30)
+//             cout << "blue";
+//         else if (stat < 40)
+//             cout << "yellow";
+//         else if (stat < 50) {
+//             if (stat == 44)
+//                 cout << "darkgreen";
+//             else if (stat == 43)
+//                 cout << "limegreen";
+//             else if (stat == 42)
+//                 cout << "mediumseagreen";
+//             else
+//                 cout << "green";
+//         } else if (stat < 60) {
+//             if (stat == 51)
+//                 cout << "indianred";
+//             else if (stat == 52)
+//                 cout << "maroon";
+//             else
+//                 cout << "red";
+//         } else if (stat < 70) {
+//             if (stat == 71)
+//                 cout << "chocolate";
+//             else if (stat == 72)
+//                 cout << "orangered";
+//             else
+//                 cout << "orange";
+//         } else if (stat < 80)
+//             cout << "cyan";
+//         else
+//             cout << "violet";
+}
+
+
+/* Graphviz printing for a whole event */
+void Pythia6Tree::PrintEvent()
+{
+    cout << "digraph test {" << endl;
+    cout << "randir=LR;" << endl;
+    cout << "ranksep=1.5;" << endl;
+    cout << "node [width=0.03,height=0.03,shape=point,label=\"\"];" << endl;
+    for (unsigned prt = 1; prt <= mPythia->GetN(); ++prt)
+        PrintParticle(prt);
+    cout << "}" << endl;
 }

@@ -83,8 +83,8 @@ public:
     void EventLoop();
 
     /* No copying or constructing with another instance */
-    Pythia8Tree( const Pythia8Tree& other ) = delete;
-    Pythia8Tree& operator=( const Pythia8Tree& ) = delete;
+    Pythia8Tree(const Pythia8Tree& other) = delete;
+    Pythia8Tree& operator=(const Pythia8Tree&) = delete;
 
     /* Run settings are provided through the initializer */
     Pythia8Tree(string settings, string fileName, int mode);
@@ -122,15 +122,22 @@ protected:
      * the energy of the photon-pair corresponds to the pion. returns 0 if
      * the origin is not a pion with good energy and 1 if it is */
     bool                GammaChecker(unsigned prt);
-    /* A function for indicating the flavour history */
-    void                PropagateHistory(unsigned prt, int hard_prt);
     /* Has the particle already been appended */
     bool                Absent(unsigned prt);
+
+    /* Print the decay tree */
+    void                PrintParticle(unsigned prt);
+    void                PrintEvent();
+
+    /* Corrected parton momentum */
+    TLorentzVector      LastParton(unsigned prt);
 
 protected:
 
     /* Indicator that the event loop can be run */
     bool                mInitialized;
+    /* Whether or not store strange ghosts */
+    bool                mUseStrange;
     /* A general-purpose counters for physics debugging */
     unsigned            mCounter;
     unsigned            mIterCount;
@@ -153,9 +160,7 @@ protected:
     int                 mTimerStep;
     Timer               mTimer;
 
-    vector<unsigned>             mSpecialIndices;
-    map<unsigned,int>            mHistory;
-    map<unsigned,TLorentzVector> mPartonHistory;
+    vector<unsigned>    mSpecialIndices;
 };
 
 

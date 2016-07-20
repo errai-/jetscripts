@@ -128,6 +128,10 @@ protected:
     /* A handle for adding the produced leptons in ttbar events */
     bool                            LeptonAdd(unsigned prt);
 
+    /* Print the decay tree */
+    void                PrintParticle(unsigned prt);
+    void                PrintEvent();
+
 protected:
 
     /* Indicator that the event loop can be run */

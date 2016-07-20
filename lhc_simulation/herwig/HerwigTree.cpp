@@ -21,7 +21,7 @@ void HerwigTree::particleAdd(const tPPtr& part, int saveStatus)
                           part->momentum().t()/GeV,
                           part->id(),
                           saveStatus);
-    cout << part->number() << " " << saveStatus << endl;
+//     cout << part->number() << " " << saveStatus << endl;
     return;
 }
 
@@ -46,6 +46,24 @@ void smMomenta(Lorentz5Momentum & psum, tPPtr parent) {
   }
 }
 
+void altMomenta(Lorentz5Momentum & psum, tPPtr parent) {
+    if(parent->children().empty()) {
+//         cout << parent->id() << endl;
+        psum += parent->momentum();
+    } else if (abs(parent->children()[0]->id())>100 || abs(parent->children()[0]->id())==81) {
+        psum += parent->momentum();
+    } else {
+        for (unsigned ix=0; ix<parent->children().size(); ++ix)
+            altMomenta(psum,parent->children()[ix]);
+    }
+}
+
+void iter_print(tPPtr prt, unsigned gen) {
+    cout << gen++ << " " << prt->id() << endl;
+    const ParticleVector childs = prt->children();
+    for (ParticleVector::const_iterator part = childs.begin(); part != childs.end(); ++part)
+        iter_print(*part, gen);
+}
 
 // Fancy plots: event->printGraphviz()
 // All particles:
@@ -59,7 +77,7 @@ void smMomenta(Lorentz5Momentum & psum, tPPtr parent) {
 void HerwigTree::analyze(tEventPtr event, long ieve, int loop, int status) {
 
     if (ieve%mTimerStep==0&&ieve>0) mTimer.printTime();
-    cout << ieve << endl;
+//     cout << ieve << endl;
     if ( loop > 0 || status != 0 || !event ) return;
 
     try {
@@ -73,11 +91,20 @@ void HerwigTree::analyze(tEventPtr event, long ieve, int loop, int status) {
 
         /* The hardest subprocess */
         tPVector hardProc = event->primaryCollision()->step(0)->getFinalState();
+//         for (tPVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
+//             iter_print(*part, 0);
+//         }
         int leptons = 0;
         for (tPVector::const_iterator part = hardProc.begin(); part != hardProc.end(); ++part) {
             int absId = abs((*part)->id());
             bool gammaCase = (mMode==2 && absId==ParticleID::gamma );
             bool ZCase = (mMode==3 && absId==ParticleID::muminus );
+
+            Lorentz5Momentum first, second;
+            smMomenta(first, *part);
+            altMomenta(second, *part);
+
+            cout << absId << ": " << (*part)->momentum().perp() << " " << first.perp() << " " << second.perp() << endl;
 
             if (gammaCase) {
                 gammaAdd(*part);
