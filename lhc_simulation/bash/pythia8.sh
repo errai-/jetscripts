@@ -24,7 +24,7 @@ do
     NAMES+="particles_pythia8_"$P8FILE".root"
     NAMES+=" "
     if [ $i -eq 0 ]; then
-        BODY+=$(python -c "import sys; import re; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+_[0-9]+$',word).group(1)" $P8FILE)
+        BODY+=$(python -c "import sys; import re; word = sys.argv[1]; print re.search('^(.+?)_[0-9]+$',word).group(1)" $P8FILE)
     fi
 done
 

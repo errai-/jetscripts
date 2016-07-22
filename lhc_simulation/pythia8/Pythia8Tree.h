@@ -105,7 +105,7 @@ protected:
     /* A handle for adding particle information */
     void                ParticleAdd(unsigned prt, int status);
     /* Particles needed by the hadronic flavor definition */
-    void                GhostHadronAdd(unsigned prt, bool useStrange = false);
+    void                GhostHadronAdd(unsigned prt);
 
     /* Loop over particles within an event: returns true if event is to be saved */
     bool                ParticleLoop();

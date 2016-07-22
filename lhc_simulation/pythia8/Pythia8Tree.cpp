@@ -96,6 +96,7 @@ bool Pythia8Tree::ParticleLoop()
     mPrtclEvent->Clear();
     /* Special particle indices are saved to eliminate saving overlap. */
     mSpecialIndices.clear();
+
     mPrtclEvent->fWeight = mPythia.info.weight();
 
     /* Particle loop */
@@ -111,6 +112,7 @@ bool Pythia8Tree::ParticleLoop()
         || (mMode==4 && mHardProcCount != 4) )
     {
         mEvent.list();
+        cout << "Hard proc count: " << mHardProcCount << " Special indices size: " << mSpecialIndices.size() << endl;
         throw std::runtime_error("Unexpected hard process structure");
     }
 
@@ -129,16 +131,16 @@ void Pythia8Tree::ParticleAdd(unsigned prt, int saveStatus)
 } // ParticleAdd
 
 
-void Pythia8Tree::GhostHadronAdd(unsigned prt, bool useStrange)
+void Pythia8Tree::GhostHadronAdd(unsigned prt)
 {
     int id = mEvent[prt].idAbs();
 
     if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5))
-        ParticleAdd(prt,7);
-    else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))
-        ParticleAdd(prt,6);
-    else if (useStrange && (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3)))
         ParticleAdd(prt,5);
+    else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))
+        ParticleAdd(prt,4);
+    else if (mUseStrange && (HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3)))
+        ParticleAdd(prt,3);
 } // GhostHadronAdd
 
 
@@ -168,11 +170,11 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
     int id = mEvent[prt].idAbs();
 
     if (mEvent[prt].statusAbs()==71 || mEvent[prt].statusAbs()==72) { /* Alt. 61-63 */
-        /* Save combined final parton level */
-        ParticleAdd(prt, 4);
+        /* Save the combined final parton level */
+        ParticleAdd(prt, 6);
         return true;
     } else if (mEvent[prt].isParton()) {
-        if (mEvent[prt].statusAbs()==23) { /* Hard process activities */
+        if (mEvent[prt].statusAbs()==23) { /* Hard process activities. */
             ++mHardProcCount;
             /* Save hard process outgoing partons with and without a corrected momentum. */
 
@@ -182,9 +184,9 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
                                   Correction.Pz(),
                                   Correction.E(),
                                   mEvent[prt].id(),
-                                  8);
+                                  7);
 
-            ParticleAdd(prt, 3);
+            ParticleAdd(prt, 8);
         }
         return true;
     } else if (mEvent[prt].isHadron()) {
@@ -201,7 +203,7 @@ bool Pythia8Tree::ProcessParticle(unsigned prt)
     /* Final-state particles */
     if (mEvent[prt].isFinal() && Absent(prt)) {
         int saveStatus = 1;
-        if (mEvent[prt].id()==22 && GammaChecker(prt)) saveStatus = 9;
+        if (mEvent[prt].id()==22 && GammaChecker(prt)) saveStatus = 2;
         ParticleAdd(prt, saveStatus);
     }
 
@@ -244,7 +246,7 @@ bool P8GammajetTree::GammaAdd(unsigned prt)
 
     if (mEvent[prt].idAbs()==22) {
         mSpecialIndices.push_back(prt);
-        ParticleAdd(prt, 2);
+        ParticleAdd(prt, 7);
         ++mHardProcCount;
         return true;
     }
@@ -257,7 +259,7 @@ bool P8GammajetTree::GammaAdd(unsigned prt)
 /* This is based on an assumption made about status codes - there are safeguards in muonadd. */
 inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 {
-    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23 && mEvent[prt].idAbs()==23)
+    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==22 && mEvent[prt].idAbs()==23)
         return MuonAdd(prt);
 
     return 2;
@@ -267,16 +269,14 @@ inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 bool P8ZmumujetTree::MuonAdd(unsigned prt)
 {
     /* Save a raw Z0 and the muons distorted by ISR and brehmsstrahlung */
+    ParticleAdd(prt, 8);
 
-    while (mSpecialIndices.size()==0) {
-        if (mEvent[mEvent[prt].daughter1()].idAbs()==23)
+    while (mEvent[mEvent[prt].daughter1()].idAbs()==23)
             prt = mEvent[prt].daughter1();
-        else {
-            for (int daughter : mEvent[prt].daughterList()) {
-                if (mEvent[daughter].idAbs()==13)
-                    mSpecialIndices.push_back(daughter);
-            }
-        }
+
+    for (int daughter : mEvent[prt].daughterList()) {
+        if (mEvent[daughter].idAbs()==13)
+            mSpecialIndices.push_back(daughter);
     }
 
     /* Descend to the final muon forms; counter checks for absurd cases. */
@@ -288,7 +288,7 @@ bool P8ZmumujetTree::MuonAdd(unsigned prt)
                     mSpecialIndices[i] = daughter; break;
             }
         }
-        ParticleAdd(mSpecialIndices[i], 2);
+        ParticleAdd(mSpecialIndices[i], 7);
     }
 
     if (mSpecialIndices.size()==2) {
@@ -313,6 +313,9 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
 
 bool P8ttbarjetTree::LeptonAdd(unsigned prt)
 {
+    /* Save a raw lepton before separation to neutrinos and charged leptons */
+    ParticleAdd(prt, 8);
+
     /* Charged lepton input: find a final-state charged lepton. */
     int type = mEvent[prt].idAbs()%2;
     if (type) {
@@ -343,7 +346,7 @@ bool P8ttbarjetTree::LeptonAdd(unsigned prt)
         }
     }
     mSpecialIndices.push_back(prt);
-    ParticleAdd(prt, 2);
+    ParticleAdd(prt, 7);
     return true;
 } // LeptonAdd
 
@@ -378,10 +381,10 @@ TLorentzVector Pythia8Tree::LastParton(unsigned prt)
         return handle;
     }
 
-    TLorentzVector cumulator(0,0,0,0);
-    for (auto &daughter : mEvent.daughterList(prt) ) {
+    TLorentzVector cumulator;
+    for (auto &daughter : mEvent.daughterList(prt))
         cumulator += LastParton(daughter);
-    }
+
     return cumulator;
 }
 

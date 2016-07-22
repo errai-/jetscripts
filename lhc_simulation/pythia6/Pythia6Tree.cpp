@@ -9,7 +9,9 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     mTune(0),
     mMPI(true),
     mISR(true),
-    mFSR(true)
+    mFSR(true),
+    mUseStrange(false),
+    mPartonLevel(true)
 {
     /* Create an instance of the Pythia event generator: */
     mPythia = new TPythia6;
@@ -200,20 +202,24 @@ void Pythia6Tree::EventLoop()
 {
     /* Simulation loop */
     unsigned evtNo = 0;
+    cout << "etu" << endl;
     while (evtNo != mNumEvents) {
         mPythia->GenerateEvent();
 
         if (!ParticleLoop()) continue;
 
-        PrintEvent();
-        mPythia->Pylist(2);
+        //PrintEvent();
+        if (evtNo>=62)
+            mPythia->Pylist(2);
 
         mTree->Fill();
+        cout << evtNo << endl;
 
         /* Update progress */
         ++evtNo;
         if (evtNo%mTimerStep==0) mTimer.printTime();
     }
+    cout << "taka" << endl;
 
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
@@ -232,17 +238,31 @@ void Pythia6Tree::EventLoop()
 bool Pythia6Tree::ParticleLoop()
 {
     mPrtclEvent->Clear();
-
+    mPartonHistory.clear();
     /* Special particle indices are saved to eliminate saving overlap */
     mSpecialIndices.clear();
-    mHistory.clear();
-    mPartonHistory.clear();
 
     /* Pythia 6 speciality: do the gamma/muon analysis before the particle loop. */
-    if (mMode==2) {
+    if (mMode==2)
         GammaAdd();
-    } else if (mMode==3) {
+    else if (mMode==3)
         MuonAdd();
+    else if (mMode==4) {
+        unsigned partno = 0, leptno = 0;
+        for (unsigned i = 13; i <= 16; ++i) {
+            unsigned id = abs(mPythia->GetK(i,2));
+            ParticleAdd(i,8);
+
+            if (IsParton(i)) {
+                ++partno;
+                mPartonHistory.emplace(i,TLorentzVector());
+            } else if (id < 20) {
+                ++leptno;
+            }
+        }
+
+        if (partno!=2 || leptno!=2 || partno%2!=0 || leptno%2!=0 || (partno+leptno)!=4)
+            return false;
     }
 
     mPrtclEvent->fWeight = 1./mPythia->GetVINT(99);
@@ -255,11 +275,11 @@ bool Pythia6Tree::ParticleLoop()
     /* Adding corrected parton momenta */
     for (auto prt : mPartonHistory)
         mPrtclEvent->AddPrtcl(prt.second.Px(),
-                                prt.second.Py(),
-                                prt.second.Pz(),
-                                prt.second.E(),
-                                mPythia->GetK(prt.first,2),
-                                8);
+                              prt.second.Py(),
+                              prt.second.Pz(),
+                              prt.second.E(),
+                              mPythia->GetK(prt.first,2),
+                              7);
 
     return true;
 } // ParticleLoop
@@ -278,11 +298,18 @@ inline bool Pythia6Tree::IsParton(unsigned int prt)
 }
 
 
-inline bool Pythia6Tree::IsFSParton(unsigned int prt) /* This assumes implicitly that the particle prt is a parton */
+/* This assumes implicitly that the particle prt is a parton */
+inline bool Pythia6Tree::IsFSParton(unsigned int prt)
 {
+    /* No decays in sight */
+    if (mPythia->GetK(prt,4)>mPythia->GetK(prt,5))
+        return false;
+
+    /* The parton has a parton daughter */
     for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr)
         if (IsParton(dtr))
             return false;
+
     return true;
 }
 
@@ -291,42 +318,46 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
 {
     int status = mPythia->GetK(prt,1);
     int id = abs(mPythia->GetK(prt,2));
+    if ()
+        mPartonLevel = false;
 
     // prt == 7,8: outgoing LO particles (hard process)
     if (mMode > 0) {
-        if (prt < 10)
-            cout << status << " " << id << " " << mPythia->GetK(prt,3) << " " << mPythia->GetK(prt,4) << " " << mPythia->GetK(prt,5) << endl;
+        unsigned parent = mPythia->GetK(prt,3);
+        if (mMode < 4) {
+            if (prt==7 || prt==8) {
+                if (status!=21)
+                    throw std::runtime_error("False functionality in hard process.");
 
-        if (prt==7 || prt==8) {
-            if (mMode==2 && id==22) return true;
-            if (mMode==3 && id==23) return true;
+                cout << prt << endl;
+                mPartonHistory.emplace(prt,TLorentzVector());
 
-            if (status!=21) throw std::runtime_error("False functionality in hard process.");
-
-            /* Initiate corrected hard process parton momentum */
-            mPartonHistory.emplace(prt, TLorentzVector());
-            /* Propagate history information */
-            PropagateHistory(prt, prt);
-
-            ParticleAdd(prt,3);
-            return true;
+                ParticleAdd(prt,8);
+                return true;
+            } else if (parent==7 || parent==8) {
+                cout << "huhuuu" << prt << " " << parent << " " << mPartonHistory.size() << endl;
+                for (auto a : mPartonHistory) {
+                    cout << a.first << " ";
+                }
+                cout << endl;
+                mPartonHistory[parent] += LastParton(prt);
+                cout << "  hahaaa" << endl;
+            }
+        } else if (mMode==4) {
+            if (parent >= 13 && parent <= 16) {
+                if (IsParton(prt))
+                    mPartonHistory[parent] += LastParton(prt);
+                else
+                    LeptonAdd(prt);
+            }
         }
     }
 
     /* Hadronic and algorithmic definitions: add FS partons or interesting hadrons. */
     if (status >= 11 && status <= 20) {
-        if (IsParton(prt)) {
-            ParticleAdd(prt,4);
-
-            if (IsFSParton(prt)) {
-                /* Accumulate the corrected momentum of FS partons */
-                auto it = mHistory.find(prt);
-                if (it != mHistory.end() && it->second!=-1)
-                    mPartonHistory[mHistory[prt]] += TLorentzVector(mPythia->GetP(prt,1),
-                                                                    mPythia->GetP(prt,2),
-                                                                    mPythia->GetP(prt,3),
-                                                                    mPythia->GetP(prt,4));
-            }
+        if (mPartonLevel) {
+            if (IsFSParton(prt))
+                ParticleAdd(prt,6);
 
             return true;
         } else if (abs(mPythia->GetK(prt,2))>=100) {
@@ -337,9 +368,8 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
     /* Stable particles, check that this is no special case. */
     if (status <= 10 && Absent(prt)) {
         int saveStatus = 1;
-        /* Gamma from pi0 */
-        if (id==22 && GammaChecker(prt))
-            saveStatus = 9;
+        if (id==22 && GammaChecker(prt)) /* Gamma from pi0 */
+            saveStatus = 2;
         ParticleAdd(prt,saveStatus);
     }
 
@@ -364,11 +394,11 @@ void Pythia6Tree::GhostHadronAdd(unsigned int prt, bool useStrange)
     int id = abs(mPythia->GetK(prt,2));
 
     if (HadrFuncs::HasBottom(id) && !IsExcitedHadronState(prt,5))
-        ParticleAdd(prt,7);
-    else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))
-        ParticleAdd(prt,6);
-    else if (useStrange && HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3))
         ParticleAdd(prt,5);
+    else if (HadrFuncs::HasCharm(id) && !IsExcitedHadronState(prt,4))
+        ParticleAdd(prt,4);
+    else if (useStrange && HadrFuncs::HasStrange(id) && !IsExcitedHadronState(prt,3))
+        ParticleAdd(prt,3);
 }
 
 
@@ -381,42 +411,25 @@ bool Pythia6Tree::IsExcitedHadronState(unsigned int prt, int quarkId)
 }
 
 
-void Pythia6Tree::PropagateHistory(unsigned prt, int hard_count)
-{
-    if (!IsParton(prt)) {
-        return;
-    } else if (mHistory.emplace(prt,hard_count).second) {
-        /* Propagate history info recursively */
-        for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr)
-            PropagateHistory(dtr,hard_count);
-    } else {
-        /* Mark repeated cases with a zero flavor */
-        if (mHistory[prt]!=hard_count)
-            mHistory[prt] = -1;
-    }
-} // PropagateHistory
-
-
 bool Pythia6Tree::GammaAdd()
 {
     mSpecialIndices.push_back(9);
 
-    while ( mPythia->GetK(mSpecialIndices[0],1)>10 )
+    while (mPythia->GetK(mSpecialIndices[0],1)>10)
         mSpecialIndices[0] = mPythia->GetK(mSpecialIndices[0],4);
 
-    if ( mPythia->GetK(mSpecialIndices[0],2) != 22 )
+    if (mPythia->GetK(mSpecialIndices[0],2) != 22)
         throw std::logic_error("The photon finder did not find a photon.");
 
-    ParticleAdd(mSpecialIndices[0],2);
+    ParticleAdd(mSpecialIndices[0],7);
 }
 
 
 bool Pythia6Tree::MuonAdd()
 {
     mSpecialIndices.push_back(12); mSpecialIndices.push_back(13);
-    while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13) {
+    while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13)
         ++mSpecialIndices[0]; ++mSpecialIndices[1];
-    }
 
     for (unsigned i = 0; i < mSpecialIndices.size(); ++i) {
         if (abs(mPythia->GetK(mSpecialIndices[i],2))!=13)
@@ -431,15 +444,39 @@ bool Pythia6Tree::MuonAdd()
                 }
             }
         }
-        ParticleAdd(mSpecialIndices[i],2);
+        ParticleAdd(mSpecialIndices[i],7);
     }
     return true;
 }
 
 
-bool Pythia6Tree::LeptonAdd(unsigned int prt)
+bool Pythia6Tree::LeptonAdd(unsigned prt)
 {
-    // TODO: top events
+    /* Charged lepton input: find a final-state charged lepton. */
+    int type = abs(mPythia->GetK(prt,2))%2;
+    if (type) {
+        /* Charged leptons require processing. */
+        while (mPythia->GetK(prt,1)>9) {
+            unsigned tmpPrt = 0;
+            for (unsigned i = mPythia->GetK(prt,4); i <= mPythia->GetK(prt,5); ++i) {
+                unsigned dType = abs(mPythia->GetK(i,2))%2;
+                unsigned dId = abs(mPythia->GetK(i,2));
+                if ((dId>10 && dId < 20) && dType==1)
+                    tmpPrt = i;
+            }
+
+            /* This occurs around 25-30% of the time originating from tau decay */
+            if (tmpPrt == 0)
+                return false; /* Charged lepton decays to partons and a neutrino */
+
+            prt = tmpPrt;
+        }
+
+        if (abs(mPythia->GetK(prt,2))==15)
+            throw std::logic_error("Final-state tau spotted.");
+    }
+    mSpecialIndices.push_back(prt);
+    ParticleAdd(prt, 7);
     return true;
 }
 
@@ -456,10 +493,26 @@ bool Pythia6Tree::GammaChecker(unsigned prt)
     for (int daugh = mPythia->GetK(mother,4), N = mPythia->GetK(mother,5); daugh <= N; ++daugh)
         eDifference -= mPythia->GetP(daugh,4);
 
-    if ( fabs(eDifference) > 0.001 )
+    if (fabs(eDifference) > 0.001)
         return false;
 
     return true;
+}
+
+
+/* Corrected parton momentum */
+TLorentzVector Pythia6Tree::LastParton(unsigned prt)
+{
+    if (IsFSParton(prt)) {
+        TLorentzVector handle(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
+        return handle;
+    }
+
+    TLorentzVector cumulator;
+    for (unsigned i = mPythia->GetK(prt,4); i <= mPythia->GetK(prt,5); ++i)
+        cumulator += LastParton(i);
+
+    return cumulator;
 }
 
 
@@ -467,16 +520,13 @@ bool Pythia6Tree::GammaChecker(unsigned prt)
 void Pythia6Tree::PrintParticle(unsigned prt)
 {
     unsigned stat = mPythia->GetK(prt,2);
-//     if (mPythia->GetK(prt,4)>mPythia->GetK(prt,5) || mPythia->GetK(prt,5)>mPythia->GetN())
-//         return;
     unsigned mother = mPythia->GetK(prt,3);
     if (mother == 0 && prt > 2)
         mother = prt-2;
-    cout << mother << " -> " << prt << " [label=\"" << prt << " ";
-    TLorentzVector probe(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
-    cout << mPythia->GetK(prt,1) << "\\n" << mPythia->GetK(prt,2) << "\\n";
-    cout << mPythia->GetP(prt,5) << "\\n" << probe.M2() << "\\n";
-    cout << stat << "\\n" << mHistory[prt] << "\"";
+    cout << mother << " -> " << prt << " [label=\"" << prt << " " << mPythia->GetK(prt,1) << " " << mPythia->GetK(prt,2) << "\\n";
+    cout << mPythia->GetK(prt,3) << " " << mPythia->GetK(prt,4) << " " << mPythia->GetK(prt,5) << "\\n";
+    cout << mPythia->GetP(prt,4) << " " << mPythia->GetP(prt,5) << "\\n";
+    cout << '"';
     cout << ",penwidth=2,color=\"";
     if (prt>2 && prt < 9)
         cout << "blue";
@@ -484,49 +534,31 @@ void Pythia6Tree::PrintParticle(unsigned prt)
         cout << "violet";
     cout << "\"];" << endl;
 
+    if (prt == 7 || prt == 8) {
+        if (prt==7)
+            mother += 1;
+        if (prt==8)
+            mother -= 1;
+        cout << mother << " -> " << prt << " [label=\"" << prt << " " << mPythia->GetK(prt,1) << " " << mPythia->GetK(prt,2) << "\\n";
+        cout << mPythia->GetK(prt,3) << " " << mPythia->GetK(prt,4) << " " << mPythia->GetK(prt,5) << "\\n";
+        cout << mPythia->GetP(prt,4) << " " << mPythia->GetP(prt,5) << "\\n";
+        cout << '"';
+        cout << ",penwidth=2,color=\"";
+        cout << "blue";
+        cout << "\"];" << endl;
+    }
+
     mother = prt;
     prt = mPythia->GetK(prt,4);
-    if (prt>0 && prt==mPythia->GetK(mother,5)) {
-        cout << mother << " -> " << prt << " [label=\"" << prt << " ";
-        TLorentzVector probe(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
-        cout << mPythia->GetK(prt,1) << "\\n" << mPythia->GetK(prt,2) << "\\n";
-        cout << mPythia->GetP(prt,5) << "\\n" << probe.M2() << "\\n";
-        cout << stat << "\\n" << mHistory[prt] << "\"";
+    if (prt==mPythia->GetK(mother,5) && mPythia->GetK(prt,2)==92) {
+        cout << mother << " -> " << prt << " [label=\"" << prt << " " << mPythia->GetK(prt,1) << " " << mPythia->GetK(prt,2) << "\\n";
+        cout << mPythia->GetK(prt,3) << " " << mPythia->GetK(prt,4) << " " << mPythia->GetK(prt,5) << "\\n";
+        cout << mPythia->GetP(prt,4) << " " << mPythia->GetP(prt,5) << "\\n";
+        cout << '"';
         cout << ",penwidth=2,color=\"";
         cout << "yellow";
         cout << "\"];" << endl;
     }
-//         if (stat < 30)
-//             cout << "blue";
-//         else if (stat < 40)
-//             cout << "yellow";
-//         else if (stat < 50) {
-//             if (stat == 44)
-//                 cout << "darkgreen";
-//             else if (stat == 43)
-//                 cout << "limegreen";
-//             else if (stat == 42)
-//                 cout << "mediumseagreen";
-//             else
-//                 cout << "green";
-//         } else if (stat < 60) {
-//             if (stat == 51)
-//                 cout << "indianred";
-//             else if (stat == 52)
-//                 cout << "maroon";
-//             else
-//                 cout << "red";
-//         } else if (stat < 70) {
-//             if (stat == 71)
-//                 cout << "chocolate";
-//             else if (stat == 72)
-//                 cout << "orangered";
-//             else
-//                 cout << "orange";
-//         } else if (stat < 80)
-//             cout << "cyan";
-//         else
-//             cout << "violet";
 }
 
 

@@ -129,8 +129,11 @@ protected:
     bool                            LeptonAdd(unsigned prt);
 
     /* Print the decay tree */
-    void                PrintParticle(unsigned prt);
-    void                PrintEvent();
+    void                            PrintParticle(unsigned prt);
+    void                            PrintEvent();
+
+    /* Corrected parton momentum */
+    TLorentzVector                  LastParton(unsigned prt);
 
 protected:
 
@@ -152,7 +155,6 @@ protected:
     Timer                           mTimer;
 
     vector<unsigned>                mSpecialIndices;
-    map<unsigned,int>               mHistory;
     map<unsigned,TLorentzVector>    mPartonHistory;
 
     int                             mEnergy;
@@ -160,6 +162,8 @@ protected:
     bool                            mMPI;
     bool                            mISR;
     bool                            mFSR;
+    bool                            mUseStrange;
+    bool                            mPartonLevel;
 
     static const unsigned           mNumSeeds = 40;
     const unsigned                  mSeeds[mNumSeeds] = {840744607,
