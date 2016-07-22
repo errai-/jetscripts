@@ -363,8 +363,8 @@ fi
 # fetch the ROOT interface code
 #
 if [ ! -f pythia6.tar.gz -o ${refetch} -ne 0 ] ; then
-  echo "${fetchit} ftp://root.cern.ch/root/pythia6.tar.gz"
-  ${fetchit} ftp://root.cern.ch/root/pythia6.tar.gz
+  echo "${fetchit} https://root.cern.ch/download/pythia6.tar.gz"
+  ${fetchit} https://root.cern.ch/download/pythia6.tar.gz
 fi
 
 ############################################################################
