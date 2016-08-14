@@ -14,19 +14,20 @@ using std::endl;
     0   - pythia8 generated data
     1   - cmssw MC (juska)
     2   - cmssw MC (old)
-    3-9 - real detector data */
-const string fileArray[] = {
-    "pythia8.root",
-    "ProcessedTree_RDMC_START53_V7N_try2.root",
-    "27thJune_MC_NTuple.root",
-    "29thAugust_Run2012A.root",
-    "29thAugust_Run2012B_JetHT.root",
-    "29thAugust_Run2012B_JetMon.root",
-    "29thAugust_Run2012C_JetHT.root",
-    "29thAugust_Run2012C_JetMon.root",
-    "29thAugust_Run2012D_JetHT.root",
-    "29thAugust_Run2012D_JetMon.root"};
-Int_t fileAmount = 10;
+    3-10 - real detector data */
+const int fileAmount = 11;
+//string fileArray[fileAmount] = {
+//    "pythia8.root",
+//    "ProcessedTree_RDMC_START53_V7N_try2.root",
+//    "27thJune_MC_NTuple.root",
+//    "29thAugust_Run2012A.root",
+//    "29thAugust_Run2012B_JetHT.root",
+//    "29thAugust_Run2012B_JetMon.root",
+//    "29thAugust_Run2012C_JetHT.root",
+//    "29thAugust_Run2012C_JetMon.root",
+//    "29thAugust_Run2012D_JetHT.root",
+//    "29thAugust_Run2012D_JetMon.root",
+//    "19thNovember2014_Run2012B_JetHT.root"};
 
 void runAnalyzeData(Long64_t events=0, Int_t firstIdx=0, Int_t lastIdx = 0,
     string writeFile="test.root", Int_t testing = 0, string dataPath="data/")
@@ -35,9 +36,9 @@ void runAnalyzeData(Long64_t events=0, Int_t firstIdx=0, Int_t lastIdx = 0,
         cout << "Usage: runAnalyzeData( [Number of events], [First file index], ";
         cout << "[Last file index], [File to write], [Testing flag], [Data path]";
         cout << endl << "File indices:" << endl;
-        for ( int i = 0; i < fileAmount; ++i ) {
-            cout << i << " - " << fileArray[i] << endl;
-        }
+        //for ( int i = 0; i < fileAmount; ++i ) {
+        //    cout << i << " - " << fileArray[i] << endl;
+        //}
         return;
     }
 
@@ -65,16 +66,17 @@ void runAnalyzeData(Long64_t events=0, Int_t firstIdx=0, Int_t lastIdx = 0,
     else if ( firstIdx == 2) { isMC = 2; } 
     else if (firstIdx == 0) { isMC = 3; }
 
-    cout << "First file read: " << fileArray[firstIdx] << endl;
-    cout << "Last file read: " << fileArray[lastIdx] << endl;
+    //cout << "First file read: " << fileArray[firstIdx] << endl;
+    //cout << "Last file read: " << fileArray[lastIdx] << endl;
 
-    string tmpPath;
-    /* Read consequent files from the list */
-    for (Int_t fileChoice = firstIdx; fileChoice<=lastIdx; ++fileChoice) {
-        tmpPath = dataPath;
-        tmpPath += fileArray[fileChoice];
-        forest->AddFile(tmpPath.c_str());
-    }
+    //string tmpPath;
+    ///* Read consequent files from the list */
+    //for (Int_t fileChoice = firstIdx; fileChoice<=lastIdx; ++fileChoice) {
+    //    tmpPath = dataPath;
+    //    tmpPath += fileArray[fileChoice];
+    //    forest->AddFile(tmpPath.c_str());
+    forest->AddFile("data/19thNovember2014_Run2012B_JetHT.root");
+    //}
     
     AnalyzeData scriptObject(forest, events, isMC, testing);
     scriptObject.Loop(writeFile);

@@ -22,11 +22,11 @@ void JetData::SetParams(JetVariables& vars, int flav)
     fPhf = vars.phf;
     fElf = vars.elf;
     fMuf = vars.muf;
-    fChm = vars.chm;
-    fNhm = vars.nhm;
-    fPhm = vars.phm;
-    fElm = vars.elm;
-    fMum = vars.mum;
+//     fChm = vars.chm;
+//     fNhm = vars.nhm;
+//     fPhm = vars.phm;
+//     fElm = vars.elm;
+//     fMum = vars.mum;
 
     fFlav = flav;                       /* Jet flavor, depends on the definition in use */
     fConstituents = vars.constituents;  /* Number of constituents, exact definition varies (e.g. pT threshold) */

@@ -13,7 +13,7 @@
 //  7: Historic hadron definition
 //  8: Hadronic definition
 //  9: Algorithmic definition
-//  10: LO (Algotirhmic definition with ghost partons)
+//  10: LO (Algorithmic definition with ghost partons)
 
 /////////////////////////////////////////////////
 

@@ -14,9 +14,9 @@ using std::endl;
 using std::vector;
 using std::cerr;
 
-class HardProc : public JetBase 
+class HardProc : public JetBase
 {
-public : 
+public :
     HardProc(TTree * tree, const char* file1, const char* file2, Int_t mode, Int_t definition) :
         JetBase::JetBase(tree, file1, file2, mode, definition)
     {

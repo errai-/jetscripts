@@ -64,6 +64,7 @@ public :
     Double_t        fY[kMaxPFJets_];   //[PFJets_]
     Double_t        fZ[kMaxPFJets_];   //[PFJets_]
     Double_t        fT[kMaxPFJets_];   //[PFJets_]
+    Float_t         cor_[kMaxPFJets_];   //[PFJets_]
     Double_t        gen_fX[kMaxPFJets_];   //[PFJets_]
     Double_t        gen_fY[kMaxPFJets_];   //[PFJets_]
     Double_t        gen_fZ[kMaxPFJets_];   //[PFJets_]
@@ -165,6 +166,7 @@ void AnalyzeData::Init(TTree *tree)
         fChain->SetBranchAddress("PFJets_.hf_hf_", hf_hf_);
         fChain->SetBranchAddress("PFJets_.hf_phf_", hf_phf_);
         fChain->SetBranchAddress("PFJets_.betaStar_", betaStar_);
+        fChain->SetBranchAddress("PFJets_.cor_", cor_);
     } else {
         fChain->SetBranchAddress("fJets", &PFJets_);
         fChain->SetBranchAddress("fWeight", &fWeight);
@@ -214,6 +216,7 @@ void AnalyzeData::Init(TTree *tree)
         fChain->SetBranchStatus("PFJets_.hf_hf_", 1);
         fChain->SetBranchStatus("PFJets_.hf_phf_", 1);
         fChain->SetBranchStatus("PFJets_.betaStar_", 1);
+        fChain->SetBranchStatus("PFJets_.cor_", 1);
     } else {
         fChain->SetBranchStatus("fJets",1);
         fChain->SetBranchStatus("fWeight",1);

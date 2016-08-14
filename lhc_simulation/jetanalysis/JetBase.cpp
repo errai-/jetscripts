@@ -89,7 +89,7 @@ void JetBase::EventLoop()
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break;
         fChain->GetEntry(jentry);
-        assert( fPrtcls_ < kMaxfPrtcls );
+        assert(fPrtcls_ < kMaxfPrtcls);
 
         /* Jet clusting and analysis cycle */
         ParticlesToJetsorterInput();
@@ -112,8 +112,8 @@ void JetBase::Finalize()
 
 void JetBase::EventProcessing() {
     fastjet::ClusterSequence fClustSeq(fJetInputs, fJetDef);
-    vector< fastjet::PseudoJet > unsorteds = fClustSeq.inclusive_jets( fMinPT );
-    fSortedJets = sorted_by_pt( unsorteds );
+    vector<fastjet::PseudoJet> unsorted = fClustSeq.inclusive_jets(fMinPT);
+    fSortedJets = sorted_by_pt(unsorteds);
 
     /* Abort if the event does not meet quality specifications */
     fJetVars.SetZero();
@@ -200,45 +200,45 @@ void JetBase::ParticleLoop()
         int status = fAnalysisStatus[ fJetParts[j].user_index() ];
 
         fEtSum += fJetParts[j];
-        if ( id == 211 ) {
+        if (id == 211) {
             fPiPlus += fJetParts[j];
-        } else if ( id == -211 ) {
+        } else if (id == -211) {
             fPiMinus+= fJetParts[j];
-        } else if ( id == 22 ) {
-            if ( status == 2 ) {
+        } else if (id == 22) {
+            if (status == 2) {
                 fPi0Gamma += fJetParts[j];
             } else {
                 fGamma += fJetParts[j];
             }
-        } else if ( id == 321 ) {
+        } else if (id == 321) {
             fKaPlus += fJetParts[j];
-        } else if ( id == -321 ) {
+        } else if (id == -321) {
             fKaMinus += fJetParts[j];
-        } else if ( abs( id ) == 310 ) {
+        } else if (abs(id) == 310) {
             fKSZero += fJetParts[j];
-        } else if ( abs( id ) == 130 ) {
+        } else if (abs(id) == 130) {
             fKLZero += fJetParts[j];
-        } else if ( id == 2212 ) {
+        } else if (id == 2212) {
             fProton += fJetParts[j];
-        } else if ( id == -2212 ) {
+        } else if (id == -2212) {
             fAproton += fJetParts[j];
-        } else if ( id == 2112 ) {
+        } else if (id == 2112) {
             fNeutron += fJetParts[j];
-        } else if ( id == -2112 ) {
+        } else if (id == -2112) {
             fAneutron += fJetParts[j];
-        } else if ( abs( id ) == 3122 ) {
+        } else if (abs(id) == 3122) {
             fLambda0 += fJetParts[j];
-        } else if ( abs( id ) == 3112 || abs( id ) == 3222 ) {
+        } else if (abs(id) == 3112 || abs(id) == 3222) {
             fSigma += fJetParts[j];
-        } else if ( abs( id ) == 3312 ) {
+        } else if (abs(id) == 3312) {
             fXiMinus += fJetParts[j];
-        } else if ( abs( id ) == 3322 ) {
+        } else if (abs(id) == 3322) {
             fXiZero += fJetParts[j];
-        } else if ( abs( id ) == 3334 ) {
+        } else if (abs(id) == 3334) {
             fOmMinus += fJetParts[j];
-        } else if ( abs( id ) == 11 ) {
+        } else if (abs(id) == 11) {
             fElec += fJetParts[j];
-        } else if ( abs( id ) == 13 ) {
+        } else if (abs(id) == 13) {
             fMuon += fJetParts[j];
         } else {
             fOthers += fJetParts[j];
@@ -266,34 +266,77 @@ void JetBase::ParticlesToJetsorterInput()
 
     for (unsigned i = 0; i != fPrtcls_; ++i) {
         fastjet::PseudoJet particleTemp(fX[i],fY[i], fZ[i], fT[i]);
-        particleTemp.set_user_index( i ); /* Save particle index */
+        particleTemp.set_user_index(i); /* Save particle index */
 
         int stat = fAnalysisStatus[i];
         int pdgID = abs(fPDGCode[i]);
 
         if (stat==1) {
             /* General final-state particles: neutrinos are thrown into MET */
-
             if (pdgID == 12 || pdgID == 14 || pdgID == 16)
                 fMET += particleTemp;
             else
                 fJetInputs.push_back(particleTemp);
 
+            /* In gamma+jets events all photons are monitored */
+            if (fMode==2 && pdgID==22)
+                fAux.push_back(particleTemp);
+
+            /* In zmumu+jets events all muons are monitored */
+            if (fMode==3 && pdgID==13)
+                fAux.push_back(particleTemp);
+
             /* Ttbar lepton+jet events: save leptons */
             if (fMode==4 && (pdgID == 11 || pdgID == 13))
-                fLeptons.push_back(particleTemp);
-
-            if (fMode==2 && pdgID ==22)
-
+                fAux.push_back(particleTemp);
 
         } else if (stat==2) {
+            /* Pi0 photons */
+            fJetInputs.push_back(particleTemp);
+
+        } else if (stat==3 || stat==4 || stat==5) {
+            /* Hadronic definition hadrons: (strange), charm and bottom */
+            if (fDefinition==8) {
+                particleTemp *= pow(10, -18);
+                particleTemp.set_user_index(-i-1);
+                fJetInputs.push_back(particleTemp);
+            }
+
+        } else if (stat==6) {
+            /* Algorithmic and hadronic definition: partons just before hadronization */
+            if (fDefinition==5 || fDefinition==6 || fDefinition==8 || fDefinition==10) {
+                particleTemp *= pow(10, -18);
+                particleTemp.set_user_index(-i-1);
+                fJetInputs.push_back( particleTemp );
+            } else if (fDefinition==9) {
+                if (pdgID > 6 && pdgID!=21) continue;
+                fPartons.push_back(particleTemp);
+            }
+        } else if (stat==7) {
+            /* Outgoing momentum corrected hard process partons. */
+            if (fDefinition==3 || fDefinition==4) {
+                /* Final state parton physics definition. */
+                particleTemp *= pow(10,-18);
+                particleTemp.set_user_index( -i-1 );
+                fJetInputs.push_back( particleTemp );
+            }
+
+            /* For now, ignore the uncorrected photons and muons */
+
+        } else if (stat==8) {
             /* Special final-state particles, e.g. muons in Zmumu+jet cases
              * Depending on the event type these can be exlucded from jet
              * clustering and stored to AuxInputs. */
+            if (pdgID<=6 || pdgID==21) {
+                /* Always set the hard process partons */
+                fHardPartons.push_back(particleTemp);
 
-            if (fMode==0 || fMode==1) {
-                /* pi0 photons in generic events */
-                fJetInputs.push_back(particleTemp);
+                if (fDefinition==2 || fDefinition==4 || fDefinition==5) {
+                    /* Physics clustering definition: ghost partons from the hard process */
+                    particleTemp *= pow(10,-18);
+                    particleTemp.set_user_index( -i-1 );
+                    fJetInputs.push_back( particleTemp );
+                }
             } else if (fMode==2) {
                 /* outgoing photons in gamma+jet events */
                 fTheGamma = particleTemp;
@@ -311,58 +354,17 @@ void JetBase::ParticlesToJetsorterInput()
 
             /* Add gamma/lepton in certain event types as a jet.
              * Status: lepton or gamma particle code. */
-            if (fAddNonJet && (fMode==2||fMode==3||fMode==4)) {
-                fJetVars.SetZero();
-                fJetEvent->AddJet(particleTemp.px(),
-                                  particleTemp.py(),
-                                  particleTemp.pz(),
-                                  particleTemp.e(),
-                                  fJetVars,
-                                  fWeight,
-                                  fabs(pdgID) );
-            }
-        } else if (stat==3) {
-            /* Outgoing hard process particles - these are used with some of the
-             * jet flavour definitions */
-
-            /* Always set the hard process partons */
-            fHardPartons.push_back(particleTemp);
-
-            if (fDefinition==2 || fDefinition==4 || fDefinition==5) {
-                /* Physics clustering definition: ghost partons from the hard process */
-                particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i-1 );
-                fJetInputs.push_back( particleTemp );
-            }
-        } else if (stat==8) {
-            /* Outgoing momentum corrected hard process partons. */
-            if (fDefinition==3 || fDefinition==4) {
-                /* Final state parton physics definition. */
-                particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i-1 );
-                fJetInputs.push_back( particleTemp );
-            }
-        } else if (stat==4) {
-            /* Algorithmic and hadronic definition: partons just before hadronization */
-
-            if (fDefinition==5 || fDefinition==6 || fDefinition==8 || fDefinition==10) {
-                particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i-1 );
-                fJetInputs.push_back( particleTemp );
-            } else if (fDefinition==9) {
-                if (pdgID > 6 && pdgID!=21) continue;
-                fPartons.push_back(particleTemp);
-            }
-        } else if (/*stat == 5 ||*/ stat == 6 || stat == 7 ) {
-            /* Hadronic definition hadrons: charm and top omitted for now */
-
-            if (fDefinition==8) {
-                particleTemp *= pow( 10, -18 );
-                particleTemp.set_user_index( -i-1 );
-                fJetInputs.push_back( particleTemp );
-            }
+//             if (fAddNonJet && (fMode==2||fMode==3||fMode==4)) {
+//                 fJetVars.SetZero();
+//                 fJetEvent->AddJet(particleTemp.px(),
+//                                   particleTemp.py(),
+//                                   particleTemp.pz(),
+//                                   particleTemp.e(),
+//                                   fJetVars,
+//                                   fWeight,
+//                                   fabs(pdgID) );
+//             }
         }
-        /* Unnecessary particles are implicitly discarded */
     }
 
     /* The MET-"jet" is given a status 10 */
@@ -376,7 +378,7 @@ void JetBase::ParticlesToJetsorterInput()
                           fWeight,
                           10);
 
-    assert( fJetInputs.size() ); /* The input should not be empty */
+    assert(fJetInputs.size()); /* The input should not be empty */
 }
 
 
@@ -385,14 +387,13 @@ bool JetBase::SelectionParams()
     if ( fSortedJets.size() == 0 ) return false;
 
     unsigned studyJets = TMath::Min(unsigned(fJetsPerEvent),unsigned(fSortedJets.size()));
-    if (fMode == 0) {
-
+    if (fMode==0) {
         fJetVars.Alpha = 0;
         fJetVars.DPhi = 0;
         fJetVars.matchPT = 0;
         return true;
 
-    } else if (fMode == 1) {
+    } else if (fMode==1) {
         /* Dijet events: require always at least two jets
          *
          * Example of a jet selection that should be done:
@@ -402,15 +403,15 @@ bool JetBase::SelectionParams()
          *  -A third jet has at most 30% of the average pt of the leading jets (alpha) */
         studyJets = 2;
 
-        if ( fSortedJets.size() < 2 )
+        if (fSortedJets.size()<2)
             return false;
 
-        fJetVars.Alpha   = fSortedJets.size() < 3 ? 0 :
+        fJetVars.Alpha   = (fSortedJets.size() < 3) ? 0 :
                            2*fSortedJets[2].pt()/fabs(fSortedJets[0].pt()+fSortedJets[1].pt());
         fJetVars.DPhi    = fabs(fSortedJets[0].delta_phi_to( fSortedJets[1] ));
         fJetVars.matchPT = 0;
 
-    } else if (fMode == 2) {
+    } else if (fMode==2) {
         /* Gammajet events: require always sufficient resolution and cuts for gamma eta and pt
          *
          * Example of a selection that should be done

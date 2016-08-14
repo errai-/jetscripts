@@ -78,6 +78,8 @@ void AnalyzeData::Loop(string writeFile)
     vector<JetCorrectorParameters> corParams;
     FactorizedJetCorrector *jetECor = EnergyCorrSetup( &corParams, isMC );
 
+    double cor1 = 0, cor2 = 0;
+    unsigned counter = 0;
     /* Event loop, until reaching the limit or tree size */
     for (Long64_t jentry=0; jentry<loopLimit; jentry++) {
 
@@ -115,6 +117,9 @@ void AnalyzeData::Loop(string writeFile)
                 corr = jetECor->getCorrection();
             }
             jetMomentum *= corr;
+            //cout << corr << " " << cor_[kentry] << " " << corr/cor_[kentry] << endl;
+            cor1 += corr; cor2 += cor_[kentry];
+            ++counter;
 
             double jetPt = jetMomentum.Pt();
             double jetEta = jetMomentum.Eta();
@@ -178,6 +183,7 @@ void AnalyzeData::Loop(string writeFile)
         cout << "Duplicate events observed: " << duplicEvents << endl;
         cout << "Triggering jets: " << goodJets << endl;
     }
+    cout << cor1/counter << " " << cor2/counter << endl;
     
     if (isMC){
         mcPileUp.Close();

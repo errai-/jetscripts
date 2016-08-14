@@ -27,11 +27,11 @@ struct JetVariables
     float elf;
     float muf;
 
-    float chm;
-    float nhm;
-    float phm;
-    float elm;
-    float mum;
+//     float chm;
+//     float nhm;
+//     float phm;
+//     float elm;
+//     float mum;
 
     //float nextDR;
     float partonPT;

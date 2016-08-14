@@ -10,8 +10,7 @@ Pythia6Tree::Pythia6Tree(Int_t nEvent, string fileName, Int_t nameId, const int 
     mMPI(true),
     mISR(true),
     mFSR(true),
-    mUseStrange(false),
-    mPartonLevel(true)
+    mUseStrange(false)
 {
     /* Create an instance of the Pythia event generator: */
     mPythia = new TPythia6;
@@ -202,24 +201,21 @@ void Pythia6Tree::EventLoop()
 {
     /* Simulation loop */
     unsigned evtNo = 0;
-    cout << "etu" << endl;
     while (evtNo != mNumEvents) {
         mPythia->GenerateEvent();
 
+        //PrintEvent();
+//         if (evtNo==63)
+//             mPythia->Pylist(2);
+
         if (!ParticleLoop()) continue;
 
-        //PrintEvent();
-        if (evtNo>=62)
-            mPythia->Pylist(2);
-
         mTree->Fill();
-        cout << evtNo << endl;
 
         /* Update progress */
         ++evtNo;
         if (evtNo%mTimerStep==0) mTimer.printTime();
     }
-    cout << "taka" << endl;
 
     mFile = mTree->GetCurrentFile();
     mTree->AutoSave("Overwrite");
@@ -239,7 +235,7 @@ bool Pythia6Tree::ParticleLoop()
 {
     mPrtclEvent->Clear();
     mPartonHistory.clear();
-    /* Special particle indices are saved to eliminate saving overlap */
+    /* Special particle indices are saved to eliminate saving overlap. */
     mSpecialIndices.clear();
 
     /* Pythia 6 speciality: do the gamma/muon analysis before the particle loop. */
@@ -273,53 +269,23 @@ bool Pythia6Tree::ParticleLoop()
             return false;
 
     /* Adding corrected parton momenta */
-    for (auto prt : mPartonHistory)
+    for (auto prt : mPartonHistory) {
         mPrtclEvent->AddPrtcl(prt.second.Px(),
                               prt.second.Py(),
                               prt.second.Pz(),
                               prt.second.E(),
                               mPythia->GetK(prt.first,2),
                               7);
+    }
 
     return true;
 } // ParticleLoop
-
-
-inline bool Pythia6Tree::Absent(unsigned int prt)
-{
-    return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end();
-}
-
-
-inline bool Pythia6Tree::IsParton(unsigned int prt)
-{
-    int id = abs(mPythia->GetK(prt,2));
-    return (id <= 6 || id == 21);
-}
-
-
-/* This assumes implicitly that the particle prt is a parton */
-inline bool Pythia6Tree::IsFSParton(unsigned int prt)
-{
-    /* No decays in sight */
-    if (mPythia->GetK(prt,4)>mPythia->GetK(prt,5))
-        return false;
-
-    /* The parton has a parton daughter */
-    for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr)
-        if (IsParton(dtr))
-            return false;
-
-    return true;
-}
 
 
 bool Pythia6Tree::ProcessParticle(unsigned prt)
 {
     int status = mPythia->GetK(prt,1);
     int id = abs(mPythia->GetK(prt,2));
-    if ()
-        mPartonLevel = false;
 
     // prt == 7,8: outgoing LO particles (hard process)
     if (mMode > 0) {
@@ -329,19 +295,12 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
                 if (status!=21)
                     throw std::runtime_error("False functionality in hard process.");
 
-                cout << prt << endl;
                 mPartonHistory.emplace(prt,TLorentzVector());
 
                 ParticleAdd(prt,8);
                 return true;
             } else if (parent==7 || parent==8) {
-                cout << "huhuuu" << prt << " " << parent << " " << mPartonHistory.size() << endl;
-                for (auto a : mPartonHistory) {
-                    cout << a.first << " ";
-                }
-                cout << endl;
                 mPartonHistory[parent] += LastParton(prt);
-                cout << "  hahaaa" << endl;
             }
         } else if (mMode==4) {
             if (parent >= 13 && parent <= 16) {
@@ -355,12 +314,11 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
 
     /* Hadronic and algorithmic definitions: add FS partons or interesting hadrons. */
     if (status >= 11 && status <= 20) {
-        if (mPartonLevel) {
+        if (IsParton(prt)) {
             if (IsFSParton(prt))
                 ParticleAdd(prt,6);
-
             return true;
-        } else if (abs(mPythia->GetK(prt,2))>=100) {
+        } else if (id>=100 && id%100>9) {
             GhostHadronAdd(prt);
         }
     }
@@ -371,6 +329,37 @@ bool Pythia6Tree::ProcessParticle(unsigned prt)
         if (id==22 && GammaChecker(prt)) /* Gamma from pi0 */
             saveStatus = 2;
         ParticleAdd(prt,saveStatus);
+    }
+
+    return true;
+}
+
+
+inline bool Pythia6Tree::Absent(unsigned int prt)
+{
+    return std::find(mSpecialIndices.begin(),mSpecialIndices.end(),prt)==mSpecialIndices.end();
+}
+
+
+inline bool Pythia6Tree::IsParton(unsigned int prt)
+{
+    unsigned id = abs(mPythia->GetK(prt,2));
+    return (id <= 6 || id == 21);
+}
+
+
+/* This assumes implicitly that the particle prt is a parton */
+inline bool Pythia6Tree::IsFSParton(unsigned int prt)
+{
+    /* No decays in sight */
+    if (mPythia->GetK(prt,4)>mPythia->GetK(prt,5))
+        return false;
+
+    /* The parton has a parton daughter */
+    for (unsigned dtr = mPythia->GetK(prt,4), N = mPythia->GetK(prt,5); dtr <= N; ++dtr) {
+        unsigned id = abs(mPythia->GetK(prt,2));
+        if (id > 90 && id < 94)
+            return false;
     }
 
     return true;
@@ -428,8 +417,10 @@ bool Pythia6Tree::GammaAdd()
 bool Pythia6Tree::MuonAdd()
 {
     mSpecialIndices.push_back(12); mSpecialIndices.push_back(13);
-    while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13)
-        ++mSpecialIndices[0]; ++mSpecialIndices[1];
+    while (abs(mPythia->GetK(mSpecialIndices[0],2))!=13) {
+        ++mSpecialIndices[0];
+        ++mSpecialIndices[1];
+    }
 
     for (unsigned i = 0; i < mSpecialIndices.size(); ++i) {
         if (abs(mPythia->GetK(mSpecialIndices[i],2))!=13)
@@ -503,7 +494,7 @@ bool Pythia6Tree::GammaChecker(unsigned prt)
 /* Corrected parton momentum */
 TLorentzVector Pythia6Tree::LastParton(unsigned prt)
 {
-    if (IsFSParton(prt)) {
+    if (!IsParton(prt) || IsFSParton(prt)) {
         TLorentzVector handle(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
         return handle;
     }

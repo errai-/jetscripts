@@ -163,7 +163,6 @@ protected:
     bool                            mISR;
     bool                            mFSR;
     bool                            mUseStrange;
-    bool                            mPartonLevel;
 
     static const unsigned           mNumSeeds = 40;
     const unsigned                  mSeeds[mNumSeeds] = {840744607,
