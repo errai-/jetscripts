@@ -56,13 +56,18 @@
 // Fixed size dimensions of array or collections stored in the TTree if any.
 #include "../generic/help_functions.h"
 
+#include "QCDAwarePlugin.hh"
+
 using std::cout;
 using std::endl;
 using std::vector;
 using std::map;
+using std::pair;
 using std::set;
 using std::cerr;
 using fastjet::PseudoJet;
+
+using namespace fastjet::contrib::QCDAwarePlugin;
 
 class JetBase
 {
@@ -97,32 +102,30 @@ public :
     virtual Bool_t      Isolation(PseudoJet prt, double R = 0.3);
 
     /* The classically best jet flavour definition in terms of robustness. */
-    virtual void        PhysFlavor(unsigned);
+    virtual void        PhysFlavor(unsigned jet);
     /* Ghost parton jet clustering for the physics definition.
      * Used by the ghost parton physics definition and the
      * experimental final (ghost) parton physics definition.
      * The latter uses a sum of the momenta of the hard process descendants
      * instead of the hard process momentum values. */
-    virtual void        LOFlavor(unsigned);
+    virtual void        GhostFlavor();
+    /* For an equal combination of the definitions (e.g. LO & CLO) */
+    virtual void        EqualFlavor();
     /* A combination of the physics definition and algorithmic definition */
-    virtual void        LOFSFlavor(unsigned);
-    /* The experimental historic physics definition for flavor.
-     * Determines the jet flavor based on an et-sum of the jet constituents.
-     * Each constituent has information of its ancestor. */
-    virtual void        HistFlavor(unsigned);
+    virtual void        LOFSFlavor();
     /* Particle identification the modern "Hadronic definition".
      * Determine whether a jet is dominated by quarks or by gluons.
      * Looping stops when a corresponding jet is found.
      * Hadron flavour is used as a dominating feature.
      * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
      * for further information. */
-    virtual void        HadrFlavor(unsigned);
+    virtual void        HadrFlavor();
     /* Algorithmic flavor tagging is somewhat similar to hadronic tagging.
      * See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideBTagMCTools
      * for further information. */
-    virtual void        AlgoFlavor(unsigned);
+    virtual void        AlgoFlavor(unsigned jet);
     /* The hadronic definition without hadrons (or modernized algorithmic deifinition) */
-    virtual void        FSFlavor(unsigned);
+    virtual void        FSFlavor();
 
 protected:
 ///////////
@@ -145,6 +148,7 @@ protected:
     vector<PseudoJet> fHardPartons; /* Outgoing hard process partons */
     vector<PseudoJet> fPartons;     /* Other partons */
     vector<PseudoJet> fLeptons;     /* Z+jets, ttbarlepton+jets */
+    vector<PseudoJet> fGhosts;      /* Store original ghost momentum and info */
     vector<PseudoJet> fAux;         /* Auxiliary storage */
 
     PseudoJet         fTheGamma;       /* gamma+jets */
@@ -170,7 +174,6 @@ protected:
 
     Int_t           fPDGCode[kMaxfPrtcls];   //[fPrtcls_]
     Int_t           fAnalysisStatus[kMaxfPrtcls];   //[fPrtcls_]
-    Int_t           fHistoryFlavor[kMaxfPrtcls]; //[fPrtcls_]
 
 //////////
 // Output:
@@ -218,8 +221,8 @@ protected:
     bool            fParticleStudy;
     bool            fInitialized;
     bool            fAddNonJet;
-    double          fFlavour;
 
+    Int_t           fFlavour;
     Int_t           fMode;       /* Event type */
     Int_t           fDefinition; /* Flavour definition */
     Int_t           fBookedParton; /* Monitor partons that are paired with jets */

@@ -38,7 +38,8 @@ bool main_handle(int argc, char* argv[], string& fullPath, string& treePath,
         cout << "7: Historic hadron definition" << endl;
         cout << "8: Hadronic definition" << endl;
         cout << "9: Algorithmic definition" << endl;
-        cout << "10: Algotirhmic definition with ghost partons" << endl;
+        cout << "10: Algorithmic definition with ghost partons" << endl;
+        cout << "11: QCDAware definition" << endl;
         return false;
     }
 
@@ -46,7 +47,7 @@ bool main_handle(int argc, char* argv[], string& fullPath, string& treePath,
     int generator = -1;
     bool beginning = false;
 
-    if ( definition<1||definition>10 ) throw std::runtime_error("Flavor options 1-10");
+    if (definition<1||definition>11) throw std::runtime_error("Flavor options 1-11");
 
     string input = argv[1], tmpStr = "";
     fullPath = argv[2];
@@ -109,6 +110,9 @@ bool main_handle(int argc, char* argv[], string& fullPath, string& treePath,
                 } else if (definition==10) {
                     output += "ghostalgo_";
                     output2 += "ghostalgo_";
+                } else if (definition==11) {
+                    output += "qcdaware_";
+                    output2 += "qcdaware_";
                 }
             }
             tmpStr = "";

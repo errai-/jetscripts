@@ -363,7 +363,7 @@ bool Pythia8Tree::GammaChecker(unsigned prt)
     vector<int> daughters = mEvent[mothers[0]].daughterList();
 
     double eDifference = mEvent[mothers[0]].e();
-    for ( auto daugh : daughters )
+    for (auto daugh : daughters)
         eDifference -= mEvent[daugh].e();
 
     if (fabs(eDifference) > 0.001)

@@ -23,7 +23,7 @@ using std::vector;
 
 const int ptBins = 45.;//29.;//61.;
 const double ptRange[]=
-    //{18, 21, 24, 
+    //{18, 21, 24,
     {28, 32, 37, 43, 49,
      56, 64, 74, 84,
      97, 114, 133, 153, 174, 196, 220, 245, 272, 300, 330, 362, 395, 430, 468,
@@ -97,7 +97,7 @@ void Fracs(string file, string writefile) {
             //if (mDPhi[i] < 2.8) continue;
 
             int fl = abs(mFlav[i]);
-            if (mDR[i] > dr_limit) fl = -1;
+            //if (mDR[i] > dr_limit) fl = -1;
             if (fl == 6 || fl == 7) fl -= 2;
             if (fl > 5 && fl != 21) continue;
 
@@ -108,7 +108,7 @@ void Fracs(string file, string writefile) {
             hists[4].Fill(tmpVec.Pt(), fl <= 0 ? 1:0, mWeight);
         }
     }
-    
+
     TFile* writerHandle = new TFile(writefile.c_str(),"RECREATE");
     vector<TH1D*> dummies;
     dummies.push_back( hists[0].ProjectionX("Quark","") );

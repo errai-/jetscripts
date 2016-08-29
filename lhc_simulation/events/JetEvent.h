@@ -27,13 +27,6 @@ struct JetVariables
     float elf;
     float muf;
 
-//     float chm;
-//     float nhm;
-//     float phm;
-//     float elm;
-//     float mum;
-
-    //float nextDR;
     float partonPT;
     float matchPT;
 
@@ -51,11 +44,6 @@ struct JetVariables
         phf = 0;
         elf = 0;
         muf = 0;
-        chm = 0;
-        nhm = 0;
-        phm = 0;
-        elm = 0;
-        mum = 0;
         partonPT = 0;
         matchPT = 0;
         constituents = 0;
@@ -64,7 +52,6 @@ struct JetVariables
         DR = 0;
         Alpha = 0;
         DPhi = 0;
-        //nextDR = 0;
     }
 };
 
@@ -99,12 +86,6 @@ private:
     float fElf;
     float fMuf;
 
-    //float fChm;
-    //float fNhm;
-    //float fPhm;
-    //float fElm;
-    //float fMum;
-
     float fPartonPT;
     float fMatchPT;
 
@@ -113,7 +94,6 @@ private:
     float fSigma2;
 
     float fDR;
-    //float fDR_Next;
     float fAlpha;
     float fDPhi;
 

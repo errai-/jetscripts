@@ -61,7 +61,6 @@ void JetBase::Init(TTree *tree)
     fChain->SetBranchAddress("fPrtcls.fP4.fCoordinates.fT", fT);
     fChain->SetBranchAddress("fPrtcls.fPDGCode", fPDGCode);
     fChain->SetBranchAddress("fPrtcls.fAnalysisStatus", fAnalysisStatus);
-    fChain->SetBranchAddress("fPrtcls.fHistoryFlavor",fHistoryFlavor);
 }
 
 
@@ -113,7 +112,7 @@ void JetBase::Finalize()
 void JetBase::EventProcessing() {
     fastjet::ClusterSequence fClustSeq(fJetInputs, fJetDef);
     vector<fastjet::PseudoJet> unsorted = fClustSeq.inclusive_jets(fMinPT);
-    fSortedJets = sorted_by_pt(unsorteds);
+    fSortedJets = sorted_by_pt(unsorted);
 
     /* Abort if the event does not meet quality specifications */
     fJetVars.SetZero();
@@ -135,32 +134,36 @@ void JetBase::EventProcessing() {
 bool JetBase::JetLoop()
 {
     for (size_t i = 0; i < fSortedJets.size(); ++i) {
-        if ( i == fJetsPerEvent || fSortedJets[i].pt()<30 ) break;
+        if (i == fJetsPerEvent || fSortedJets[i].pt()<30) break;
         fJetVars.SetZero();
 
         fJetParts = fSortedJets[i].constituents();
 
         /* Flavour definition */
+        fFlavour = 0;
+        fJetVars.partonPT = 0;
         if (fDefinition == 1)
             PhysFlavor(i);
         else if (fDefinition == 2)
-            LOFlavor(i);
+            GhostFlavor();
         else if (fDefinition == 3)
-            LOFlavor(i);
+            GhostFlavor();
         else if (fDefinition == 4)
-            LOFlavor(i);
+            GhostFlavor();
         else if (fDefinition == 5)
-            LOFSFlavor(i);
+            EqualFlavor();
         else if (fDefinition == 6)
-            LOFSFlavor(i);
+            LOFSFlavor();
         else if (fDefinition == 7)
-            HistFlavor(i);
+            GhostFlavor();
         else if (fDefinition == 8)
-            HadrFlavor(i);
+            HadrFlavor();
         else if (fDefinition == 9)
             AlgoFlavor(i);
         else if (fDefinition == 10)
-            FSFlavor(i);
+            FSFlavor();
+        else if (fDefinition == 11)
+            GhostFlavor();
 
         if (fParticleStudy)
             ParticleLoop(); /* Operations on jet particles */
@@ -259,6 +262,7 @@ void JetBase::ParticlesToJetsorterInput()
     fLeptons.clear();
     fHardPartons.clear();
     fPartons.clear();
+    fGhosts.clear();
     fAux.clear();
     fTheGamma = PseudoJet();
     fTheLepton = PseudoJet();
@@ -273,7 +277,7 @@ void JetBase::ParticlesToJetsorterInput()
 
         if (stat==1) {
             /* General final-state particles: neutrinos are thrown into MET */
-            if (pdgID == 12 || pdgID == 14 || pdgID == 16)
+            if (pdgID==12 || pdgID==14 || pdgID==16)
                 fMET += particleTemp;
             else
                 fJetInputs.push_back(particleTemp);
@@ -282,14 +286,18 @@ void JetBase::ParticlesToJetsorterInput()
             if (fMode==2 && pdgID==22)
                 fAux.push_back(particleTemp);
 
-            /* In zmumu+jets events all muons are monitored */
+            /* In Zmumu+jets events all muons are monitored */
             if (fMode==3 && pdgID==13)
                 fAux.push_back(particleTemp);
 
-            /* Ttbar lepton+jet events: save leptons */
-            if (fMode==4 && (pdgID == 11 || pdgID == 13))
+            /* Ttbar lepton+jet events: save charged leptons */
+            if (fMode==4 && (pdgID==11 || pdgID==13))
                 fAux.push_back(particleTemp);
 
+            if (fDefinition==11 && (pdgID==11 || pdgID==13 || pdgID==15 || pdgID==22)) {
+                particleTemp.set_user_index(fPDGCode[i]);
+                fPartons.push_back(particleTemp);
+            }
         } else if (stat==2) {
             /* Pi0 photons */
             fJetInputs.push_back(particleTemp);
@@ -307,36 +315,41 @@ void JetBase::ParticlesToJetsorterInput()
             if (fDefinition==5 || fDefinition==6 || fDefinition==8 || fDefinition==10) {
                 particleTemp *= pow(10, -18);
                 particleTemp.set_user_index(-i-1);
-                fJetInputs.push_back( particleTemp );
+                fJetInputs.push_back(particleTemp);
             } else if (fDefinition==9) {
-                if (pdgID > 6 && pdgID!=21) continue;
+                if (pdgID>6 && pdgID!=21) continue;
+                fPartons.push_back(particleTemp);
+            } else if (fDefinition==11) {
+                if (pdgID>6 && pdgID!=21) continue;
+                particleTemp.set_user_index(fPDGCode[i]);
                 fPartons.push_back(particleTemp);
             }
         } else if (stat==7) {
-            /* Outgoing momentum corrected hard process partons. */
+            /* Outgoing momentum corrected hard process partons and charged leptons. */
             if (fDefinition==3 || fDefinition==4) {
                 /* Final state parton physics definition. */
+                particleTemp.set_user_index(pdgID);
+                fGhosts.push_back(particleTemp);
                 particleTemp *= pow(10,-18);
-                particleTemp.set_user_index( -i-1 );
-                fJetInputs.push_back( particleTemp );
+                particleTemp.set_user_index(-fGhosts.size());
+                fJetInputs.push_back(particleTemp);
             }
 
-            /* For now, ignore the uncorrected photons and muons */
+            if (pdgID == 12 || pdgID == 14 || pdgID == 16) {
+                fMET += particleTemp;
+            }
 
-        } else if (stat==8) {
-            /* Special final-state particles, e.g. muons in Zmumu+jet cases
-             * Depending on the event type these can be exlucded from jet
-             * clustering and stored to AuxInputs. */
-            if (pdgID<=6 || pdgID==21) {
-                /* Always set the hard process partons */
-                fHardPartons.push_back(particleTemp);
-
-                if (fDefinition==2 || fDefinition==4 || fDefinition==5) {
-                    /* Physics clustering definition: ghost partons from the hard process */
-                    particleTemp *= pow(10,-18);
-                    particleTemp.set_user_index( -i-1 );
-                    fJetInputs.push_back( particleTemp );
-                }
+            /* Add gamma/lepton in certain event types as a jet.
+             * Status: lepton or gamma particle code. */
+            if (fAddNonJet && (fMode==2||fMode==3||fMode==4)) {
+                fJetVars.SetZero();
+                fJetEvent->AddJet(particleTemp.px(),
+                                  particleTemp.py(),
+                                  particleTemp.pz(),
+                                  particleTemp.e(),
+                                  fJetVars,
+                                  fWeight,
+                                  fabs(pdgID) );
             } else if (fMode==2) {
                 /* outgoing photons in gamma+jet events */
                 fTheGamma = particleTemp;
@@ -347,29 +360,35 @@ void JetBase::ParticlesToJetsorterInput()
                 /* charged lepton from W stored to output */
                 fTheLepton = particleTemp;
             }
+        } else if (stat==8) {
+            /* Special final-state particles, e.g. muons in Zmumu+jet cases
+             * Depending on the event type these can be excluded from jet
+             * clustering and stored to AuxInputs. */
+            if (pdgID<=6 || pdgID==21) {
+                /* Always set the hard process partons */
+                fHardPartons.push_back(particleTemp);
 
-            if (pdgID == 12 || pdgID == 14 || pdgID == 16) {
-                fMET += particleTemp;
+                if (fDefinition==2 || fDefinition==4 || fDefinition==5) {
+                    /* Physics clustering definition: ghost partons from the hard process */
+                    if (fDefinition==5) {
+                        particleTemp.set_user_index(-i-1);
+                    } else {
+                        particleTemp.set_user_index(-pdgID-1);
+                        fGhosts.push_back(particleTemp);
+                        particleTemp.set_user_index(-fGhosts.size());
+                    }
+
+                    particleTemp *= pow(10,-18);
+                    fJetInputs.push_back(particleTemp);
+                }
             }
-
-            /* Add gamma/lepton in certain event types as a jet.
-             * Status: lepton or gamma particle code. */
-//             if (fAddNonJet && (fMode==2||fMode==3||fMode==4)) {
-//                 fJetVars.SetZero();
-//                 fJetEvent->AddJet(particleTemp.px(),
-//                                   particleTemp.py(),
-//                                   particleTemp.pz(),
-//                                   particleTemp.e(),
-//                                   fJetVars,
-//                                   fWeight,
-//                                   fabs(pdgID) );
-//             }
+            /* For now, ignore the uncorrected photons and muons */
         }
     }
 
     /* The MET-"jet" is given a status 10 */
     fJetVars.SetZero();
-    if (fAddNonJet)
+    if (fAddNonJet) {
         fJetEvent->AddJet(fMET.px(),
                           fMET.py(),
                           fMET.pz(),
@@ -377,6 +396,23 @@ void JetBase::ParticlesToJetsorterInput()
                           fJetVars,
                           fWeight,
                           10);
+    }
+
+    /* QCD Aware operations */
+    if (fDefinition==11) {
+        fHardPartons.clear();
+
+        AntiKtMeasure *aktm = new AntiKtMeasure(0.4);
+        QCDAwarePlugin *qa_akt = new QCDAwarePlugin(aktm);
+        fastjet::ClusterSequence qcdaw(fPartons, qa_akt);
+        vector<PseudoJet> partonJets = sorted_by_pt(qcdaw.inclusive_jets());
+        for (auto pJet : partonJets) {
+            fGhosts.push_back(pJet);
+            pJet *= pow(10,-18);
+            pJet.set_user_index(fGhosts.size());
+            fJetInputs.push_back(pJet);
+        }
+    }
 
     assert(fJetInputs.size()); /* The input should not be empty */
 }
@@ -468,7 +504,7 @@ bool JetBase::SelectionParams()
          * Additionally require single-charged lepton events */
         studyJets = 4;
 
-        if ( fSortedJets.size() < 4 ) {
+        if (fSortedJets.size() < 4) {
             return false;
         }
         /* Quality check for primary lepton */
@@ -542,15 +578,13 @@ Bool_t JetBase::Isolation(PseudoJet prt, double R)
 
 /* dR_min: the smallest jet axis - parton distance
    dR_nextmin: the next smallest jet axis - parton distance */
-void JetBase::PhysFlavor(unsigned i)
+void JetBase::PhysFlavor(unsigned jet)
 {
-    fFlavour = 0;
-    fJetVars.partonPT = 0;
     double dR_min = 10, dR_nextmin = 10;
-    for ( auto part : fHardPartons ) {
-        double dR = fSortedJets[i].delta_R( part );
+    for (auto part : fHardPartons) {
+        double dR = fSortedJets[jet].delta_R( part );
 
-        if ( dR < dR_min ) {
+        if (dR < dR_min) {
             if (fFlavour!=0) dR_nextmin = dR_min;
             dR_min = dR;
             fJetVars.partonPT = part.pt();
@@ -563,112 +597,151 @@ void JetBase::PhysFlavor(unsigned i)
     //fJetVars.nextDR = dR_nextmin;
 }
 
-/* If there are more than one hard process parton within a jet, mark no flavour */
-void JetBase::LOFlavor(unsigned i)
+
+/* A generic method for obtaining the flavour of partons with the same priority. */
+void JetBase::GhostFlavor()
 {
-    fFlavour = 0;
-    int flav_hist = -1;
-    for ( auto part : fJetParts ) {
+    unsigned partons = 0;
+    for (auto part : fJetParts) {
         if (part.user_index() > 0) continue; /* Not ghosts */
-        int id = -part.user_index()-1;
-        if (flav_hist != -1) {
-            if (fHistoryFlavor[id]==flav_hist) {
-                fJetVars.partonPT += part.pt()*pow(10,18);
-                fJetVars.partonPT /= 2.0;
-            } else {
-                flav_hist = -2;
-            }
+        unsigned pos = -part.user_index()-1;
+        int flav = fGhosts[pos].user_index();
+        if (fFlavour==0 || fFlavour==21) {
+            fJetVars.partonPT += fGhosts[pos].pt();
+            fFlavour = flav;
+            ++partons;
+        } else if (flav==21) {
+            fJetVars.partonPT += fGhosts[pos].pt();
+            ++partons;
+        } else if (fFlavour+flav==0) {
+            fJetVars.partonPT += fGhosts[pos].pt();
+            fFlavour = 21;
+            ++partons;
         } else {
-            flav_hist = fHistoryFlavor[id];
-            fJetVars.partonPT = part.pt()*pow(10,18);
+            partons = 0;
+            break;
         }
     }
-    if (flav_hist >= 0)
-        fFlavour = abs(fPDGCode[fHardPartons[flav_hist].user_index()]);
+
+    if (partons!=0) {
+        fJetVars.partonPT /= partons;
+        fFlavour = abs(fFlavour);
+    } else {
+        fJetVars.partonPT = 0.0;
+        fFlavour = 0;
+    }
 }
 
-void JetBase::LOFSFlavor(unsigned int)
-{
-    fFlavour = 0;
-    int hardflav_hist = -1, algoflav = -1;
-    double tmpPt = 0;
-    for ( auto part : fJetParts ) {
+
+/* Combine LO and CLO (or other similar purely partonic). UNTESTED */
+void JetBase::EqualFlavor() {
+    map<unsigned,int> flavs;
+    map<unsigned,double> pt;
+    map<unsigned,unsigned> partons;
+    for (auto part : fJetParts) {
         if (part.user_index() > 0) continue; /* Not ghosts */
-        int id = -part.user_index()-1;
-        int status = fAnalysisStatus[id];
-        if (status == 3) {
-            if (hardflav_hist != -1) {
-                if (fHistoryFlavor[id]==hardflav_hist) {
+        unsigned pos = -part.user_index()-1;
+        int flav = fPDGCode[pos];
+        unsigned status = fAnalysisStatus[pos];
+        if (flavs.find(status)==flavs.end()) {
+            flavs[status] = flav;
+            pt[status] = part.pt()*pow(10,18);
+            partons[status] = 1;
+        } else {
+            if (flavs[status]==21) {
+                flavs[status] = flav;
+                pt[status] += part.pt()*pow(10,18);
+                ++partons[status];
+            } else if (flavs[status]==21) {
+                pt[status] += part.pt()*pow(10,18);
+                ++partons[status];
+            } else if (fFlavour+flav==0) {
+                flavs[status] = 21;
+                pt[status] += part.pt()*pow(10,18);
+                ++partons[status];
+            } else {
+                flavs[status] = 0;
+                break;
+            }
+        }
+    }
+
+    /* Check that there is an agreement of the flavor */
+    for (auto flav : flavs) {
+        if (fFlavour!=0 && fFlavour!=flav.second) {
+            fFlavour=0;
+            return;
+        } else if (fFlavour==0) {
+            fFlavour = flav.second;
+        }
+    }
+
+    if (flavs.find(8)!=flavs.end()) {
+        fJetVars.partonPT = pt[8]/partons[8];
+    } else {
+        for (auto prts : partons) {
+            if (prts.second > 0) {
+                fJetVars.partonPT = pt[prts.first]/prts.second;
+                return;
+            }
+        }
+        fFlavour = 0;
+    }
+}
+
+/* Priority for LO partons, then check FS. UNTESTED */
+void JetBase::LOFSFlavor()
+{
+    int flav = -1, algoflav = -1;
+    double tmpPt = 0;
+    for (auto part : fJetParts) {
+        if (part.user_index() > 0) continue; /* Disregard non-ghosts */
+        unsigned pos = -part.user_index()-1;
+        int pdgCode = fPDGCode[pos];
+        int status = fAnalysisStatus[pos];
+        if (status==8 || status==7) {
+            if (flav != -1) {
+                if (pdgCode==flav) {
                     fJetVars.partonPT += part.pt()*pow(10,18);
                     fJetVars.partonPT /= 2.0;
                 } else {
-                    hardflav_hist = -2;
+                    flav = -2;
                 }
             } else {
-                hardflav_hist = fHistoryFlavor[id];
+                flav = pdgCode;
                 fJetVars.partonPT = part.pt()*pow(10,18);
             }
         } else {
             if (tmpPt < part.pt()) {
-                algoflav = fPDGCode[id];
+                algoflav = pdgCode;
                 tmpPt = part.pt();
             }
         }
 
     }
-    if (hardflav_hist >= 0) {
-        fFlavour = abs(fPDGCode[fHardPartons[hardflav_hist].user_index()]);
+    if (flav >= 0) {
+        fFlavour = abs(flav);
     } else {
         fFlavour = abs(algoflav);
-        if ( fFlavour > 6 && fFlavour != 21 )
+        if (fFlavour > 6 && fFlavour != 21)
             fFlavour = 0;
         fJetVars.partonPT = tmpPt;
     }
 }
 
-void JetBase::HistFlavor(unsigned i)
-{
-    map<int,double> et_sums;
-    et_sums.emplace(-1,0);
 
-    /* Calculate et sum for each outgoing hard process parton descendants */
-    for ( auto part : fJetParts ){
-        if (part.user_index() < 0) continue; /* Select non-ghosts */
-
-        unsigned fl = fHistoryFlavor[part.user_index()];
-        if ( !(et_sums.emplace(fl,part.E()).second) )
-            et_sums[fl] += part.E();
-    }
-
-    double et_sum = 0;
-    int max_id = 0;
-    for ( auto fl : et_sums ) {
-        et_sum += fl.second;
-
-        if ( fl.second > et_sums[max_id] )
-            max_id = fl.first;
-    }
-
-    /* A purity condition for the jets. Reduces the flavor and parton information
-     * to a simple flavor information. */
-    fFlavour = (max_id==-1) ? 0 : abs(fPDGCode[fHardPartons[max_id].user_index()]);
-
-    fJetVars.DR = et_sums[max_id]/et_sum;
-    if ( fJetVars.DR == 0.0 ) cout << "wot" << endl;
-}
-
-
-void JetBase::HadrFlavor(unsigned)
+void JetBase::HadrFlavor()
 {
     fFlavour = 0;
     int partonFlav = 0, hardestLightParton = 0;
     double lightPT = 0, partonPT = 0;
 
-    for ( auto part : fJetParts ){
+    for (auto part : fJetParts) {
         if (part.user_index() > 0) continue; /* Select ghosts */
 
-        int pdgCode = abs(fPDGCode[-part.user_index()-1]);
-        int status = fAnalysisStatus[-part.user_index()-1]-2;
+        unsigned pos =-part.user_index()-1;
+        int pdgCode = abs(fPDGCode[pos]);
+        int status = fAnalysisStatus[pos]-2;
         double PT = part.pt();
 
         if (status == 4 || status == 5) {
@@ -700,21 +773,21 @@ void JetBase::HadrFlavor(unsigned)
 }
 
 
-void JetBase::AlgoFlavor(unsigned i)
+void JetBase::AlgoFlavor(unsigned jet)
 {
     fFlavour = 0;
     int hardestLightParton = 0;
     double lightDR = 0, lightPT = 0;
 
-    for ( auto part : fPartons ) {
-        double dR = fSortedJets[i].delta_R( part );
-        int status = fAnalysisStatus[part.user_index()]-2;
+    for (auto part : fPartons) {
+        double dR = fSortedJets[jet].delta_R( part );
+        int status = fAnalysisStatus[part.user_index()];
         int pdgCode = abs(fPDGCode[part.user_index()]);
 
         if (dR > 0.3) continue;
 
         double PT = part.pt();
-        if (status == 4 || status == 5) {
+        if (status==4 || status==5) {
             if (status > fFlavour || PT > fJetVars.partonPT) {
                 fFlavour = status;
                 fJetVars.DR = dR;
@@ -736,7 +809,7 @@ void JetBase::AlgoFlavor(unsigned i)
 }
 
 
-void JetBase::FSFlavor(unsigned i)
+void JetBase::FSFlavor()
 {
     int hardestLightParton = 0;
     double lightPT = 0;

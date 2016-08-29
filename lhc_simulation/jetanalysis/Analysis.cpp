@@ -31,7 +31,6 @@ void Analysis::TypeSort()
     tmpLorentz += fXiMinus;
     tmpLorentz += fOmMinus;
     fJetVars.chf = tmpLorentz.E();
-    fJetVars.chm = tmpLorentz.m();
 
     tmpLorentz = PseudoJet();
 
@@ -42,20 +41,16 @@ void Analysis::TypeSort()
     tmpLorentz += fLambda0;
     tmpLorentz += fXiZero;
     fJetVars.nhf = tmpLorentz.E();
-    fJetVars.nhm = tmpLorentz.m();
 
     tmpLorentz = PseudoJet();
 
     tmpLorentz += fPi0Gamma;
     tmpLorentz += fGamma;
     fJetVars.phf = tmpLorentz.E();
-    fJetVars.phm = tmpLorentz.m();
 
     fJetVars.elf = fElec.E();
-    fJetVars.elm = fElec.m();
 
     fJetVars.muf = fMuon.E();
-    fJetVars.mum = fMuon.m();
 
     double scale = fEtSum.E();
     fJetVars.chf /= scale;
