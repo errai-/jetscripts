@@ -1,0 +1,6 @@
+string IntToString (int a)
+{
+  std::ostringstream temp;
+  temp<<a;
+  return temp.str();
+}

@@ -1,0 +1,50 @@
+################################################################
+## Makefile for building Pythia-ROOT-Fastjet code (jetsorter) ## 
+## Hannu Siikonen, 10.02.2015                                 ##  
+################################################################
+
+-include ../config.mk
+
+.SECONDEXPANSION:
+.PHONY: all clean
+
+INCLUDE := $(INCLUDE) -I../include -I..
+
+all:
+	@echo "No make for all objects provided."
+
+# Main targets
+
+pythiatree: src/main_$$@.cpp $(PYTHIALIB) ../obj/minimalevent.so include/jetsorter_auxiliary.h ../obj/PTDct.cc
+	$(CXX) $^ $(PYTHIALIB) -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
+
+pythia8tree: src/main_$$@.cpp $(PYTHIALIB) include/jetsorter_auxiliary.h ../obj/SimEvent.o ../obj/SimEventDict.o
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
+
+test: src/main_$$@.cpp $(PYTHIALIB) ../obj/libSimEvent.so
+	$(CXX) $^ -w $(INCLUDE) $(CXXFLAGS) $(ROOT) $(PYTHIA) -ldl -o $@.exe
+
+## OBJECTS
+
+../obj/PTDct.cc: ../include/MinimalEvent.h ../include/PTLinkDef.h
+	cd .. && $(MAKE) obj/PTDct.cc
+
+../obj/SimDct.cc: ../include/SimEvent.h ../include/SimLinkDef.h
+	cd .. && $(MAKE) obj/SimDct.cc
+
+../obj/minimalevent.so: ../src/MinimalEvent.cpp
+	cd .. && $(MAKE) obj/minimalevent.so
+
+../obj/SimEvent.o: ../src/SimEvent.cpp
+	cd .. && $(MAKE) obj/SimEvent.o
+
+../obj/libSimEvent.so: ../obj/SimEventDict.o ../obj/SimEvent.o
+	cd .. && $(MAKE) obj/libSimEvent.so
+
+../obj/SimEventDict.o: ../obj/SimDct.cc
+	cd .. && $(MAKE) obj/SimEventDict.o
+
+# Clean.
+clean:
+	rm -f *.log *.exe *.d *.so
+
