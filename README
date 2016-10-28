@@ -1,3 +1,11 @@
+IMPORTANT:
+
+Project has been split into three parts and moved to CERN gitlab:
+
+https://gitlab.cern.ch/hsiikone/gen_handle // A handle for gen-level simulations
+https://gitlab.cern.ch/hsiikone/gen_analysis // A collection of analysis tools for the gen-level simulations
+https://gitlab.cern.ch/hsiikone/jet_compos // Jet composition plots
+
 Author Hannu Siikonen (github: errai-)
 README updated 3.4.2016
 
